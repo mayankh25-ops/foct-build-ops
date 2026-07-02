@@ -45,6 +45,13 @@ tokens tuned for all 5 themes, app shell visuals).
 
 ## Known issues / HANDOVER
 
+- All Stage 0 work lives on branch `claude/session-hygiene-tokens-hw7zqd`,
+  pushed to origin; `main` does not contain it yet (merge before Stage 1 or
+  branch Stage 1 from it).
+- The CI workflow is committed but has not been observed running green on
+  GitHub yet — check the Actions tab on first push review.
+- No database migrations have been applied anywhere; `supabase/migrations/`
+  is empty by design.
 - `supabase/config.toml` is minimal (project_id only); run
   `npx supabase init --force` if the CLI demands more, then re-set project_id.
 - Supabase env vars in `.env.example` use anon/service-role naming; if the
