@@ -1,0 +1,4 @@
+# Supabase CLI configuration.
+# Regenerate defaults with `npx supabase init --force` if the CLI ever
+# requires sections that are missing here.
+project_id = "foct-building-ops"
