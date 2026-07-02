@@ -1,0 +1,273 @@
+/*
+ * FOCT BuildingOps — design tokens.
+ * Semantic tokens only in components. Themes are token SETS applied via
+ * data-theme="<name>" on any element (app root, or a preview wrapper).
+ * Every value is documented with its reference + contrast in design/tokens.md.
+ * Verified by scripts/check-contrast.mjs — do not edit colours without re-running it.
+ */
+
+/* ---------------------------------------------------------------- */
+/* Theme-independent tokens: type scale, spacing, radius             */
+/* ---------------------------------------------------------------- */
+:root {
+  /* Typography — families are wired up in globals.css via next/font vars */
+  --font-stack-display: "General Sans", var(--font-inter), var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-stack-body: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-stack-mono: var(--font-geist-mono), ui-monospace, "SF Mono", "Cascadia Mono", monospace;
+
+  /* Type scale (size / line-height / tracking) — documented in design/tokens.md */
+  --fs-display: 2rem;        /* 32px */
+  --lh-display: 2.5rem;      /* 40px */
+  --ls-display: -0.02em;
+  --fs-title-1: 1.5rem;      /* 24px */
+  --lh-title-1: 2rem;        /* 32px */
+  --ls-title-1: -0.015em;
+  --fs-title-2: 1.25rem;     /* 20px */
+  --lh-title-2: 1.75rem;     /* 28px */
+  --ls-title-2: -0.01em;
+  --fs-title-3: 1rem;        /* 16px */
+  --lh-title-3: 1.5rem;      /* 24px */
+  --ls-title-3: -0.005em;
+  --fs-body: 0.9375rem;      /* 15px */
+  --lh-body: 1.375rem;       /* 22px */
+  --fs-body-sm: 0.8125rem;   /* 13px */
+  --lh-body-sm: 1.25rem;     /* 20px */
+  --fs-caption: 0.75rem;     /* 12px */
+  --lh-caption: 1rem;        /* 16px */
+  --ls-caption: 0.01em;
+
+  /* Radius — cards 12–16px per CLAUDE.md */
+  --r-card: 0.875rem;    /* 14px */
+  --r-control: 0.625rem; /* 10px */
+  --r-sm: 0.5rem;        /* 8px */
+  --r-pill: 9999px;
+}
+
+/* ---------------------------------------------------------------- */
+/* 1. GRAPHITE (default) — warm off-white, charcoal-slate text,      */
+/*    deep graphite-blue accent. Apple HIG neutral discipline,       */
+/*    neutrals from Radix Sand.                                      */
+/* ---------------------------------------------------------------- */
+:root,
+[data-theme="graphite"] {
+  color-scheme: light;
+
+  --bg-canvas: #f9f9f8;        /* Radix Sand 2 */
+  --bg-surface: #ffffff;       /* HIG systemBackground */
+  --bg-raised: #ffffff;
+  --bg-hover: #f1f0ef;         /* Radix Sand 3 */
+
+  --border-subtle: #e9e8e6;    /* Radix Sand 4 */
+  --border-strong: #8d8d86;    /* Radix Sand 9 — 3:1 vs surface */
+
+  --text-primary: #21201c;     /* Radix Sand 12 / HIG label */
+  --text-secondary: #54534d;   /* tuned between Sand 11–12 / HIG secondaryLabel */
+  --text-muted: #63635e;       /* Radix Sand 11 / HIG tertiaryLabel */
+  --text-disabled: #a8a7a0;    /* Radix Sand ~8 — non-AA by design, disabled only */
+  --text-on-accent: #ffffff;
+
+  --accent: #45556d;           /* deep graphite-blue, custom (Slate-family) */
+  --accent-hover: #3a4859;
+  --accent-subtle: #edf1f5;
+  --accent-text: #3e4e64;
+
+  --brand: var(--accent);
+
+  --success: #2e7d4f;          /* muted green, Radix Grass-family */
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;          /* amber, Radix Amber-family — non-text uses only */
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;         /* restrained red, Radix Red-family */
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+
+  --focus-ring: #45556d;
+
+  --elevation-card: 0 1px 2px rgb(20 20 16 / 0.04), 0 2px 8px rgb(20 20 16 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(20 20 16 / 0.06), 0 12px 32px rgb(20 20 16 / 0.10);
+}
+
+/* ---------------------------------------------------------------- */
+/* 2. HARBOUR — light grey canvas, ink-navy text, deep teal accent.  */
+/*    Neutrals from Radix Slate. FOCT signal teal #00B4A6 reserved   */
+/*    for brand moments (--brand), desaturated for UI.               */
+/* ---------------------------------------------------------------- */
+[data-theme="harbour"] {
+  color-scheme: light;
+
+  --bg-canvas: #f9f9fb;        /* Radix Slate 2 */
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #f0f0f3;         /* Radix Slate 3 */
+
+  --border-subtle: #e8e8ec;    /* Radix Slate 4 */
+  --border-strong: #8b8d98;    /* Radix Slate 9 — 3:1 vs surface */
+
+  --text-primary: #1b2532;     /* ink-navy, tuned from Radix Slate 12 */
+  --text-secondary: #414d63;
+  --text-muted: #566276;
+  --text-disabled: #a5abb8;
+  --text-on-accent: #ffffff;
+
+  --accent: #0e7568;           /* FOCT teal desaturated/deepened for UI */
+  --accent-hover: #0b5f55;
+  --accent-subtle: #e4f2f0;
+  --accent-text: #0b6357;
+
+  --brand: #00b4a6;            /* full-strength FOCT teal — brand moments only, never text */
+
+  --success: #2e7d4f;
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+
+  --focus-ring: #0e7568;
+
+  --elevation-card: 0 1px 2px rgb(16 20 26 / 0.04), 0 2px 8px rgb(16 20 26 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(16 20 26 / 0.06), 0 12px 32px rgb(16 20 26 / 0.10);
+}
+
+/* ---------------------------------------------------------------- */
+/* 3. EUCALYPT — warm neutral canvas, muted green accent.            */
+/*    Neutrals from Radix Sage; accent low-chroma Grass-family.      */
+/* ---------------------------------------------------------------- */
+[data-theme="eucalypt"] {
+  color-scheme: light;
+
+  --bg-canvas: #f7f9f7;        /* Radix Sage 2 */
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #eef1ef;         /* Radix Sage 3 */
+
+  --border-subtle: #e6e9e7;    /* Radix Sage 4 */
+  --border-strong: #868e8b;    /* Radix Sage 9 — 3:1 vs surface */
+
+  --text-primary: #1a211e;     /* Radix Sage 12 */
+  --text-secondary: #4a544e;
+  --text-muted: #5f6563;       /* Radix Sage 11 */
+  --text-disabled: #a3aaa6;
+  --text-on-accent: #ffffff;
+
+  --accent: #3e7a52;           /* muted eucalyptus green, low-chroma Grass-family */
+  --accent-hover: #336545;
+  --accent-subtle: #e9f2ec;
+  --accent-text: #356947;
+
+  --brand: var(--accent);
+
+  --success: #2e7d4f;
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+
+  --focus-ring: #3e7a52;
+
+  --elevation-card: 0 1px 2px rgb(18 22 19 / 0.04), 0 2px 8px rgb(18 22 19 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(18 22 19 / 0.06), 0 12px 32px rgb(18 22 19 / 0.10);
+}
+
+/* ---------------------------------------------------------------- */
+/* 4. SANDSTONE — warm stone canvas, restrained bronze accent.       */
+/*    Neutrals warm Sand/stone family; heritage/premium strata feel. */
+/* ---------------------------------------------------------------- */
+[data-theme="sandstone"] {
+  color-scheme: light;
+
+  --bg-canvas: #faf8f4;        /* warm stone, Radix Sand 2 warmed */
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #f2efe9;
+
+  --border-subtle: #eae6de;
+  --border-strong: #8f8a7f;    /* 3:1 vs surface */
+
+  --text-primary: #24211b;     /* Radix Sand 12 warmed */
+  --text-secondary: #565147;
+  --text-muted: #6a645a;
+  --text-disabled: #aca69b;
+  --text-on-accent: #ffffff;
+
+  --accent: #82653f;           /* restrained bronze, Radix Bronze/Gold-family */
+  --accent-hover: #6f5636;
+  --accent-subtle: #f3ede2;
+  --accent-text: #755a33;
+
+  --brand: var(--accent);
+
+  --success: #2e7d4f;
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+
+  --focus-ring: #82653f;
+
+  --elevation-card: 0 1px 2px rgb(24 21 15 / 0.04), 0 2px 8px rgb(24 21 15 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(24 21 15 / 0.06), 0 12px 32px rgb(24 21 15 / 0.10);
+}
+
+/* ---------------------------------------------------------------- */
+/* 5. INK — the one dark theme. Deep charcoal (never pure black),    */
+/*    soft off-white text, teal accent. Concierge night mode/kiosks. */
+/*    Neutrals from Radix Slate Dark.                                */
+/* ---------------------------------------------------------------- */
+[data-theme="ink"] {
+  color-scheme: dark;
+
+  --bg-canvas: #141517;        /* Radix Slate Dark 1-family */
+  --bg-surface: #1c1e21;       /* Radix Slate Dark 2-family */
+  --bg-raised: #24262a;        /* Radix Slate Dark 3-family */
+  --bg-hover: #2a2d31;
+
+  --border-subtle: #2e3136;
+  --border-strong: #626a74;    /* 3:1 vs surface */
+
+  --text-primary: #edeef0;     /* Radix Slate Dark 12 */
+  --text-secondary: #c6cad1;
+  --text-muted: #9ba1a9;       /* Radix Slate Dark 11-family */
+  --text-disabled: #6b7178;
+  --text-on-accent: #0c1211;   /* dark text on bright accent (dark-theme inversion) */
+
+  --accent: #3ecbbb;           /* teal, brightened for dark surfaces */
+  --accent-hover: #55d6c8;
+  --accent-subtle: #14332f;
+  --accent-text: #4ccfc0;
+
+  --brand: #00b4a6;
+
+  --success: #4caf74;
+  --success-subtle: #162b1f;
+  --success-text: #7bd3a0;
+  --warning: #e5a63b;
+  --warning-subtle: #33290f;
+  --warning-text: #e9b95c;
+  --critical: #e5605c;
+  --critical-hover: #ec7a77;
+  --critical-subtle: #3a1f1e;
+  --critical-text: #f08c88;
+
+  --focus-ring: #3ecbbb;
+
+  --elevation-card: 0 1px 2px rgb(0 0 0 / 0.20), 0 2px 8px rgb(0 0 0 / 0.24);
+  --elevation-raised: 0 2px 4px rgb(0 0 0 / 0.28), 0 16px 40px rgb(0 0 0 / 0.42);
+}
