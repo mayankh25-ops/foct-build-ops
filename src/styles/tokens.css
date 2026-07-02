@@ -86,6 +86,8 @@
 
   --focus-ring: #45556d;
 
+  --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
+
   --elevation-card: 0 1px 2px rgb(20 20 16 / 0.04), 0 2px 8px rgb(20 20 16 / 0.04);
   --elevation-raised: 0 2px 4px rgb(20 20 16 / 0.06), 0 12px 32px rgb(20 20 16 / 0.10);
 }
@@ -132,6 +134,8 @@
 
   --focus-ring: #0e7568;
 
+  --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
+
   --elevation-card: 0 1px 2px rgb(16 20 26 / 0.04), 0 2px 8px rgb(16 20 26 / 0.04);
   --elevation-raised: 0 2px 4px rgb(16 20 26 / 0.06), 0 12px 32px rgb(16 20 26 / 0.10);
 }
@@ -176,6 +180,8 @@
   --critical-text: #b03030;
 
   --focus-ring: #3e7a52;
+
+  --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
 
   --elevation-card: 0 1px 2px rgb(18 22 19 / 0.04), 0 2px 8px rgb(18 22 19 / 0.04);
   --elevation-raised: 0 2px 4px rgb(18 22 19 / 0.06), 0 12px 32px rgb(18 22 19 / 0.10);
@@ -222,6 +228,8 @@
 
   --focus-ring: #82653f;
 
+  --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
+
   --elevation-card: 0 1px 2px rgb(24 21 15 / 0.04), 0 2px 8px rgb(24 21 15 / 0.04);
   --elevation-raised: 0 2px 4px rgb(24 21 15 / 0.06), 0 12px 32px rgb(24 21 15 / 0.10);
 }
@@ -267,6 +275,8 @@
   --critical-text: #f08c88;
 
   --focus-ring: #3ecbbb;
+
+  --overlay: rgb(0 0 0 / 0.60);   /* modal scrim */
 
   --elevation-card: 0 1px 2px rgb(0 0 0 / 0.20), 0 2px 8px rgb(0 0 0 / 0.24);
   --elevation-raised: 0 2px 4px rgb(0 0 0 / 0.28), 0 16px 40px rgb(0 0 0 / 0.42);

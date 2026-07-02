@@ -55,6 +55,7 @@
   --color-critical-text: var(--critical-text);
 
   --color-focus: var(--focus-ring);
+  --color-overlay: var(--overlay);
 
   --font-display: var(--font-stack-display);
   --font-body: var(--font-stack-body);
