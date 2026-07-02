@@ -4,3 +4,27 @@
 
 ## 2026-07-02 — CLAUDE.md filename
 Uploaded file was `claude.md.txt` wrapped in a markdown code fence with CRLF endings. Renamed to `CLAUDE.md`, stripped fence, normalised to LF. Content unchanged.
+
+## 2026-07-02 — Tailwind v4 (CSS-first config)
+Chose Tailwind v4 over v3. Its `@theme` layer maps semantic CSS variables straight into utilities (`bg-surface`, `text-fg`, `rounded-card`) with no colour duplication in a JS config. The stock palette and stock text sizes are disabled (`--color-*: initial`, `--text-*: initial` in `globals.css`), so raw colour utilities like `bg-blue-500` and ad-hoc sizes don't even exist — the no-raw-hex rule is structural, not just linted.
+
+## 2026-07-02 — Radix UI primitives for interactive components
+Select, Tabs, Modal (Dialog), Toast are built on unstyled Radix primitives for correct focus management, keyboard navigation, and ARIA. All visuals are ours via semantic tokens. Simpler components are hand-rolled. Note: the Select content is intentionally **not** portalled so it inherits the `data-theme` scope it was opened in (needed for the side-by-side preview and harmless in-app); Modal/Toast are portalled and accept `data-theme` pass-through when scoped theming is needed.
+
+## 2026-07-02 — Fonts: self-hosted; General Sans is a drop-in slot
+All fonts self-host (no CDN flicker, kiosk-friendly offline). Hanken Grotesk woff2 vendored from `@fontsource-variable/hanken-grotesk` into `src/fonts/`, loaded with `next/font/local`. Geist Mono via Vercel's `geist` package (bundles woff2). **General Sans could not be fetched this session**: it is not on npm, Fontshare/its CDN are blocked by the session network policy, and GitHub access is scoped to this repo only. It ships as a manual `@font-face` in `globals.css` pointing at `public/fonts/general-sans/GeneralSans-Variable.woff2` (see README there) so dropping the file in activates it with zero code change; until then headings use self-hosted Inter — CLAUDE.md's documented fallback ("Inter Display feel"). This is graceful: a missing font file 404s and falls back, whereas `next/font/local` would fail the build.
+
+## 2026-07-02 — Semantic token set extended beyond CLAUDE.md's list
+CLAUDE.md names 14 tokens; the shipped set adds: `--bg-hover`, `--border-strong` (inputs need a ≥3:1 boundary per WCAG 1.4.11; `--border-subtle` stays decorative), `--text-disabled` (explicitly non-AA, disabled controls only), `--text-on-accent`, `--accent-text` (links need ≥4.5:1, the solid accent is tuned for fills), `--*-subtle`/`--*-text` per status, `--overlay`, `--brand`, `--elevation-card/raised`, font/type-scale/radius primitives. Reasons: WCAG AA for every text/background pair forced the text/fill split; everything is documented in `design/tokens.md`.
+
+## 2026-07-02 — Status text never sits on solid status colours
+StatusPill/Badge use tinted `*-subtle` backgrounds with dark `*-text` — amber with white text can never reach 4.5:1, and the tinted style is calmer (Linear-like). Solid status colours are reserved for dots, icons, and the destructive button fill (`--critical` + white is verified AA).
+
+## 2026-07-02 — Stage 1 scope: no backend wiring
+Supabase, TanStack Query, Zustand, and Inngest are intentionally absent from `package.json`. Stage 1 is pure UI; adding them unconfigured would only create drift. They enter with Stage 2 (schema + RLS) per CLAUDE.md.
+
+## 2026-07-02 — lucide-react for icons
+One icon set, tree-shakeable, neutral style that suits the calm aesthetic. Icons always render with `aria-hidden` and inherit `currentColor` so they obey semantic tokens.
+
+## 2026-07-02 — Contrast + raw-colour checks are scripts, not docs
+`npm run check:contrast` parses `src/styles/tokens.css` (single source of truth) and fails below AA; its `--md` output is embedded in `design/tokens.md`, so the documented ratios are generated, never hand-typed. `npm run check:tokens` fails on any raw hex/rgb/hsl/oklch or stock Tailwind colour utility under `src/`. Both should run in CI when CI exists.
