@@ -43,6 +43,13 @@
   --color-accent-text: var(--accent-text);
   --color-brand: var(--brand);
 
+  --color-sidebar: var(--sidebar-bg);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-fg: var(--sidebar-fg);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-border: var(--sidebar-border);
+
   --color-success: var(--success);
   --color-success-subtle: var(--success-subtle);
   --color-success-text: var(--success-text);
@@ -53,6 +60,9 @@
   --color-critical-hover: var(--critical-hover);
   --color-critical-subtle: var(--critical-subtle);
   --color-critical-text: var(--critical-text);
+  --color-info: var(--info);
+  --color-info-subtle: var(--info-subtle);
+  --color-info-text: var(--info-text);
 
   --color-focus: var(--focus-ring);
   --color-overlay: var(--overlay);
@@ -63,6 +73,10 @@
 
   /* type scale — use text-display, text-title-1 … never ad-hoc sizes */
   --text-*: initial;
+  --text-hero: var(--fs-hero);
+  --text-hero--line-height: var(--lh-hero);
+  --text-hero--letter-spacing: var(--ls-hero);
+  --text-hero--font-weight: 600;
   --text-display: var(--fs-display);
   --text-display--line-height: var(--lh-display);
   --text-display--letter-spacing: var(--ls-display);

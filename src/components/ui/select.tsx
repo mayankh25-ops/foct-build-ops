@@ -34,7 +34,7 @@ export function Select({
 }: SelectProps) {
   const id = React.useId();
   return (
-    <div className={cn("flex w-full flex-col gap-1.5", className)}>
+    <div className={cn("flex flex-col gap-1.5", className ?? "w-full")}>
       {label && (
         <label htmlFor={id} className="text-body-sm font-medium text-fg">
           {label}
@@ -49,8 +49,8 @@ export function Select({
         <SelectPrimitive.Trigger
           id={id}
           className={cn(
-            "flex h-10 w-full items-center justify-between rounded-control border border-edge-strong",
-            "bg-surface px-3 text-body text-fg transition-colors duration-150",
+            "flex h-11 w-full items-center justify-between rounded-control border border-edge-strong",
+            "bg-surface px-3.5 text-body text-fg transition-colors duration-150",
             "data-[placeholder]:text-fg-muted",
             "disabled:cursor-not-allowed disabled:bg-hover disabled:text-fg-disabled"
           )}
@@ -76,7 +76,7 @@ export function Select({
                   value={opt.value}
                   disabled={opt.disabled}
                   className={cn(
-                    "flex cursor-default items-center justify-between gap-2 rounded-sm px-2.5 py-2",
+                    "flex cursor-default items-center justify-between gap-2 rounded-sm px-3 py-2.5",
                     "text-body text-fg outline-none",
                     "data-[highlighted]:bg-hover data-[disabled]:text-fg-disabled"
                   )}

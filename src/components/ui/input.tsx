@@ -28,7 +28,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
-            "h-10 w-full rounded-control border bg-surface px-3 text-body text-fg",
+            "h-11 w-full rounded-control border bg-surface px-3.5 text-body text-fg",
             "placeholder:text-fg-muted transition-colors duration-150",
             "disabled:cursor-not-allowed disabled:bg-hover disabled:text-fg-disabled",
             error ? "border-critical" : "border-edge-strong",

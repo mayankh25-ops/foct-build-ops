@@ -78,12 +78,18 @@ const PAIRS = [
   { fg: "text-on-accent", bg: "critical", min: 4.5, use: "destructive button" },
   { fg: "text-on-accent", bg: "critical-hover", min: 4.5, use: "destructive button :hover" },
   // status pill text on its tinted background, and on plain surface
-  ...["success", "warning", "critical"].flatMap((s) => [
+  ...["success", "warning", "critical", "info"].flatMap((s) => [
     { fg: `${s}-text`, bg: `${s}-subtle`, min: 4.5, use: `${s} pill` },
     { fg: `${s}-text`, bg: "bg-surface", min: 4.5, use: `${s} inline text` },
   ]),
   // accent text on accent-subtle (selected nav item, subtle badges)
   { fg: "accent-text", bg: "accent-subtle", min: 4.5, use: "selected/subtle accent" },
+  // sidebar rail (dark in every theme)
+  { fg: "sidebar-fg", bg: "sidebar-bg", min: 4.5, use: "sidebar item text" },
+  { fg: "sidebar-fg", bg: "sidebar-hover", min: 4.5, use: "sidebar item :hover/active" },
+  { fg: "sidebar-muted", bg: "sidebar-bg", min: 4.5, use: "sidebar secondary text" },
+  { fg: "sidebar-active", bg: "sidebar-bg", min: 4.5, use: "sidebar active accent text" },
+  { fg: "sidebar-active", bg: "sidebar-hover", min: 4.5, use: "sidebar active accent on fill" },
   // non-text UI: input borders and focus rings (WCAG 1.4.11, 3:1)
   { fg: "border-strong", bg: "bg-surface", min: 3.0, use: "input border (non-text)" },
   { fg: "border-strong", bg: "bg-canvas", min: 3.0, use: "input border (non-text)" },

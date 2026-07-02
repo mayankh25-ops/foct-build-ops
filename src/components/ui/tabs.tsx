@@ -25,7 +25,7 @@ export function TabsTrigger({
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        "-mb-px border-b-2 border-transparent pb-2.5 text-body-sm font-medium text-fg-muted",
+        "-mb-px border-b-2 border-transparent pb-3 text-body font-medium text-fg-muted",
         "transition-colors duration-150 hover:text-fg",
         "data-[state=active]:border-[var(--accent)] data-[state=active]:text-fg",
         className

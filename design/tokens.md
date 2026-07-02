@@ -27,6 +27,18 @@ tuned within; **HIG** = the Apple Human Interface Guidelines semantic colour
 the token plays the role of; **Material** = Material Design tonal-ramp
 equivalent where useful.
 
+### Name mapping (shadcn-style aliases)
+
+For anyone arriving with shadcn/Tailwind-preset vocabulary, the roles map 1:1
+onto our token set — we kept the documented names rather than renaming:
+
+`background`→`--bg-canvas` · `card`→`--bg-surface` · `foreground`/`card-foreground`→`--text-primary` ·
+`muted`→`--bg-hover` · `muted-foreground`→`--text-muted` · `border`→`--border-subtle` ·
+`input`→`--border-strong` · `primary`→`--accent` · `primary-foreground`→`--text-on-accent` ·
+`secondary`→`--bg-surface`+`--border-subtle` (secondary button) · `destructive`→`--critical` ·
+`ring`→`--focus-ring` · `sidebar`/`sidebar-foreground`→`--sidebar-bg`/`--sidebar-fg` ·
+`success`/`warning`/`info`→ same names.
+
 ### Backgrounds
 
 | Token | Role | Reference |
@@ -74,6 +86,21 @@ Solid values are for dots, icons, and the destructive button fill.
 | `--success` / `--success-subtle` / `--success-text` | Muted green | Radix Grass family, low chroma |
 | `--warning` / `--warning-subtle` / `--warning-text` | Amber | Radix Amber family; solid is non-text-use only |
 | `--critical` / `--critical-hover` / `--critical-subtle` / `--critical-text` | Restrained red; `--critical` doubles as destructive-button fill (AA with white, verified) | Radix Red family, desaturated |
+| `--info` / `--info-subtle` / `--info-text` | Slate blue — informational status ("Ordered", packaging tiers) | Radix Blue family, desaturated |
+
+### Sidebar (deep rail)
+
+Every theme ships a deep-toned navigation rail (`--sidebar-*` family) so the
+app shell reads premium-operations rather than light-admin. Values are tuned
+per theme (graphite charcoal / harbour navy / eucalypt green-grey / sandstone
+umber / ink one-step-off-canvas); all text pairs are AA-verified below.
+
+| Token | Role |
+| --- | --- |
+| `--sidebar-bg` / `--sidebar-hover` | Rail background and hover/active fill |
+| `--sidebar-fg` / `--sidebar-muted` | Item text; secondary/disabled item text (≥ 4.5:1 on the rail) |
+| `--sidebar-active` | Active-item indicator bar and accent text, brightened for the dark rail |
+| `--sidebar-border` | Footer hairline inside the rail |
 
 ### Other
 
@@ -98,21 +125,29 @@ No ad-hoc font sizes in components — only these utilities (Tailwind
 
 | Name | Size / line height | Tracking | Weight | Use |
 | --- | --- | --- | --- | --- |
-| `display` | 32 / 40 px | −0.02em | 600 | Page-level hero numbers, kiosk headings |
-| `title-1` | 24 / 32 px | −0.015em | 600 | Page titles (`PageHeader`) |
-| `title-2` | 20 / 28 px | −0.01em | 600 | Modal titles, section heads |
-| `title-3` | 16 / 24 px | −0.005em | 600 | Card titles |
-| `body` | 15 / 22 px | 0 | 400 | Default UI text |
-| `body-sm` | 13 / 20 px | 0 | 400 | Tables, secondary copy, buttons (sm) |
-| `caption` | 12 / 16 px | +0.01em | 400–500 | Labels, hints, table headers, badges |
+| `hero` | 72 px / 1 | −0.02em | 600 | Kiosk clock only |
+| `display` | 36 / 44 px | −0.02em | 600 | Page titles (`PageHeader`), metric numbers |
+| `title-1` | 28 / 36 px | −0.015em | 600 | Section titles, kiosk buttons |
+| `title-2` | 22 / 30 px | −0.01em | 600 | Modal/drawer titles, `SectionHeader` |
+| `title-3` | 17 / 25 px | −0.005em | 600 | Card titles |
+| `body` | 16 / 24 px | 0 | 400 | Default UI text, inputs, buttons (md) |
+| `body-sm` | 14 / 20 px | 0 | 400 | Tables (never smaller), secondary copy, buttons (sm) |
+| `caption` | 13 / 18 px | +0.005em | 400–500 | Labels, hints, badges |
+
+Table headers are sentence case (`text-body-sm font-medium text-fg-muted`) —
+no all-caps tracking-wide micro-labels anywhere in the system.
 
 ## Spacing, radius, elevation
 
 - **8px grid** via Tailwind's default 4px scale — components use even steps
   (`gap-2`, `p-4`, `p-6`…); 4px half-steps only for icon-to-label gaps.
-- Radius: `--r-card` 14px (cards, modals, toasts — inside the 12–16px rule),
-  `--r-control` 10px (buttons, inputs), `--r-sm` 8px (badges, menu items),
-  `--r-pill` for StatusPill/avatars.
+- Radius: `--r-card` 16px (cards, modals, toasts, kiosk controls),
+  `--r-control` 12px (buttons, inputs, nav items), `--r-sm` 8px (badges, menu
+  items), `--r-pill` for StatusPill/avatars.
+- Control heights: buttons 36px (sm) / 44px (md), inputs/selects 44px,
+  kiosk touch targets ≥ 64px (keypad) and ≥ 88px (`KioskButton`).
+- Table rows ≈ 56px (py-4 on 14px text); page padding 24–40px; card padding
+  24px; dashboard grid gaps 16–24px.
 - Max **2 accent-coloured elements per view** (design rule, reviewed at the
   preview gate — not machine-enforced).
 
@@ -151,7 +186,14 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 | `--warning-text` #8a6002 | `--bg-surface` #ffffff | 5.59:1 | 4.5:1 | ✅ | warning inline text |
 | `--critical-text` #b03030 | `--critical-subtle` #faeceb | 5.51:1 | 4.5:1 | ✅ | critical pill |
 | `--critical-text` #b03030 | `--bg-surface` #ffffff | 6.34:1 | 4.5:1 | ✅ | critical inline text |
+| `--info-text` #33608f | `--info-subtle` #e8eff7 | 5.64:1 | 4.5:1 | ✅ | info pill |
+| `--info-text` #33608f | `--bg-surface` #ffffff | 6.54:1 | 4.5:1 | ✅ | info inline text |
 | `--accent-text` #3e4e64 | `--accent-subtle` #edf1f5 | 7.46:1 | 4.5:1 | ✅ | selected/subtle accent |
+| `--sidebar-fg` #eceef1 | `--sidebar-bg` #1f2227 | 13.72:1 | 4.5:1 | ✅ | sidebar item text |
+| `--sidebar-fg` #eceef1 | `--sidebar-hover` #2b2f36 | 11.56:1 | 4.5:1 | ✅ | sidebar item :hover/active |
+| `--sidebar-muted` #a2a9b3 | `--sidebar-bg` #1f2227 | 6.73:1 | 4.5:1 | ✅ | sidebar secondary text |
+| `--sidebar-active` #a3b8da | `--sidebar-bg` #1f2227 | 7.92:1 | 4.5:1 | ✅ | sidebar active accent text |
+| `--sidebar-active` #a3b8da | `--sidebar-hover` #2b2f36 | 6.67:1 | 4.5:1 | ✅ | sidebar active accent on fill |
 | `--border-strong` #8d8d86 | `--bg-surface` #ffffff | 3.34:1 | 3:1 | ✅ | input border (non-text) |
 | `--border-strong` #8d8d86 | `--bg-canvas` #f9f9f8 | 3.17:1 | 3:1 | ✅ | input border (non-text) |
 | `--focus-ring` #45556d | `--bg-canvas` #f9f9f8 | 7.19:1 | 3:1 | ✅ | focus ring (non-text) |
@@ -185,7 +227,14 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 | `--warning-text` #8a6002 | `--bg-surface` #ffffff | 5.59:1 | 4.5:1 | ✅ | warning inline text |
 | `--critical-text` #b03030 | `--critical-subtle` #faeceb | 5.51:1 | 4.5:1 | ✅ | critical pill |
 | `--critical-text` #b03030 | `--bg-surface` #ffffff | 6.34:1 | 4.5:1 | ✅ | critical inline text |
+| `--info-text` #33608f | `--info-subtle` #e8eff7 | 5.64:1 | 4.5:1 | ✅ | info pill |
+| `--info-text` #33608f | `--bg-surface` #ffffff | 6.54:1 | 4.5:1 | ✅ | info inline text |
 | `--accent-text` #0b6357 | `--accent-subtle` #e4f2f0 | 6.22:1 | 4.5:1 | ✅ | selected/subtle accent |
+| `--sidebar-fg` #eef2f3 | `--sidebar-bg` #12212b | 14.58:1 | 4.5:1 | ✅ | sidebar item text |
+| `--sidebar-fg` #eef2f3 | `--sidebar-hover` #1e3140 | 11.88:1 | 4.5:1 | ✅ | sidebar item :hover/active |
+| `--sidebar-muted` #9aacb5 | `--sidebar-bg` #12212b | 7.00:1 | 4.5:1 | ✅ | sidebar secondary text |
+| `--sidebar-active` #56c9ba | `--sidebar-bg` #12212b | 8.18:1 | 4.5:1 | ✅ | sidebar active accent text |
+| `--sidebar-active` #56c9ba | `--sidebar-hover` #1e3140 | 6.67:1 | 4.5:1 | ✅ | sidebar active accent on fill |
 | `--border-strong` #8b8d98 | `--bg-surface` #ffffff | 3.30:1 | 3:1 | ✅ | input border (non-text) |
 | `--border-strong` #8b8d98 | `--bg-canvas` #f9f9fb | 3.14:1 | 3:1 | ✅ | input border (non-text) |
 | `--focus-ring` #0e7568 | `--bg-canvas` #f9f9fb | 5.31:1 | 3:1 | ✅ | focus ring (non-text) |
@@ -219,7 +268,14 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 | `--warning-text` #8a6002 | `--bg-surface` #ffffff | 5.59:1 | 4.5:1 | ✅ | warning inline text |
 | `--critical-text` #b03030 | `--critical-subtle` #faeceb | 5.51:1 | 4.5:1 | ✅ | critical pill |
 | `--critical-text` #b03030 | `--bg-surface` #ffffff | 6.34:1 | 4.5:1 | ✅ | critical inline text |
+| `--info-text` #33608f | `--info-subtle` #e8eff7 | 5.64:1 | 4.5:1 | ✅ | info pill |
+| `--info-text` #33608f | `--bg-surface` #ffffff | 6.54:1 | 4.5:1 | ✅ | info inline text |
 | `--accent-text` #356947 | `--accent-subtle` #e9f2ec | 5.63:1 | 4.5:1 | ✅ | selected/subtle accent |
+| `--sidebar-fg` #edf1ee | `--sidebar-bg` #1b231d | 14.12:1 | 4.5:1 | ✅ | sidebar item text |
+| `--sidebar-fg` #edf1ee | `--sidebar-hover` #273329 | 11.57:1 | 4.5:1 | ✅ | sidebar item :hover/active |
+| `--sidebar-muted` #a0ada3 | `--sidebar-bg` #1b231d | 6.90:1 | 4.5:1 | ✅ | sidebar secondary text |
+| `--sidebar-active` #8cc7a0 | `--sidebar-bg` #1b231d | 8.27:1 | 4.5:1 | ✅ | sidebar active accent text |
+| `--sidebar-active` #8cc7a0 | `--sidebar-hover` #273329 | 6.78:1 | 4.5:1 | ✅ | sidebar active accent on fill |
 | `--border-strong` #868e8b | `--bg-surface` #ffffff | 3.36:1 | 3:1 | ✅ | input border (non-text) |
 | `--border-strong` #868e8b | `--bg-canvas` #f7f9f7 | 3.17:1 | 3:1 | ✅ | input border (non-text) |
 | `--focus-ring` #3e7a52 | `--bg-canvas` #f7f9f7 | 4.83:1 | 3:1 | ✅ | focus ring (non-text) |
@@ -253,7 +309,14 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 | `--warning-text` #8a6002 | `--bg-surface` #ffffff | 5.59:1 | 4.5:1 | ✅ | warning inline text |
 | `--critical-text` #b03030 | `--critical-subtle` #faeceb | 5.51:1 | 4.5:1 | ✅ | critical pill |
 | `--critical-text` #b03030 | `--bg-surface` #ffffff | 6.34:1 | 4.5:1 | ✅ | critical inline text |
+| `--info-text` #33608f | `--info-subtle` #e8eff7 | 5.64:1 | 4.5:1 | ✅ | info pill |
+| `--info-text` #33608f | `--bg-surface` #ffffff | 6.54:1 | 4.5:1 | ✅ | info inline text |
 | `--accent-text` #755a33 | `--accent-subtle` #f3ede2 | 5.52:1 | 4.5:1 | ✅ | selected/subtle accent |
+| `--sidebar-fg` #f3efe8 | `--sidebar-bg` #251f17 | 14.24:1 | 4.5:1 | ✅ | sidebar item text |
+| `--sidebar-fg` #f3efe8 | `--sidebar-hover` #332b20 | 12.16:1 | 4.5:1 | ✅ | sidebar item :hover/active |
+| `--sidebar-muted` #aea391 | `--sidebar-bg` #251f17 | 6.56:1 | 4.5:1 | ✅ | sidebar secondary text |
+| `--sidebar-active` #d6ac6a | `--sidebar-bg` #251f17 | 7.75:1 | 4.5:1 | ✅ | sidebar active accent text |
+| `--sidebar-active` #d6ac6a | `--sidebar-hover` #332b20 | 6.61:1 | 4.5:1 | ✅ | sidebar active accent on fill |
 | `--border-strong` #8f8a7f | `--bg-surface` #ffffff | 3.44:1 | 3:1 | ✅ | input border (non-text) |
 | `--border-strong` #8f8a7f | `--bg-canvas` #faf8f4 | 3.24:1 | 3:1 | ✅ | input border (non-text) |
 | `--focus-ring` #82653f | `--bg-canvas` #faf8f4 | 5.10:1 | 3:1 | ✅ | focus ring (non-text) |
@@ -287,10 +350,16 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 | `--warning-text` #e9b95c | `--bg-surface` #1c1e21 | 9.20:1 | 4.5:1 | ✅ | warning inline text |
 | `--critical-text` #f08c88 | `--critical-subtle` #3a1f1e | 6.32:1 | 4.5:1 | ✅ | critical pill |
 | `--critical-text` #f08c88 | `--bg-surface` #1c1e21 | 7.01:1 | 4.5:1 | ✅ | critical inline text |
+| `--info-text` #8ec4ec | `--info-subtle` #16293c | 7.95:1 | 4.5:1 | ✅ | info pill |
+| `--info-text` #8ec4ec | `--bg-surface` #1c1e21 | 8.96:1 | 4.5:1 | ✅ | info inline text |
 | `--accent-text` #4ccfc0 | `--accent-subtle` #14332f | 7.12:1 | 4.5:1 | ✅ | selected/subtle accent |
+| `--sidebar-fg` #edeef0 | `--sidebar-bg` #17191c | 15.17:1 | 4.5:1 | ✅ | sidebar item text |
+| `--sidebar-fg` #edeef0 | `--sidebar-hover` #24262a | 13.05:1 | 4.5:1 | ✅ | sidebar item :hover/active |
+| `--sidebar-muted` #9ba1a9 | `--sidebar-bg` #17191c | 6.76:1 | 4.5:1 | ✅ | sidebar secondary text |
+| `--sidebar-active` #4ccfc0 | `--sidebar-bg` #17191c | 9.22:1 | 4.5:1 | ✅ | sidebar active accent text |
+| `--sidebar-active` #4ccfc0 | `--sidebar-hover` #24262a | 7.93:1 | 4.5:1 | ✅ | sidebar active accent on fill |
 | `--border-strong` #626a74 | `--bg-surface` #1c1e21 | 3.05:1 | 3:1 | ✅ | input border (non-text) |
 | `--border-strong` #626a74 | `--bg-canvas` #141517 | 3.33:1 | 3:1 | ✅ | input border (non-text) |
 | `--focus-ring` #3ecbbb | `--bg-canvas` #141517 | 9.10:1 | 3:1 | ✅ | focus ring (non-text) |
 | `--focus-ring` #3ecbbb | `--bg-surface` #1c1e21 | 8.32:1 | 3:1 | ✅ | focus ring (non-text) |
-✓ all 29 pairs × 5 themes meet WCAG AA requirements.
 <!-- END GENERATED CONTRAST TABLES -->

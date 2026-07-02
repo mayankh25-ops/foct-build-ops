@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/cn";
 
-type Tone = "neutral" | "accent" | "success" | "warning" | "critical";
+type Tone = "neutral" | "accent" | "success" | "warning" | "critical" | "info";
 
 const tones: Record<Tone, string> = {
   neutral: "bg-hover text-fg-secondary",
@@ -9,6 +9,7 @@ const tones: Record<Tone, string> = {
   success: "bg-success-subtle text-success-text",
   warning: "bg-warning-subtle text-warning-text",
   critical: "bg-critical-subtle text-critical-text",
+  info: "bg-info-subtle text-info-text",
 };
 
 const dots: Record<Tone, string> = {
@@ -17,6 +18,7 @@ const dots: Record<Tone, string> = {
   success: "bg-success",
   warning: "bg-warning",
   critical: "bg-critical",
+  info: "bg-info",
 };
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
@@ -47,13 +49,13 @@ export function StatusPill({ tone = "neutral", className, children, ...props }: 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-caption font-medium",
+        "inline-flex items-center gap-1.5 rounded-pill px-3 py-1 text-caption font-medium",
         tones[tone],
         className
       )}
       {...props}
     >
-      <span aria-hidden className={cn("size-1.5 rounded-pill", dots[tone])} />
+      <span aria-hidden className={cn("size-2 rounded-pill", dots[tone])} />
       {children}
     </span>
   );

@@ -1,5 +1,5 @@
 /*
- * FOCT BuildingOps — design tokens.
+ * FOCT BuildingOps — design tokens ("FOCT Premium Operations UI").
  * Semantic tokens only in components. Themes are token SETS applied via
  * data-theme="<name>" on any element (app root, or a preview wrapper).
  * Every value is documented with its reference + contrast in design/tokens.md.
@@ -16,29 +16,32 @@
   --font-stack-mono: var(--font-geist-mono), ui-monospace, "SF Mono", "Cascadia Mono", monospace;
 
   /* Type scale (size / line-height / tracking) — documented in design/tokens.md */
-  --fs-display: 2rem;        /* 32px */
-  --lh-display: 2.5rem;      /* 40px */
+  --fs-hero: 4.5rem;         /* 72px — kiosk clock only */
+  --lh-hero: 1;
+  --ls-hero: -0.02em;
+  --fs-display: 2.25rem;     /* 36px — page titles, metric numbers */
+  --lh-display: 2.75rem;     /* 44px */
   --ls-display: -0.02em;
-  --fs-title-1: 1.5rem;      /* 24px */
-  --lh-title-1: 2rem;        /* 32px */
+  --fs-title-1: 1.75rem;     /* 28px — section titles */
+  --lh-title-1: 2.25rem;     /* 36px */
   --ls-title-1: -0.015em;
-  --fs-title-2: 1.25rem;     /* 20px */
-  --lh-title-2: 1.75rem;     /* 28px */
+  --fs-title-2: 1.375rem;    /* 22px — modal titles, sub-sections */
+  --lh-title-2: 1.875rem;    /* 30px */
   --ls-title-2: -0.01em;
-  --fs-title-3: 1rem;        /* 16px */
-  --lh-title-3: 1.5rem;      /* 24px */
+  --fs-title-3: 1.0625rem;   /* 17px — card titles */
+  --lh-title-3: 1.5625rem;   /* 25px */
   --ls-title-3: -0.005em;
-  --fs-body: 0.9375rem;      /* 15px */
-  --lh-body: 1.375rem;       /* 22px */
-  --fs-body-sm: 0.8125rem;   /* 13px */
+  --fs-body: 1rem;           /* 16px — default UI text */
+  --lh-body: 1.5rem;         /* 24px */
+  --fs-body-sm: 0.875rem;    /* 14px — tables, secondary copy (never smaller in tables) */
   --lh-body-sm: 1.25rem;     /* 20px */
-  --fs-caption: 0.75rem;     /* 12px */
-  --lh-caption: 1rem;        /* 16px */
-  --ls-caption: 0.01em;
+  --fs-caption: 0.8125rem;   /* 13px — labels, hints, badges */
+  --lh-caption: 1.125rem;    /* 18px */
+  --ls-caption: 0.005em;
 
-  /* Radius — cards 12–16px per CLAUDE.md */
-  --r-card: 0.875rem;    /* 14px */
-  --r-control: 0.625rem; /* 10px */
+  /* Radius — cards 16px, controls 12px */
+  --r-card: 1rem;        /* 16px */
+  --r-control: 0.75rem;  /* 12px */
   --r-sm: 0.5rem;        /* 8px */
   --r-pill: 9999px;
 }
@@ -83,10 +86,21 @@
   --critical-hover: #a93636;
   --critical-subtle: #faeceb;
   --critical-text: #b03030;
+  --info: #3a6b9e;             /* slate blue, Radix Blue-family desaturated */
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
 
   --focus-ring: #45556d;
 
   --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
+
+  /* Sidebar — deep graphite rail, distinct from content surfaces */
+  --sidebar-bg: #1f2227;
+  --sidebar-hover: #2b2f36;
+  --sidebar-fg: #eceef1;
+  --sidebar-muted: #a2a9b3;
+  --sidebar-active: #a3b8da;
+  --sidebar-border: #2e3239;
 
   --elevation-card: 0 1px 2px rgb(20 20 16 / 0.04), 0 2px 8px rgb(20 20 16 / 0.04);
   --elevation-raised: 0 2px 4px rgb(20 20 16 / 0.06), 0 12px 32px rgb(20 20 16 / 0.10);
@@ -131,10 +145,21 @@
   --critical-hover: #a93636;
   --critical-subtle: #faeceb;
   --critical-text: #b03030;
+  --info: #3a6b9e;
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
 
   --focus-ring: #0e7568;
 
   --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
+
+  /* Sidebar — deep harbour navy with teal active state */
+  --sidebar-bg: #12212b;
+  --sidebar-hover: #1e3140;
+  --sidebar-fg: #eef2f3;
+  --sidebar-muted: #9aacb5;
+  --sidebar-active: #56c9ba;
+  --sidebar-border: #21353f;
 
   --elevation-card: 0 1px 2px rgb(16 20 26 / 0.04), 0 2px 8px rgb(16 20 26 / 0.04);
   --elevation-raised: 0 2px 4px rgb(16 20 26 / 0.06), 0 12px 32px rgb(16 20 26 / 0.10);
@@ -178,10 +203,21 @@
   --critical-hover: #a93636;
   --critical-subtle: #faeceb;
   --critical-text: #b03030;
+  --info: #3a6b9e;
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
 
   --focus-ring: #3e7a52;
 
   --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
+
+  /* Sidebar — deep green-grey */
+  --sidebar-bg: #1b231d;
+  --sidebar-hover: #273329;
+  --sidebar-fg: #edf1ee;
+  --sidebar-muted: #a0ada3;
+  --sidebar-active: #8cc7a0;
+  --sidebar-border: #2a3a2e;
 
   --elevation-card: 0 1px 2px rgb(18 22 19 / 0.04), 0 2px 8px rgb(18 22 19 / 0.04);
   --elevation-raised: 0 2px 4px rgb(18 22 19 / 0.06), 0 12px 32px rgb(18 22 19 / 0.10);
@@ -225,10 +261,21 @@
   --critical-hover: #a93636;
   --critical-subtle: #faeceb;
   --critical-text: #b03030;
+  --info: #3a6b9e;
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
 
   --focus-ring: #82653f;
 
   --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
+
+  /* Sidebar — deep warm umber */
+  --sidebar-bg: #251f17;
+  --sidebar-hover: #332b20;
+  --sidebar-fg: #f3efe8;
+  --sidebar-muted: #aea391;
+  --sidebar-active: #d6ac6a;
+  --sidebar-border: #372f23;
 
   --elevation-card: 0 1px 2px rgb(24 21 15 / 0.04), 0 2px 8px rgb(24 21 15 / 0.04);
   --elevation-raised: 0 2px 4px rgb(24 21 15 / 0.06), 0 12px 32px rgb(24 21 15 / 0.10);
@@ -273,10 +320,21 @@
   --critical-hover: #ec7a77;
   --critical-subtle: #3a1f1e;
   --critical-text: #f08c88;
+  --info: #6fa9d8;
+  --info-subtle: #16293c;
+  --info-text: #8ec4ec;
 
   --focus-ring: #3ecbbb;
 
   --overlay: rgb(0 0 0 / 0.60);   /* modal scrim */
+
+  /* Sidebar — one step off the canvas, same family */
+  --sidebar-bg: #17191c;
+  --sidebar-hover: #24262a;
+  --sidebar-fg: #edeef0;
+  --sidebar-muted: #9ba1a9;
+  --sidebar-active: #4ccfc0;
+  --sidebar-border: #2b2e33;
 
   --elevation-card: 0 1px 2px rgb(0 0 0 / 0.20), 0 2px 8px rgb(0 0 0 / 0.24);
   --elevation-raised: 0 2px 4px rgb(0 0 0 / 0.28), 0 16px 40px rgb(0 0 0 / 0.42);

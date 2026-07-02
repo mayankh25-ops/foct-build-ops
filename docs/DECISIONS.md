@@ -28,3 +28,17 @@ One icon set, tree-shakeable, neutral style that suits the calm aesthetic. Icons
 
 ## 2026-07-02 — Contrast + raw-colour checks are scripts, not docs
 `npm run check:contrast` parses `src/styles/tokens.css` (single source of truth) and fails below AA; its `--md` output is embedded in `design/tokens.md`, so the documented ratios are generated, never hand-typed. `npm run check:tokens` fails on any raw hex/rgb/hsl/oklch or stock Tailwind colour utility under `src/`. Both should run in CI when CI exists.
+
+## 2026-07-02 (later) — "FOCT Premium Operations UI" visual upgrade (Stage 1.5)
+Owner brief: the Stage 1 output read as a generic admin dashboard — too small, too text-heavy, not premium. Upgraded the visual system without changing the token architecture or the five CLAUDE.md themes:
+- **Type scale up one notch across the board** (body 15→16, tables 13→14 minimum, page titles 24→36, plus a 72px `hero` size for the kiosk clock). All-caps micro-labels removed (table headers and eyebrows are now sentence case).
+- **Deep sidebar rail** via a new `--sidebar-*` token family, tuned per theme (charcoal/navy/green-grey/umber), AA-verified like everything else. This is the single biggest "not-an-admin-template" move.
+- **`--info` status family** (slate blue) added — the brief's status set needed an informational tone ("Ordered", "Requires Pro").
+- **Radius/controls up**: cards 14→16px, controls 10→12px, buttons 36/44px, inputs 44px, table rows ~56px.
+- The owner-supplied token names (background/foreground/card/muted/…, shadcn-style) were mapped onto the existing documented semantic set rather than renaming: same roles, and renaming would have destroyed the contrast-check/reference documentation for no visual gain. Mapping documented in design/tokens.md.
+
+## 2026-07-02 (later) — Stage 1.5 demo screens ahead of Stage 2 backend
+The visual brief required real screens (dashboard, kiosk, roster, timesheets, consumables, module access) to judge the design system operationally. Built them as static pages rendering exclusively from `src/lib/demo-data.ts` (Aurora on Collins cast) — no Supabase, no new modules beyond their packaging tiles. This front-runs Stage 3+ *layouts* only; every screen must be re-bound to real data and RLS in later stages. The kiosk PIN directory is an in-file demo map, clearly marked.
+
+## 2026-07-02 (later) — Referenced design attachments not found
+The brief referenced Figma/Octet/Google Stitch/Lovable design attachments "already provided in the project"; no such files exist in the repo. Direction was taken from CLAUDE.md's documented references (Apple HIG, Radix, Stripe/Linear calibre) and the brief's own style keywords. If those attachments exist elsewhere, add them to `design/` and we can tune against them.

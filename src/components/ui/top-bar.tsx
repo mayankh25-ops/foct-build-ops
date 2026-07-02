@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Bell, ChevronDown, Search } from "lucide-react";
+import { Bell, Building2, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export interface TopBarProps extends React.HTMLAttributes<HTMLElement> {
@@ -32,7 +32,7 @@ export function TopBar({
   return (
     <header
       className={cn(
-        "flex h-14 items-center gap-4 border-b border-edge bg-surface px-4",
+        "flex h-16 items-center gap-4 border-b border-edge bg-surface px-6",
         className
       )}
       {...props}
@@ -40,27 +40,30 @@ export function TopBar({
       <button
         type="button"
         className={cn(
-          "flex items-center gap-2 rounded-control px-2.5 py-1.5 text-body-sm font-medium text-fg",
-          "transition-colors hover:bg-hover"
+          "flex items-center gap-2.5 rounded-control border border-edge bg-surface py-2 pr-3 pl-2.5",
+          "text-body-sm font-medium text-fg transition-colors hover:bg-hover"
         )}
       >
+        <span className="flex size-7 items-center justify-center rounded-sm bg-accent-subtle">
+          <Building2 aria-hidden className="size-4 text-accent-text" />
+        </span>
         {buildingName}
         {orgName && <span className="font-normal text-fg-muted">· {orgName}</span>}
         <ChevronDown aria-hidden className="size-4 text-fg-muted" />
       </button>
 
-      <div className="relative ml-auto hidden w-64 md:block">
+      <div className="relative ml-auto hidden w-72 md:block">
         <Search
           aria-hidden
-          className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-fg-muted"
+          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-fg-muted"
         />
         <input
           type="search"
-          placeholder="Search"
+          placeholder="Search cleaners, shifts, orders…"
           aria-label="Search"
           className={cn(
-            "h-8 w-full rounded-control border border-edge bg-canvas pr-3 pl-8 text-body-sm text-fg",
-            "placeholder:text-fg-muted"
+            "h-10 w-full rounded-control border border-edge bg-canvas pr-3 pl-9 text-body-sm text-fg",
+            "placeholder:text-fg-muted transition-colors focus:bg-surface"
           )}
         />
       </div>
@@ -68,15 +71,20 @@ export function TopBar({
       <button
         type="button"
         aria-label="Notifications"
-        className="rounded-control p-2 text-fg-secondary transition-colors hover:bg-hover hover:text-fg"
+        className="relative rounded-control p-2.5 text-fg-secondary transition-colors hover:bg-hover hover:text-fg"
       >
-        <Bell aria-hidden className="size-4" />
-      </button>
-
-      <div className="flex items-center gap-2.5">
+        <Bell aria-hidden className="size-[18px]" />
         <span
           aria-hidden
-          className="flex size-8 items-center justify-center rounded-pill bg-accent-subtle text-caption font-semibold text-accent-text"
+          className="absolute top-2 right-2 size-2 rounded-pill bg-critical"
+        />
+        <span className="sr-only">1 unread alert</span>
+      </button>
+
+      <div className="flex items-center gap-3 border-l border-edge pl-4">
+        <span
+          aria-hidden
+          className="flex size-9 items-center justify-center rounded-pill bg-accent-subtle text-caption font-semibold text-accent-text"
         >
           {initials}
         </span>

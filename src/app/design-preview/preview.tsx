@@ -2,10 +2,13 @@
 
 import * as React from "react";
 import {
+  AlertTriangle,
   Building2,
   CalendarDays,
   Inbox,
   LayoutDashboard,
+  LogIn,
+  MapPin,
   Package,
   Plug,
   Plus,
@@ -40,6 +43,11 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { Sidebar } from "@/components/ui/sidebar";
+import { KioskButton } from "@/components/ui/kiosk-button";
+import { MetricCard } from "@/components/ui/metric-card";
+import { ModuleCard } from "@/components/ui/module-card";
+import { SearchInput } from "@/components/ui/search-input";
+import { SegmentedControl } from "@/components/ui/filter-bar";
 import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToastProvider, useToast } from "@/components/ui/toast";
@@ -386,6 +394,60 @@ function OverlaySection({ theme }: { theme: Theme }) {
   );
 }
 
+function OperationalSection() {
+  const [view, setView] = React.useState("day");
+  return (
+    <SectionCard title="Operational components">
+      <div className="grid gap-4 md:grid-cols-2">
+        <MetricCard
+          label="On site now"
+          value="3"
+          context="Since 05:58"
+          icon={MapPin}
+          tone="accent"
+        />
+        <MetricCard
+          label="Missed check-ins"
+          value="1"
+          context="Tom · 06:00 shift"
+          icon={AlertTriangle}
+          tone="critical"
+        />
+      </div>
+      <Card>
+        <CardBody className="flex flex-wrap items-center gap-3">
+          <SegmentedControl
+            label="Roster view"
+            value={view}
+            onValueChange={setView}
+            options={[
+              { value: "day", label: "Day" },
+              { value: "week", label: "Week" },
+              { value: "timeline", label: "Timeline" },
+            ]}
+          />
+          <SearchInput className="w-56" placeholder="Find a cleaner…" />
+        </CardBody>
+      </Card>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <ModuleCard
+          icon={SprayCan}
+          name="CleaningOps"
+          description="Rosters, check-ins, timesheets, consumables and audits."
+          status="enabled"
+        />
+        <ModuleCard
+          icon={Building2}
+          name="Concierge desk"
+          description="Front-of-house log and handover notes for concierge teams."
+          status="not-enabled"
+        />
+      </div>
+      <KioskButton icon={LogIn}>Check in</KioskButton>
+    </SectionCard>
+  );
+}
+
 function StateSection() {
   return (
     <SectionCard title="EmptyState & ComingSoonState">
@@ -499,6 +561,7 @@ function AllSections({ theme }: { theme: Theme }) {
       <TableSection />
       <TabsSection />
       <OverlaySection theme={theme} />
+      <OperationalSection />
       <StateSection />
       <ShellSection />
     </>
