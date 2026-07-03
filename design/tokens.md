@@ -10,7 +10,7 @@ cannot drift; the tables at the bottom are that script's output (`--md` flag).
 
 | Theme | Personality | Neutral reference | Accent |
 | --- | --- | --- | --- |
-| **Graphite** (default) | Apple HIG neutral discipline, warm off-white | Radix Sand | Deep graphite-blue `#45556d` |
+| **Graphite** (default) | Cool light-grey, crisp SaaS (TailAdmin/Untitled-UI-inspired, owner reference) | Untitled UI Gray (gray-50…900) | Vivid indigo-blue `#465fff` |
 | **Harbour** | Melbourne CBD commercial, ink-navy on light grey | Radix Slate | Deep teal `#0e7568` (FOCT `#00b4a6` desaturated) |
 | **Eucalypt** | ESG / green-building clients | Radix Sage | Muted eucalyptus green `#3e7a52` |
 | **Sandstone** | Heritage / premium strata | Radix Sand, warmed | Restrained bronze `#82653f` |
@@ -88,19 +88,20 @@ Solid values are for dots, icons, and the destructive button fill.
 | `--critical` / `--critical-hover` / `--critical-subtle` / `--critical-text` | Restrained red; `--critical` doubles as destructive-button fill (AA with white, verified) | Radix Red family, desaturated |
 | `--info` / `--info-subtle` / `--info-text` | Slate blue — informational status ("Ordered", packaging tiers) | Radix Blue family, desaturated |
 
-### Sidebar (deep rail)
+### Sidebar rail
 
-Every theme ships a deep-toned navigation rail (`--sidebar-*` family) so the
-app shell reads premium-operations rather than light-admin. Values are tuned
-per theme (graphite charcoal / harbour navy / eucalypt green-grey / sandstone
-umber / ink one-step-off-canvas); all text pairs are AA-verified below.
+The navigation rail has its own token family (`--sidebar-*`) so its treatment
+can differ from content surfaces per theme. Light themes ship a **light rail**
+(white, hairline border, accent-subtle active pill — TailAdmin style, owner
+reference 2026-07-03); Ink keeps a dark rail one step off its canvas. All text
+pairs are AA-verified below.
 
 | Token | Role |
 | --- | --- |
-| `--sidebar-bg` / `--sidebar-hover` | Rail background and hover/active fill |
+| `--sidebar-bg` / `--sidebar-hover` | Rail background and hover fill |
 | `--sidebar-fg` / `--sidebar-muted` | Item text; secondary/disabled item text (≥ 4.5:1 on the rail) |
-| `--sidebar-active` | Active-item indicator bar and accent text, brightened for the dark rail |
-| `--sidebar-border` | Footer hairline inside the rail |
+| `--sidebar-active` | Active-item text on the `--accent-subtle` pill |
+| `--sidebar-border` | Rail edge + footer hairline |
 
 ### Other
 
@@ -162,22 +163,22 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 
 | Foreground | Background | Ratio | Requirement | Result | Used for |
 | --- | --- | --- | --- | --- | --- |
-| `--text-primary` #21201c | `--bg-canvas` #f9f9f8 | 15.48:1 | 4.5:1 | ✅ | body text |
-| `--text-primary` #21201c | `--bg-surface` #ffffff | 16.30:1 | 4.5:1 | ✅ | body text |
-| `--text-primary` #21201c | `--bg-raised` #ffffff | 16.30:1 | 4.5:1 | ✅ | body text |
-| `--text-primary` #21201c | `--bg-hover` #f1f0ef | 14.32:1 | 4.5:1 | ✅ | body text |
-| `--text-secondary` #54534d | `--bg-canvas` #f9f9f8 | 7.32:1 | 4.5:1 | ✅ | body text |
-| `--text-secondary` #54534d | `--bg-surface` #ffffff | 7.72:1 | 4.5:1 | ✅ | body text |
-| `--text-secondary` #54534d | `--bg-raised` #ffffff | 7.72:1 | 4.5:1 | ✅ | body text |
-| `--text-secondary` #54534d | `--bg-hover` #f1f0ef | 6.78:1 | 4.5:1 | ✅ | body text |
-| `--text-muted` #63635e | `--bg-canvas` #f9f9f8 | 5.73:1 | 4.5:1 | ✅ | body text |
-| `--text-muted` #63635e | `--bg-surface` #ffffff | 6.04:1 | 4.5:1 | ✅ | body text |
-| `--text-muted` #63635e | `--bg-raised` #ffffff | 6.04:1 | 4.5:1 | ✅ | body text |
-| `--text-muted` #63635e | `--bg-hover` #f1f0ef | 5.31:1 | 4.5:1 | ✅ | body text |
-| `--accent-text` #3e4e64 | `--bg-canvas` #f9f9f8 | 8.04:1 | 4.5:1 | ✅ | link text |
-| `--accent-text` #3e4e64 | `--bg-surface` #ffffff | 8.47:1 | 4.5:1 | ✅ | link text |
-| `--text-on-accent` #ffffff | `--accent` #45556d | 7.57:1 | 4.5:1 | ✅ | primary button |
-| `--text-on-accent` #ffffff | `--accent-hover` #3a4859 | 9.33:1 | 4.5:1 | ✅ | primary button :hover |
+| `--text-primary` #101828 | `--bg-canvas` #f9fafb | 16.98:1 | 4.5:1 | ✅ | body text |
+| `--text-primary` #101828 | `--bg-surface` #ffffff | 17.75:1 | 4.5:1 | ✅ | body text |
+| `--text-primary` #101828 | `--bg-raised` #ffffff | 17.75:1 | 4.5:1 | ✅ | body text |
+| `--text-primary` #101828 | `--bg-hover` #f2f4f7 | 16.11:1 | 4.5:1 | ✅ | body text |
+| `--text-secondary` #344054 | `--bg-canvas` #f9fafb | 10.01:1 | 4.5:1 | ✅ | body text |
+| `--text-secondary` #344054 | `--bg-surface` #ffffff | 10.46:1 | 4.5:1 | ✅ | body text |
+| `--text-secondary` #344054 | `--bg-raised` #ffffff | 10.46:1 | 4.5:1 | ✅ | body text |
+| `--text-secondary` #344054 | `--bg-hover` #f2f4f7 | 9.49:1 | 4.5:1 | ✅ | body text |
+| `--text-muted` #5a6779 | `--bg-canvas` #f9fafb | 5.50:1 | 4.5:1 | ✅ | body text |
+| `--text-muted` #5a6779 | `--bg-surface` #ffffff | 5.75:1 | 4.5:1 | ✅ | body text |
+| `--text-muted` #5a6779 | `--bg-raised` #ffffff | 5.75:1 | 4.5:1 | ✅ | body text |
+| `--text-muted` #5a6779 | `--bg-hover` #f2f4f7 | 5.22:1 | 4.5:1 | ✅ | body text |
+| `--accent-text` #3641f5 | `--bg-canvas` #f9fafb | 6.22:1 | 4.5:1 | ✅ | link text |
+| `--accent-text` #3641f5 | `--bg-surface` #ffffff | 6.50:1 | 4.5:1 | ✅ | link text |
+| `--text-on-accent` #ffffff | `--accent` #465fff | 4.84:1 | 4.5:1 | ✅ | primary button |
+| `--text-on-accent` #ffffff | `--accent-hover` #3641f5 | 6.50:1 | 4.5:1 | ✅ | primary button :hover |
 | `--text-on-accent` #ffffff | `--critical` #c24242 | 5.06:1 | 4.5:1 | ✅ | destructive button |
 | `--text-on-accent` #ffffff | `--critical-hover` #a93636 | 6.43:1 | 4.5:1 | ✅ | destructive button :hover |
 | `--success-text` #256b44 | `--success-subtle` #e7f3eb | 5.64:1 | 4.5:1 | ✅ | success pill |
@@ -188,16 +189,17 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 | `--critical-text` #b03030 | `--bg-surface` #ffffff | 6.34:1 | 4.5:1 | ✅ | critical inline text |
 | `--info-text` #33608f | `--info-subtle` #e8eff7 | 5.64:1 | 4.5:1 | ✅ | info pill |
 | `--info-text` #33608f | `--bg-surface` #ffffff | 6.54:1 | 4.5:1 | ✅ | info inline text |
-| `--accent-text` #3e4e64 | `--accent-subtle` #edf1f5 | 7.46:1 | 4.5:1 | ✅ | selected/subtle accent |
-| `--sidebar-fg` #eceef1 | `--sidebar-bg` #1f2227 | 13.72:1 | 4.5:1 | ✅ | sidebar item text |
-| `--sidebar-fg` #eceef1 | `--sidebar-hover` #2b2f36 | 11.56:1 | 4.5:1 | ✅ | sidebar item :hover/active |
-| `--sidebar-muted` #a2a9b3 | `--sidebar-bg` #1f2227 | 6.73:1 | 4.5:1 | ✅ | sidebar secondary text |
-| `--sidebar-active` #a3b8da | `--sidebar-bg` #1f2227 | 7.92:1 | 4.5:1 | ✅ | sidebar active accent text |
-| `--sidebar-active` #a3b8da | `--sidebar-hover` #2b2f36 | 6.67:1 | 4.5:1 | ✅ | sidebar active accent on fill |
-| `--border-strong` #8d8d86 | `--bg-surface` #ffffff | 3.34:1 | 3:1 | ✅ | input border (non-text) |
-| `--border-strong` #8d8d86 | `--bg-canvas` #f9f9f8 | 3.17:1 | 3:1 | ✅ | input border (non-text) |
-| `--focus-ring` #45556d | `--bg-canvas` #f9f9f8 | 7.19:1 | 3:1 | ✅ | focus ring (non-text) |
-| `--focus-ring` #45556d | `--bg-surface` #ffffff | 7.57:1 | 3:1 | ✅ | focus ring (non-text) |
+| `--accent-text` #3641f5 | `--accent-subtle` #ecf3ff | 5.83:1 | 4.5:1 | ✅ | selected/subtle accent |
+| `--sidebar-fg` #344054 | `--sidebar-bg` #ffffff | 10.46:1 | 4.5:1 | ✅ | sidebar item text |
+| `--sidebar-fg` #344054 | `--sidebar-hover` #f2f4f7 | 9.49:1 | 4.5:1 | ✅ | sidebar item :hover/active |
+| `--sidebar-muted` #5a6779 | `--sidebar-bg` #ffffff | 5.75:1 | 4.5:1 | ✅ | sidebar secondary text |
+| `--sidebar-active` #3641f5 | `--sidebar-bg` #ffffff | 6.50:1 | 4.5:1 | ✅ | sidebar active accent text |
+| `--sidebar-active` #3641f5 | `--sidebar-hover` #f2f4f7 | 5.90:1 | 4.5:1 | ✅ | sidebar active accent on fill |
+| `--sidebar-active` #3641f5 | `--accent-subtle` #ecf3ff | 5.83:1 | 4.5:1 | ✅ | sidebar active pill |
+| `--border-strong` #85909f | `--bg-surface` #ffffff | 3.24:1 | 3:1 | ✅ | input border (non-text) |
+| `--border-strong` #85909f | `--bg-canvas` #f9fafb | 3.10:1 | 3:1 | ✅ | input border (non-text) |
+| `--focus-ring` #465fff | `--bg-canvas` #f9fafb | 4.63:1 | 3:1 | ✅ | focus ring (non-text) |
+| `--focus-ring` #465fff | `--bg-surface` #ffffff | 4.84:1 | 3:1 | ✅ | focus ring (non-text) |
 
 ### Harbour
 
@@ -230,11 +232,12 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 | `--info-text` #33608f | `--info-subtle` #e8eff7 | 5.64:1 | 4.5:1 | ✅ | info pill |
 | `--info-text` #33608f | `--bg-surface` #ffffff | 6.54:1 | 4.5:1 | ✅ | info inline text |
 | `--accent-text` #0b6357 | `--accent-subtle` #e4f2f0 | 6.22:1 | 4.5:1 | ✅ | selected/subtle accent |
-| `--sidebar-fg` #eef2f3 | `--sidebar-bg` #12212b | 14.58:1 | 4.5:1 | ✅ | sidebar item text |
-| `--sidebar-fg` #eef2f3 | `--sidebar-hover` #1e3140 | 11.88:1 | 4.5:1 | ✅ | sidebar item :hover/active |
-| `--sidebar-muted` #9aacb5 | `--sidebar-bg` #12212b | 7.00:1 | 4.5:1 | ✅ | sidebar secondary text |
-| `--sidebar-active` #56c9ba | `--sidebar-bg` #12212b | 8.18:1 | 4.5:1 | ✅ | sidebar active accent text |
-| `--sidebar-active` #56c9ba | `--sidebar-hover` #1e3140 | 6.67:1 | 4.5:1 | ✅ | sidebar active accent on fill |
+| `--sidebar-fg` #414d63 | `--sidebar-bg` #ffffff | 8.51:1 | 4.5:1 | ✅ | sidebar item text |
+| `--sidebar-fg` #414d63 | `--sidebar-hover` #f0f0f3 | 7.49:1 | 4.5:1 | ✅ | sidebar item :hover/active |
+| `--sidebar-muted` #566276 | `--sidebar-bg` #ffffff | 6.17:1 | 4.5:1 | ✅ | sidebar secondary text |
+| `--sidebar-active` #0b6357 | `--sidebar-bg` #ffffff | 7.15:1 | 4.5:1 | ✅ | sidebar active accent text |
+| `--sidebar-active` #0b6357 | `--sidebar-hover` #f0f0f3 | 6.29:1 | 4.5:1 | ✅ | sidebar active accent on fill |
+| `--sidebar-active` #0b6357 | `--accent-subtle` #e4f2f0 | 6.22:1 | 4.5:1 | ✅ | sidebar active pill |
 | `--border-strong` #8b8d98 | `--bg-surface` #ffffff | 3.30:1 | 3:1 | ✅ | input border (non-text) |
 | `--border-strong` #8b8d98 | `--bg-canvas` #f9f9fb | 3.14:1 | 3:1 | ✅ | input border (non-text) |
 | `--focus-ring` #0e7568 | `--bg-canvas` #f9f9fb | 5.31:1 | 3:1 | ✅ | focus ring (non-text) |
@@ -271,11 +274,12 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 | `--info-text` #33608f | `--info-subtle` #e8eff7 | 5.64:1 | 4.5:1 | ✅ | info pill |
 | `--info-text` #33608f | `--bg-surface` #ffffff | 6.54:1 | 4.5:1 | ✅ | info inline text |
 | `--accent-text` #356947 | `--accent-subtle` #e9f2ec | 5.63:1 | 4.5:1 | ✅ | selected/subtle accent |
-| `--sidebar-fg` #edf1ee | `--sidebar-bg` #1b231d | 14.12:1 | 4.5:1 | ✅ | sidebar item text |
-| `--sidebar-fg` #edf1ee | `--sidebar-hover` #273329 | 11.57:1 | 4.5:1 | ✅ | sidebar item :hover/active |
-| `--sidebar-muted` #a0ada3 | `--sidebar-bg` #1b231d | 6.90:1 | 4.5:1 | ✅ | sidebar secondary text |
-| `--sidebar-active` #8cc7a0 | `--sidebar-bg` #1b231d | 8.27:1 | 4.5:1 | ✅ | sidebar active accent text |
-| `--sidebar-active` #8cc7a0 | `--sidebar-hover` #273329 | 6.78:1 | 4.5:1 | ✅ | sidebar active accent on fill |
+| `--sidebar-fg` #4a544e | `--sidebar-bg` #ffffff | 7.87:1 | 4.5:1 | ✅ | sidebar item text |
+| `--sidebar-fg` #4a544e | `--sidebar-hover` #eef1ef | 6.92:1 | 4.5:1 | ✅ | sidebar item :hover/active |
+| `--sidebar-muted` #5f6563 | `--sidebar-bg` #ffffff | 5.95:1 | 4.5:1 | ✅ | sidebar secondary text |
+| `--sidebar-active` #356947 | `--sidebar-bg` #ffffff | 6.44:1 | 4.5:1 | ✅ | sidebar active accent text |
+| `--sidebar-active` #356947 | `--sidebar-hover` #eef1ef | 5.66:1 | 4.5:1 | ✅ | sidebar active accent on fill |
+| `--sidebar-active` #356947 | `--accent-subtle` #e9f2ec | 5.63:1 | 4.5:1 | ✅ | sidebar active pill |
 | `--border-strong` #868e8b | `--bg-surface` #ffffff | 3.36:1 | 3:1 | ✅ | input border (non-text) |
 | `--border-strong` #868e8b | `--bg-canvas` #f7f9f7 | 3.17:1 | 3:1 | ✅ | input border (non-text) |
 | `--focus-ring` #3e7a52 | `--bg-canvas` #f7f9f7 | 4.83:1 | 3:1 | ✅ | focus ring (non-text) |
@@ -312,11 +316,12 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 | `--info-text` #33608f | `--info-subtle` #e8eff7 | 5.64:1 | 4.5:1 | ✅ | info pill |
 | `--info-text` #33608f | `--bg-surface` #ffffff | 6.54:1 | 4.5:1 | ✅ | info inline text |
 | `--accent-text` #755a33 | `--accent-subtle` #f3ede2 | 5.52:1 | 4.5:1 | ✅ | selected/subtle accent |
-| `--sidebar-fg` #f3efe8 | `--sidebar-bg` #251f17 | 14.24:1 | 4.5:1 | ✅ | sidebar item text |
-| `--sidebar-fg` #f3efe8 | `--sidebar-hover` #332b20 | 12.16:1 | 4.5:1 | ✅ | sidebar item :hover/active |
-| `--sidebar-muted` #aea391 | `--sidebar-bg` #251f17 | 6.56:1 | 4.5:1 | ✅ | sidebar secondary text |
-| `--sidebar-active` #d6ac6a | `--sidebar-bg` #251f17 | 7.75:1 | 4.5:1 | ✅ | sidebar active accent text |
-| `--sidebar-active` #d6ac6a | `--sidebar-hover` #332b20 | 6.61:1 | 4.5:1 | ✅ | sidebar active accent on fill |
+| `--sidebar-fg` #565147 | `--sidebar-bg` #ffffff | 7.88:1 | 4.5:1 | ✅ | sidebar item text |
+| `--sidebar-fg` #565147 | `--sidebar-hover` #f2efe9 | 6.87:1 | 4.5:1 | ✅ | sidebar item :hover/active |
+| `--sidebar-muted` #6a645a | `--sidebar-bg` #ffffff | 5.86:1 | 4.5:1 | ✅ | sidebar secondary text |
+| `--sidebar-active` #755a33 | `--sidebar-bg` #ffffff | 6.43:1 | 4.5:1 | ✅ | sidebar active accent text |
+| `--sidebar-active` #755a33 | `--sidebar-hover` #f2efe9 | 5.60:1 | 4.5:1 | ✅ | sidebar active accent on fill |
+| `--sidebar-active` #755a33 | `--accent-subtle` #f3ede2 | 5.52:1 | 4.5:1 | ✅ | sidebar active pill |
 | `--border-strong` #8f8a7f | `--bg-surface` #ffffff | 3.44:1 | 3:1 | ✅ | input border (non-text) |
 | `--border-strong` #8f8a7f | `--bg-canvas` #faf8f4 | 3.24:1 | 3:1 | ✅ | input border (non-text) |
 | `--focus-ring` #82653f | `--bg-canvas` #faf8f4 | 5.10:1 | 3:1 | ✅ | focus ring (non-text) |
@@ -358,6 +363,7 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 | `--sidebar-muted` #9ba1a9 | `--sidebar-bg` #17191c | 6.76:1 | 4.5:1 | ✅ | sidebar secondary text |
 | `--sidebar-active` #4ccfc0 | `--sidebar-bg` #17191c | 9.22:1 | 4.5:1 | ✅ | sidebar active accent text |
 | `--sidebar-active` #4ccfc0 | `--sidebar-hover` #24262a | 7.93:1 | 4.5:1 | ✅ | sidebar active accent on fill |
+| `--sidebar-active` #4ccfc0 | `--accent-subtle` #14332f | 7.12:1 | 4.5:1 | ✅ | sidebar active pill |
 | `--border-strong` #626a74 | `--bg-surface` #1c1e21 | 3.05:1 | 3:1 | ✅ | input border (non-text) |
 | `--border-strong` #626a74 | `--bg-canvas` #141517 | 3.33:1 | 3:1 | ✅ | input border (non-text) |
 | `--focus-ring` #3ecbbb | `--bg-canvas` #141517 | 9.10:1 | 3:1 | ✅ | focus ring (non-text) |

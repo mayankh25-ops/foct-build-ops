@@ -145,3 +145,20 @@ export const recentTasks: CleaningTask[] = [
   { title: "Spill cleaned — L14 kitchen", zone: "L14", by: "Leila Haddad", when: "08:05", photos: 3, status: "done" },
   { title: "Graffiti reported — loading dock", zone: "BOH", by: "Daniel Aboud", when: "08:40", photos: 1, status: "flagged" },
 ];
+
+export interface WeekHours {
+  day: string;
+  rostered: number;
+  actual: number;
+  today?: boolean;
+}
+
+export const weekHours: WeekHours[] = [
+  { day: "Mon", rostered: 22, actual: 21.5 },
+  { day: "Tue", rostered: 22, actual: 22.25 },
+  { day: "Wed", rostered: 23.5, actual: 14.1, today: true },
+  { day: "Thu", rostered: 22, actual: 0 },
+  { day: "Fri", rostered: 22, actual: 0 },
+  { day: "Sat", rostered: 9, actual: 0 },
+  { day: "Sun", rostered: 0, actual: 0 },
+];

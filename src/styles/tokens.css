@@ -47,32 +47,32 @@
 }
 
 /* ---------------------------------------------------------------- */
-/* 1. GRAPHITE (default) — warm off-white, charcoal-slate text,      */
-/*    deep graphite-blue accent. Apple HIG neutral discipline,       */
-/*    neutrals from Radix Sand.                                      */
+/* 1. GRAPHITE (default) — cool light-grey canvas, near-black ink    */
+/*    text, vivid indigo-blue accent. TailAdmin/Untitled-UI-style    */
+/*    neutral ramp (owner reference, see DECISIONS.md 2026-07-03).   */
 /* ---------------------------------------------------------------- */
 :root,
 [data-theme="graphite"] {
   color-scheme: light;
 
-  --bg-canvas: #f9f9f8;        /* Radix Sand 2 */
-  --bg-surface: #ffffff;       /* HIG systemBackground */
+  --bg-canvas: #f9fafb;        /* gray-50, TailAdmin canvas */
+  --bg-surface: #ffffff;
   --bg-raised: #ffffff;
-  --bg-hover: #f1f0ef;         /* Radix Sand 3 */
+  --bg-hover: #f2f4f7;         /* gray-100 */
 
-  --border-subtle: #e9e8e6;    /* Radix Sand 4 */
-  --border-strong: #8d8d86;    /* Radix Sand 9 — 3:1 vs surface */
+  --border-subtle: #e4e7ec;    /* gray-200 */
+  --border-strong: #85909f;    /* gray-400/500 blend — 3:1 vs surface+canvas */
 
-  --text-primary: #21201c;     /* Radix Sand 12 / HIG label */
-  --text-secondary: #54534d;   /* tuned between Sand 11–12 / HIG secondaryLabel */
-  --text-muted: #63635e;       /* Radix Sand 11 / HIG tertiaryLabel */
-  --text-disabled: #a8a7a0;    /* Radix Sand ~8 — non-AA by design, disabled only */
+  --text-primary: #101828;     /* gray-900 */
+  --text-secondary: #344054;   /* gray-700 */
+  --text-muted: #5a6779;       /* gray-500/600 blend, kept ≥4.5:1 */
+  --text-disabled: #98a2b3;    /* gray-400 — non-AA by design, disabled only */
   --text-on-accent: #ffffff;
 
-  --accent: #45556d;           /* deep graphite-blue, custom (Slate-family) */
-  --accent-hover: #3a4859;
-  --accent-subtle: #edf1f5;
-  --accent-text: #3e4e64;
+  --accent: #465fff;           /* TailAdmin brand indigo-blue (4.8:1 w/ white) */
+  --accent-hover: #3641f5;
+  --accent-subtle: #ecf3ff;
+  --accent-text: #3641f5;
 
   --brand: var(--accent);
 
@@ -90,20 +90,20 @@
   --info-subtle: #e8eff7;
   --info-text: #33608f;
 
-  --focus-ring: #45556d;
+  --focus-ring: #465fff;
 
-  --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
+  --overlay: rgb(16 24 40 / 0.45);   /* modal scrim */
 
-  /* Sidebar — deep graphite rail, distinct from content surfaces */
-  --sidebar-bg: #1f2227;
-  --sidebar-hover: #2b2f36;
-  --sidebar-fg: #eceef1;
-  --sidebar-muted: #a2a9b3;
-  --sidebar-active: #a3b8da;
-  --sidebar-border: #2e3239;
+  /* Sidebar — light rail (TailAdmin style): white, hairline border */
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #f2f4f7;
+  --sidebar-fg: #344054;
+  --sidebar-muted: #5a6779;
+  --sidebar-active: #3641f5;
+  --sidebar-border: #e4e7ec;
 
-  --elevation-card: 0 1px 2px rgb(20 20 16 / 0.04), 0 2px 8px rgb(20 20 16 / 0.04);
-  --elevation-raised: 0 2px 4px rgb(20 20 16 / 0.06), 0 12px 32px rgb(20 20 16 / 0.10);
+  --elevation-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 2px 8px rgb(16 24 40 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(16 24 40 / 0.06), 0 12px 32px rgb(16 24 40 / 0.10);
 }
 
 /* ---------------------------------------------------------------- */
@@ -153,13 +153,13 @@
 
   --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
 
-  /* Sidebar — deep harbour navy with teal active state */
-  --sidebar-bg: #12212b;
-  --sidebar-hover: #1e3140;
-  --sidebar-fg: #eef2f3;
-  --sidebar-muted: #9aacb5;
-  --sidebar-active: #56c9ba;
-  --sidebar-border: #21353f;
+  /* Sidebar — light rail, teal active state */
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #f0f0f3;
+  --sidebar-fg: #414d63;
+  --sidebar-muted: #566276;
+  --sidebar-active: #0b6357;
+  --sidebar-border: #e8e8ec;
 
   --elevation-card: 0 1px 2px rgb(16 20 26 / 0.04), 0 2px 8px rgb(16 20 26 / 0.04);
   --elevation-raised: 0 2px 4px rgb(16 20 26 / 0.06), 0 12px 32px rgb(16 20 26 / 0.10);
@@ -211,13 +211,13 @@
 
   --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
 
-  /* Sidebar — deep green-grey */
-  --sidebar-bg: #1b231d;
-  --sidebar-hover: #273329;
-  --sidebar-fg: #edf1ee;
-  --sidebar-muted: #a0ada3;
-  --sidebar-active: #8cc7a0;
-  --sidebar-border: #2a3a2e;
+  /* Sidebar — light rail, eucalypt active state */
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #eef1ef;
+  --sidebar-fg: #4a544e;
+  --sidebar-muted: #5f6563;
+  --sidebar-active: #356947;
+  --sidebar-border: #e6e9e7;
 
   --elevation-card: 0 1px 2px rgb(18 22 19 / 0.04), 0 2px 8px rgb(18 22 19 / 0.04);
   --elevation-raised: 0 2px 4px rgb(18 22 19 / 0.06), 0 12px 32px rgb(18 22 19 / 0.10);
@@ -269,13 +269,13 @@
 
   --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
 
-  /* Sidebar — deep warm umber */
-  --sidebar-bg: #251f17;
-  --sidebar-hover: #332b20;
-  --sidebar-fg: #f3efe8;
-  --sidebar-muted: #aea391;
-  --sidebar-active: #d6ac6a;
-  --sidebar-border: #372f23;
+  /* Sidebar — light rail, bronze active state */
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #f2efe9;
+  --sidebar-fg: #565147;
+  --sidebar-muted: #6a645a;
+  --sidebar-active: #755a33;
+  --sidebar-border: #eae6de;
 
   --elevation-card: 0 1px 2px rgb(24 21 15 / 0.04), 0 2px 8px rgb(24 21 15 / 0.04);
   --elevation-raised: 0 2px 4px rgb(24 21 15 / 0.06), 0 12px 32px rgb(24 21 15 / 0.10);

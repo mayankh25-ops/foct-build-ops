@@ -3,27 +3,27 @@
 > Read this first, every session. Update it before ending any session.
 
 ## Current stage
-**Stage 1.5 — "FOCT Premium Operations UI" visual upgrade: BUILT, awaiting visual approval.**
-Stage 1 (token system, 5 themes, base components, `/design-preview`) was built earlier the same day; the owner then requested a premium visual upgrade + operational demo screens before any backend work. Review order: `/dashboard` → `/kiosk` → `/roster` → `/timesheets` → `/consumables` → `/modules` → `/design-preview`. Do **not** start Stage 2 until the owner approves.
+**Stage 1.6 — TailAdmin-inspired restyle (owner reference): BUILT, awaiting visual approval.**
+History: Stage 1 (tokens/themes/components/preview) → Stage 1.5 premium upgrade + demo screens → owner rejected that look and pointed at the TailAdmin Figma file (2026-07-03). Restyle applied: Graphite retuned to cool grays + vivid indigo `#465fff` and made the app-shell theme; light sidebar rail in all light themes; TailAdmin-style MetricCards with trend chips; MiniBarChart (actual vs rostered hours) on the dashboard. See DECISIONS.md 2026-07-03. Review order: `/dashboard` → `/kiosk` → `/roster` → `/timesheets` → `/consumables` → `/modules`. Do **not** start Stage 2 until the owner approves.
 
 ## What exists (sessions of 2026-07-02)
 
 ### Token system — `src/styles/tokens.css`
 - Five themes (Graphite default, Harbour, Eucalypt, Sandstone, Ink) as `data-theme` sets; semantic tokens only, mapped to Tailwind v4 utilities in `src/app/globals.css` (stock palette/text sizes disabled).
-- Stage 1.5 additions: `--sidebar-*` family (deep rail, per-theme), `--info` status family, 72px `hero` type size; scale bumped (body 16, tables 14, page titles 36), radius 16/12/8, controls 44px.
-- `design/tokens.md`: every token with Radix/HIG/Material reference, shadcn-name mapping, and **generated** WCAG tables — 36 pairs × 5 themes, 180 rows, all passing (`npm run check:contrast`, `--md` to regenerate).
+- Stage 1.5/1.6 additions: `--sidebar-*` family (light rail in light themes, dark in Ink), `--info` status family, 72px `hero` type size; scale bumped (body 16, tables 14, page titles 36), radius 16/12/8, controls 44px. Graphite = cool gray ramp + indigo `#465fff` (TailAdmin reference), and is the app-shell theme.
+- `design/tokens.md`: every token with reference, shadcn-name mapping, and **generated** WCAG tables — 37 pairs × 5 themes, 185 rows, all passing (`npm run check:contrast`, `--md` to regenerate).
 
 ### Fonts
 Hanken Grotesk (body, self-hosted `src/fonts/`), Inter (interim display, self-hosted), Geist Mono (numerics only, `geist` package). General Sans = drop-in slot at `public/fonts/general-sans/` (see README; network policy blocked Fontshare).
 
 ### Components — `src/components/ui/`
 Stage 1: button, input, select, badge (Badge + StatusPill), card, table, tabs, modal, toast, empty-state, coming-soon-state, sidebar, top-bar, page-header.
-Stage 1.5: metric-card, section-header, icon-button, search-input, filter-bar (FilterBar + SegmentedControl), drawer, kiosk-button, module-card, attendance-timeline. Plus `src/components/app-shell.tsx` (client shell: dark Sidebar + TopBar + ToastProvider; renders Harbour — Aurora's assigned theme).
+Stage 1.5/1.6: metric-card (TailAdmin arrangement: icon well + trend chip + bold display value), section-header, icon-button, search-input, filter-bar (FilterBar + SegmentedControl), drawer, kiosk-button, module-card, attendance-timeline, mini-bar-chart (dependency-free, sr-only data table). Plus `src/components/app-shell.tsx` (client shell; renders Graphite — switch its data-theme to preview building-assigned themes).
 All consume semantic tokens only (`npm run check:tokens` enforces).
 
 ### Screens (static, demo data from `src/lib/demo-data.ts` only)
 - `/` — review hub linking every screen.
-- `/dashboard` — greeting header, 6 metric cards, live attendance timeline, today's shifts table, needs-attention list, low stock, audit score, recent tasks.
+- `/dashboard` — greeting header, 6 metric cards with trend chips, live attendance timeline, weekly hours bar chart (actual vs rostered), today's shifts table, needs-attention list, low stock, audit score, recent tasks.
 - `/roster` — Day/Week/Timeline segmented views, status/search filters, shift detail Drawer, filtered empty state.
 - `/timesheets` — summary metrics, variance badges, approve actions (toast feedback), supervisor notes card.
 - `/consumables` — metrics, approval-queue order cards, category chip filter, stock table with level meters.
@@ -32,7 +32,7 @@ All consume semantic tokens only (`npm run check:tokens` enforces).
 - `/design-preview` — Stage 1 acceptance page, now including the new operational components; theme switcher + compare-all mode.
 
 ### Verified this session
-`check:tokens` ✓, `check:contrast` ✓ (180 rows), `tsc` ✓, `next build` ✓ (11 static routes), every screen screenshotted via Playwright incl. kiosk success flow, roster week view and drawer.
+`check:tokens` ✓, `check:contrast` ✓ (185 rows), `tsc` ✓, `next build` ✓ (11 static routes), screens re-screenshotted after the restyle (dashboard incl. chart, roster, timesheets, consumables, modules).
 
 ## Migrations applied
 None. No Supabase yet by design (DECISIONS.md) — first migration lands in Stage 2.

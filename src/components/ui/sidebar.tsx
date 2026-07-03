@@ -50,7 +50,7 @@ export function Sidebar({
     <nav
       aria-label="Main"
       className={cn(
-        "flex h-full w-[264px] shrink-0 flex-col bg-sidebar text-sidebar-fg",
+        "flex h-full w-[264px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-fg",
         className
       )}
       {...props}
@@ -59,7 +59,7 @@ export function Sidebar({
         <div className="flex items-center gap-3">
           <span
             aria-hidden
-            className="flex size-9 items-center justify-center rounded-control bg-sidebar-hover"
+            className="flex size-9 items-center justify-center rounded-control bg-accent-subtle"
           >
             <span className="size-3 rounded-pill bg-brand" />
           </span>
@@ -101,9 +101,7 @@ export function Sidebar({
                   "relative flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-body-sm",
                   "transition-colors duration-150",
                   isActive
-                    ? "bg-sidebar-hover font-medium text-sidebar-fg " +
-                        "before:absolute before:top-2 before:bottom-2 before:-left-3 before:w-[3px] " +
-                        "before:rounded-pill before:bg-sidebar-active"
+                    ? "bg-accent-subtle font-medium text-sidebar-active"
                     : item.disabled
                       ? "cursor-default text-sidebar-muted opacity-70"
                       : "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg"

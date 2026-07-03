@@ -42,3 +42,11 @@ The visual brief required real screens (dashboard, kiosk, roster, timesheets, co
 
 ## 2026-07-02 (later) — Referenced design attachments not found
 The brief referenced Figma/Octet/Google Stitch/Lovable design attachments "already provided in the project"; no such files exist in the repo. Direction was taken from CLAUDE.md's documented references (Apple HIG, Radix, Stripe/Linear calibre) and the brief's own style keywords. If those attachments exist elsewhere, add them to `design/` and we can tune against them.
+
+## 2026-07-03 — TailAdmin-inspired restyle (owner reference)
+Owner rejected the Stage 1.5 look and pointed at the TailAdmin Figma community file as the direction. The Figma link and TailAdmin's demo sites are unreachable from this environment's network policy, so the restyle works from TailAdmin's well-known visual system (Untitled-UI-style gray ramp, white sidebar, vivid indigo `#465FFF`, bold stat numbers with trend chips, soft pill badges):
+- **Graphite retuned** from warm-sand/graphite-blue to cool gray-50 canvas + indigo `#465fff` accent, and made the app-shell theme for the design review. Note: CLAUDE.md forbids "harsh admin-template blue"; the owner's explicit reference overrides — the indigo passes AA with white (4.8:1) and `--accent-text` uses the deeper `#3641f5` for small text. CLAUDE.md's Graphite description ("warm off-white… graphite-blue") is superseded by this entry.
+- **Light sidebar rail in all light themes** (white, hairline border, `--accent-subtle` active pill); Ink keeps its dark rail for kiosks/night mode. The dark-rail experiment from earlier today is retired.
+- **MetricCard restructured to the TailAdmin arrangement** (icon well top-left, trend chip top-right, label + big value below). Metric values now use the display face with `tabular-nums` instead of Geist Mono — mono stays for tables, timestamps and IDs per CLAUDE.md; large stat numbers read as data-display, not tabular data.
+- **MiniBarChart** added (dependency-free, tokens-only, sr-only table for a11y) — dashboard now shows actual-vs-rostered hours for the week, a genuinely useful chart, not decoration.
+- Contrast suite extended to 37 pairs × 5 themes (adds the active-pill pair); all pass.

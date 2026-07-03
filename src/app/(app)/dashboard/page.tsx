@@ -17,6 +17,7 @@ import { Badge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
 import { MetricCard } from "@/components/ui/metric-card";
+import { MiniBarChart } from "@/components/ui/mini-bar-chart";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
@@ -27,6 +28,7 @@ import {
   shiftStatusMeta,
   stock,
   todaysShifts,
+  weekHours,
 } from "@/lib/demo-data";
 
 export const metadata: Metadata = { title: "Dashboard — FOCT CleaningOps" };
@@ -53,13 +55,32 @@ export default function DashboardPage() {
       />
 
       {/* Today at a glance */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 2xl:grid-cols-6">
-        <MetricCard label="Expected today" value="6" context="Across 6 zones" icon={Users} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <MetricCard
+          label="Expected today"
+          value="6"
+          context="Across 6 zones"
+          icon={Users}
+          trend={{ direction: "up", label: "+1 vs last Wed" }}
+        />
         <MetricCard label="On site now" value="3" context="Since 05:58" icon={MapPin} tone="accent" />
         <MetricCard label="Started late" value="1" context="Sofia · 25 min" icon={Clock} tone="warning" />
-        <MetricCard label="Missed check-ins" value="1" context="Tom · 06:00 shift" icon={AlertTriangle} tone="critical" />
+        <MetricCard
+          label="Missed check-ins"
+          value="1"
+          context="Tom · 06:00 shift"
+          icon={AlertTriangle}
+          tone="critical"
+          trend={{ direction: "up", label: "+1 this week", positive: false }}
+        />
         <MetricCard label="Timesheets to review" value="4" context="Week ending 28 June" icon={ClipboardCheck} />
-        <MetricCard label="Consumable requests" value="2" context={`${lowStock.length} items low on stock`} icon={Package} />
+        <MetricCard
+          label="Consumable requests"
+          value="2"
+          context={`${lowStock.length} items low on stock`}
+          icon={Package}
+          trend={{ direction: "down", label: "−3 vs June" }}
+        />
       </div>
 
       <div className="mt-8 grid gap-6 xl:grid-cols-3">
@@ -87,6 +108,33 @@ export default function DashboardPage() {
                     actual: s.actual,
                     status: s.status as "completed" | "on-site" | "late" | "missed",
                   }))}
+              />
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div>
+                <CardTitle>Hours this week</CardTitle>
+                <p className="mt-1 text-body-sm text-fg-muted">
+                  Actual vs rostered · week of 30 June
+                </p>
+              </div>
+              <p className="font-display text-title-2 text-fg [font-variant-numeric:tabular-nums]">
+                57.9<span className="text-body-sm font-normal text-fg-muted"> / 142.5 h</span>
+              </p>
+            </CardHeader>
+            <CardBody>
+              <MiniBarChart
+                data={weekHours.map((d) => ({
+                  label: d.day,
+                  value: d.actual,
+                  reference: d.rostered,
+                  emphasis: d.today,
+                }))}
+                format={(v) => `${v} h`}
+                seriesLabel="Actual hours"
+                referenceLabel="Rostered"
               />
             </CardBody>
           </Card>

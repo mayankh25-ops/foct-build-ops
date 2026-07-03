@@ -22,13 +22,14 @@ import { TopBar } from "@/components/ui/top-bar";
 import { building } from "@/lib/demo-data";
 
 /**
- * AppShell — Aurora on Collins renders in its assigned theme (Harbour,
- * per the demo dataset in CLAUDE.md). Theme comes from the building in
- * Stage 2; hardcoding the assignment here is the Stage-1.5 equivalent.
+ * AppShell. Theme comes from the building's assignment in Stage 2; for the
+ * design review the app renders in Graphite — the retuned TailAdmin-inspired
+ * default (owner direction, DECISIONS.md 2026-07-03). Switch data-theme to
+ * "harbour" etc. to preview a building-assigned theme.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div data-theme="harbour" className="flex h-screen overflow-hidden bg-canvas text-fg">
+    <div data-theme="graphite" className="flex h-screen overflow-hidden bg-canvas text-fg">
       <Sidebar
         buildingName={building.name}
         className="hidden lg:flex"

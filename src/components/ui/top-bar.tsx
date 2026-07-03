@@ -71,12 +71,12 @@ export function TopBar({
       <button
         type="button"
         aria-label="Notifications"
-        className="relative rounded-control p-2.5 text-fg-secondary transition-colors hover:bg-hover hover:text-fg"
+        className="relative flex size-11 items-center justify-center rounded-pill border border-edge bg-surface text-fg-secondary transition-colors hover:bg-hover hover:text-fg"
       >
         <Bell aria-hidden className="size-[18px]" />
         <span
           aria-hidden
-          className="absolute top-2 right-2 size-2 rounded-pill bg-critical"
+          className="absolute top-2.5 right-3 size-2 rounded-pill bg-critical"
         />
         <span className="sr-only">1 unread alert</span>
       </button>

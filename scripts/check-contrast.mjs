@@ -90,6 +90,7 @@ const PAIRS = [
   { fg: "sidebar-muted", bg: "sidebar-bg", min: 4.5, use: "sidebar secondary text" },
   { fg: "sidebar-active", bg: "sidebar-bg", min: 4.5, use: "sidebar active accent text" },
   { fg: "sidebar-active", bg: "sidebar-hover", min: 4.5, use: "sidebar active accent on fill" },
+  { fg: "sidebar-active", bg: "accent-subtle", min: 4.5, use: "sidebar active pill" },
   // non-text UI: input borders and focus rings (WCAG 1.4.11, 3:1)
   { fg: "border-strong", bg: "bg-surface", min: 3.0, use: "input border (non-text)" },
   { fg: "border-strong", bg: "bg-canvas", min: 3.0, use: "input border (non-text)" },
