@@ -16,8 +16,8 @@ const iconWells: Record<Tone, string> = {
 
 const valueTones: Record<Tone, string> = {
   neutral: "text-fg",
-  accent: "text-fg",
-  success: "text-fg",
+  accent: "text-accent-text",
+  success: "text-success-text",
   warning: "text-warning-text",
   critical: "text-critical-text",
   info: "text-fg",
@@ -62,6 +62,7 @@ export function MetricCard({
       )}
       {...props}
     >
+      {(Icon || trend) && (
       <div className="flex items-start justify-between gap-3">
         {Icon && (
           <span
@@ -88,8 +89,11 @@ export function MetricCard({
           </span>
         )}
       </div>
+      )}
       <div className="min-w-0">
-        <p className="truncate text-body-sm text-fg-muted">{label}</p>
+        <p className="truncate text-caption font-medium tracking-[0.08em] text-fg-muted uppercase">
+          {label}
+        </p>
         <p
           className={cn(
             "mt-1 font-display text-display [font-variant-numeric:tabular-nums]",

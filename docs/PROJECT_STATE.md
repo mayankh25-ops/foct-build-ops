@@ -3,8 +3,8 @@
 > Read this first, every session. Update it before ending any session.
 
 ## Current stage
-**Stage 1.6 — TailAdmin-inspired restyle (owner reference): BUILT, awaiting visual approval.**
-History: Stage 1 (tokens/themes/components/preview) → Stage 1.5 premium upgrade + demo screens → owner rejected that look and pointed at the TailAdmin Figma file (2026-07-03). Restyle applied: Graphite retuned to cool grays + vivid indigo `#465fff` and made the app-shell theme; light sidebar rail in all light themes; TailAdmin-style MetricCards with trend chips; MiniBarChart (actual vs rostered hours) on the dashboard. See DECISIONS.md 2026-07-03. Review order: `/dashboard` → `/kiosk` → `/roster` → `/timesheets` → `/consumables` → `/modules`. Do **not** start Stage 2 until the owner approves.
+**Stage 1.7 — v3 restyle to the owner's reference build (ink+teal, light kiosk): BUILT, awaiting visual approval.**
+History: Stage 1 → 1.5 premium upgrade + screens → 1.6 TailAdmin restyle (indigo) → 1.7 owner-reference restyle (see DECISIONS.md 2026-07-03 later entry): ink `#101828` primary buttons + teal `#0e7569` links, uppercase micro-labels, dashboard hero (LiveClock/weather/progress donut/activity feed/locked camera wall), per-shift timesheets with hours bars, LIGHT Deputy-style kiosk, sidebar regrouped Core/Cleaning/Concierge/Automation, org+building top-bar switchers. Live preview artifact: https://claude.ai/code/artifact/ccade632-a546-4a3a-a90b-75d0039def15 (regenerate with scratchpad assemble script). Review order: `/dashboard` → `/kiosk` → `/roster` → `/timesheets` → `/consumables` → `/modules`. Do **not** start Stage 2 until the owner approves.
 
 ## What exists (sessions of 2026-07-02)
 
@@ -28,7 +28,7 @@ All consume semantic tokens only (`npm run check:tokens` enforces).
 - `/timesheets` — summary metrics, variance badges, approve actions (toast feedback), supervisor notes card.
 - `/consumables` — metrics, approval-queue order cards, category chip filter, stock table with level meters.
 - `/modules` — access-separation explainer + ModuleCard grid (Enabled / Not enabled / Coming soon / Requires Pro tiers).
-- `/kiosk` — full-screen Ink theme: live 72px clock, PIN pad (demo PINs 1234/2345/3456), huge check-in/out buttons, site note, success screen with auto-reset. No sidebar, no admin chrome.
+- `/kiosk` — full-screen LIGHT kiosk (Deputy-style): live 72px clock, teal welcome pill, white keypad card, Welcome-by-name on known PIN (demo PINs 1234/2345/3456), huge check-in/out buttons, site note, success screen with auto-reset.
 - `/design-preview` — Stage 1 acceptance page, now including the new operational components; theme switcher + compare-all mode.
 
 ### Verified this session

@@ -162,3 +162,53 @@ export const weekHours: WeekHours[] = [
   { day: "Sat", rostered: 9, actual: 0 },
   { day: "Sun", rostered: 0, actual: 0 },
 ];
+
+/** Static sample forecast for the hero weather card (live feed in Stage 2+). */
+export const weather = {
+  city: "Melbourne",
+  tempC: 13,
+  condition: "Overcast",
+  feelsLikeC: 11,
+  windKmh: 24,
+  hourly: [
+    { at: "Now", tempC: 13, kind: "rain" },
+    { at: "9am", tempC: 11, kind: "rain" },
+    { at: "12pm", tempC: 13, kind: "cloud" },
+    { at: "3pm", tempC: 13, kind: "cloud" },
+    { at: "6pm", tempC: 11, kind: "cloud" },
+    { at: "9pm", tempC: 10, kind: "cloud" },
+  ] as const,
+};
+
+/** Zone completion for today's clean — drives the progress donut. */
+export const zoneProgress = {
+  complete: 2,
+  inProgress: 3,
+  pending: 1,
+};
+
+export interface ActivityEvent {
+  at: string; // HH:MM
+  who: string;
+  what: string;
+  kind: "check-in" | "check-out" | "task" | "alert" | "order";
+}
+
+export const liveActivity: ActivityEvent[] = [
+  { at: "08:40", who: "Daniel Aboud", what: "Flagged graffiti at the loading dock · 1 photo", kind: "alert" },
+  { at: "08:05", who: "Leila Haddad", what: "Completed task: spill cleaned, L14 kitchen", kind: "task" },
+  { at: "07:20", who: "Marcus Chen", what: "Completed task: lobby marble buffed · 2 photos", kind: "task" },
+  { at: "06:58", who: "Daniel Aboud", what: "Checked in at the loading dock kiosk", kind: "check-in" },
+  { at: "06:55", who: "Sofia Marino", what: "Checked in · 25 minutes after roster", kind: "check-in" },
+  { at: "06:41", who: "Marcus Chen", what: "Raised consumable request CO-1042", kind: "order" },
+  { at: "06:15", who: "System", what: "Missed check-in alert sent for Tom Nguyen", kind: "alert" },
+  { at: "06:02", who: "Leila Haddad", what: "Checked in at the lobby kiosk", kind: "check-in" },
+];
+
+/** Camera wall placeholder names — module stays locked (Automation Pro). */
+export const cameraZones = [
+  { name: "Ground lobby", where: "GF · Concierge desk" },
+  { name: "Loading dock", where: "B1 · Delivery bay" },
+  { name: "Carpark ramp", where: "B2 · Boom gate" },
+  { name: "Pool deck", where: "L36 · Amenities" },
+];

@@ -50,3 +50,12 @@ Owner rejected the Stage 1.5 look and pointed at the TailAdmin Figma community f
 - **MetricCard restructured to the TailAdmin arrangement** (icon well top-left, trend chip top-right, label + big value below). Metric values now use the display face with `tabular-nums` instead of Geist Mono — mono stays for tables, timestamps and IDs per CLAUDE.md; large stat numbers read as data-display, not tabular data.
 - **MiniBarChart** added (dependency-free, tokens-only, sr-only table for a11y) — dashboard now shows actual-vs-rostered hours for the week, a genuinely useful chart, not decoration.
 - Contrast suite extended to 37 pairs × 5 themes (adds the active-pill pair); all pass.
+
+## 2026-07-03 (later) — v3 "reference build" restyle: ink + teal, uppercase labels, light kiosk
+Owner shared screenshots of their preferred FOCT build (plus Deputy references) and asked to change the design again. Applied:
+- **Graphite accent split**: `--accent` is now ink `#101828` (primary buttons, e.g. "Approve week"), `--accent-text` is FOCT-family teal `#0e7569` (links, live signals, focus ring). Active nav pill is a neutral `--accent-subtle` well with dark text. Indigo `#465fff` retired.
+- **Uppercase micro-labels return** (stat-card labels, page eyebrows, table headers, sidebar group titles with 0.06–0.08em tracking) — matches the reference; supersedes the earlier "fewer all-caps" call.
+- **Dashboard rebuilt to the reference composition**: hero card (building + LIVE + ticking LiveClock + on-site/open/late chips + kiosk CTA), weather card (static sample data until an integration exists), cleaning-progress donut (CSS conic-gradient), uppercase stat row, live activity feed, camera wall as a **locked Automation Pro card** (dark tiles, no functionality — CLAUDE.md forbids building camera analytics beyond a shell).
+- **Timesheets rebuilt per reference**: per-shift rows with avatar chips, scheduled date/time, check in/out, hours progress bar (x/y h), variance pills (Missing red / ±h amber / On time green), status chips; "Approve week" ink button.
+- **Kiosk is now light** (Deputy-style): default light theme, white keypad card, teal "Clock in and out with ease" pill, "Welcome, {name}" once a known PIN is entered. Ink theme remains available for night mode but is no longer the kiosk default.
+- Sidebar regrouped into Core / Cleaning / Concierge / Automation with locked items per module packaging; top bar now has org + building switchers, a "Preview build" chip, and identity. New components: Avatar, LiveClock.

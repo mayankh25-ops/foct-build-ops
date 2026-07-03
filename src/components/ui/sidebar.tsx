@@ -78,7 +78,7 @@ export function Sidebar({
         {sections.map((section, i) => (
           <div key={section.title ?? i} className={cn(i > 0 && "mt-7")}>
             {section.title && (
-              <p className="px-3 pb-2 text-caption font-medium text-sidebar-muted">
+              <p className="px-3 pb-2 text-caption font-medium tracking-[0.08em] text-sidebar-muted uppercase">
                 {section.title}
               </p>
             )}

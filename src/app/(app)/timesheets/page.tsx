@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, ClipboardCheck, Download, Printer } from "lucide-react";
+import { CheckCheck, ClipboardCheck, Download } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,50 +10,76 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FilterBar, SegmentedControl } from "@/components/ui/filter-bar";
 import { MetricCard } from "@/components/ui/metric-card";
 import { PageHeader } from "@/components/ui/page-header";
-import { Select } from "@/components/ui/select";
+import { SearchInput } from "@/components/ui/search-input";
 import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
-import { timesheets } from "@/lib/demo-data";
+import { fmtTime, timesheets, todaysShifts } from "@/lib/demo-data";
+import { cn } from "@/lib/cn";
 
-const statusMeta = {
-  ready: { label: "Ready for approval", tone: "accent" as const },
-  approved: { label: "Approved", tone: "success" as const },
-  "needs-review": { label: "Needs review", tone: "warning" as const },
+type RowKind = "ontime" | "variance" | "missing" | "progress" | "scheduled";
+
+const rows = todaysShifts.map((s) => {
+  const scheduledHours = s.scheduled[1] - s.scheduled[0];
+  const done = s.actual && s.actual[1] !== null;
+  const actualHours = done ? s.actual![1]! - s.actual![0] : undefined;
+  const variance = actualHours !== undefined ? +(actualHours - scheduledHours).toFixed(2) : undefined;
+  const kind: RowKind =
+    s.status === "missed"
+      ? "missing"
+      : s.status === "rostered"
+        ? "scheduled"
+        : !done
+          ? "progress"
+          : Math.abs(variance!) >= 0.25
+            ? "variance"
+            : "ontime";
+  return { ...s, scheduledHours, actualHours, variance, kind };
+});
+
+const kindPill: Record<RowKind, React.ReactNode> = {
+  ontime: <Badge tone="success">On time</Badge>,
+  variance: null, // rendered with the value
+  missing: <StatusPill tone="critical">Missing</StatusPill>,
+  progress: <StatusPill tone="accent">On site</StatusPill>,
+  scheduled: <Badge tone="neutral">—</Badge>,
 };
 
-function VarianceBadge({ rostered, actual }: { rostered: number; actual: number }) {
-  const diff = +(actual - rostered).toFixed(2);
-  if (diff === 0) return <Badge tone="neutral">On roster</Badge>;
-  const tone = Math.abs(diff) >= 1 ? "warning" : "neutral";
-  return (
-    <Badge tone={tone}>
-      <span className="font-mono">{diff > 0 ? `+${diff}` : diff} h</span>
-    </Badge>
-  );
-}
+const statusChip: Record<RowKind, React.ReactNode> = {
+  ontime: <Badge tone="neutral">complete</Badge>,
+  variance: <Badge tone="neutral">complete</Badge>,
+  missing: <Badge tone="neutral">scheduled</Badge>,
+  progress: <Badge tone="accent">in progress</Badge>,
+  scheduled: <Badge tone="neutral">scheduled</Badge>,
+};
 
 export default function TimesheetsPage() {
-  const [range, setRange] = React.useState("week");
   const [filter, setFilter] = React.useState("all");
+  const [query, setQuery] = React.useState("");
   const { toast } = useToast();
 
-  const rows = timesheets.filter((t) => filter === "all" || t.status === filter);
-  const notes = timesheets.filter((t) => t.note);
+  const visible = rows.filter((r) => {
+    const byFilter =
+      filter === "all" ||
+      (filter === "variance" && r.kind === "variance") ||
+      (filter === "missing" && r.kind === "missing");
+    return byFilter && (r.cleaner + " " + r.zone).toLowerCase().includes(query.toLowerCase());
+  });
 
-  const totalActual = timesheets.reduce((a, t) => a + t.actual, 0);
-  const totalVariance = timesheets.reduce((a, t) => a + (t.actual - t.rostered), 0);
+  const scheduledTotal = rows.reduce((a, r) => a + r.scheduledHours, 0);
+  const actualTotal = rows.reduce((a, r) => a + (r.actualHours ?? 0), 0);
+  const over = rows.filter((r) => (r.variance ?? 0) >= 0.25).length;
+  const under = rows.filter((r) => (r.variance ?? 0) <= -0.25).length;
+  const missing = rows.filter((r) => r.kind === "missing").length;
+  const notes = timesheets.filter((t) => t.note);
 
   return (
     <>
       <PageHeader
-        eyebrow="Cleaning operations"
-        title="Timesheets"
-        description="Week ending Sunday 28 June · prepared from kiosk and QR check-ins"
+        eyebrow="Cleaning · Payroll"
+        title="Timesheets & variance"
+        description="Rostered hours vs actual kiosk check-in/out. Filter to review outliers, then export for payroll."
         actions={
           <>
-            <Button variant="secondary">
-              <Printer aria-hidden /> Print
-            </Button>
             <Button variant="secondary">
               <Download aria-hidden /> Export CSV
             </Button>
@@ -60,107 +87,131 @@ export default function TimesheetsPage() {
               onClick={() =>
                 toast({
                   tone: "success",
-                  title: "3 timesheets approved",
-                  description: "Marcus, Leila and Grace · week ending 28 June",
+                  title: "Week approved",
+                  description: "6 timesheets · week ending 28 June · sent for payroll prep",
                 })
               }
             >
-              <CheckCircle2 aria-hidden /> Approve all ready
+              <CheckCheck aria-hidden /> Approve week
             </Button>
           </>
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <MetricCard label="Ready for approval" value="3" context="Of 6 timesheets this week" icon={ClipboardCheck} tone="accent" />
-        <MetricCard label="Total hours" value={totalActual.toFixed(1)} context="Across Aurora on Collins" />
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <MetricCard label="Scheduled hours" value={scheduledTotal.toFixed(1)} context={`${rows.length} shifts`} />
         <MetricCard
-          label="Variance vs roster"
-          value={`${totalVariance > 0 ? "+" : ""}${totalVariance.toFixed(1)} h`}
-          context="Mostly Tom’s missed Wednesday shift"
-          tone={Math.abs(totalVariance) >= 2 ? "warning" : "neutral"}
+          label="Actual hours"
+          value={actualTotal.toFixed(1)}
+          context={`${rows.filter((r) => r.kind === "ontime").length} on time`}
+          tone="success"
         />
+        <MetricCard
+          label="Variance flags"
+          value={over + under}
+          context={`+${over} over · −${under} under`}
+        />
+        <MetricCard label="Missing punches" value={missing} context="Alert sent 06:15" tone={missing ? "critical" : "neutral"} />
       </div>
 
       <div className="mt-8">
         <FilterBar>
-          <SegmentedControl
-            label="Summary range"
-            value={range}
-            onValueChange={setRange}
-            options={[
-              { value: "day", label: "Daily" },
-              { value: "week", label: "Weekly" },
-            ]}
+          <SearchInput
+            className="w-72"
+            placeholder="Search shift or cleaner"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
           />
-          <Select
-            className="w-56"
-            options={[
-              { value: "all", label: "All statuses" },
-              { value: "ready", label: "Ready for approval" },
-              { value: "needs-review", label: "Needs review" },
-              { value: "approved", label: "Approved" },
-            ]}
+          <SegmentedControl
+            label="Timesheet filter"
             value={filter}
             onValueChange={setFilter}
+            options={[
+              { value: "all", label: "All" },
+              { value: "variance", label: "Variance" },
+              { value: "missing", label: "Missing" },
+            ]}
           />
         </FilterBar>
 
-        {rows.length === 0 ? (
+        {visible.length === 0 ? (
           <EmptyState
             icon={ClipboardCheck}
-            title="Nothing needs review"
-            description="Every timesheet for this week has been approved. New ones appear here as shifts finish."
+            title="Nothing to review here"
+            description="No shifts match that filter — clear it to see the full day."
+            action={
+              <Button variant="secondary" size="sm" onClick={() => { setFilter("all"); setQuery(""); }}>
+                Clear filters
+              </Button>
+            }
           />
         ) : (
           <Table>
             <THead>
               <Tr>
-                <Th>Cleaner</Th>
-                <Th>Building</Th>
-                <Th numeric>Rostered</Th>
-                <Th numeric>Actual</Th>
+                <Th>Cleaner / shift</Th>
+                <Th>Scheduled</Th>
+                <Th numeric>Check in</Th>
+                <Th numeric>Check out</Th>
+                <Th className="w-52">Hours</Th>
                 <Th>Variance</Th>
                 <Th>Status</Th>
-                <Th />
               </Tr>
             </THead>
             <TBody>
-              {rows.map((t) => {
-                const meta = statusMeta[t.status];
+              {visible.map((r) => {
+                const pct =
+                  r.actualHours !== undefined
+                    ? Math.min(100, (r.actualHours / r.scheduledHours) * 100)
+                    : 0;
                 return (
-                  <Tr key={t.cleaner}>
-                    <Td className="font-medium">{t.cleaner}</Td>
-                    <Td className="text-fg-secondary">{t.building}</Td>
-                    <Td numeric>{t.rostered.toFixed(2)}</Td>
-                    <Td numeric>{t.actual.toFixed(2)}</Td>
+                  <Tr key={r.cleaner}>
                     <Td>
-                      <VarianceBadge rostered={t.rostered} actual={t.actual} />
+                      <span className="flex items-center gap-3">
+                        <Avatar name={r.cleaner} size="sm" />
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium">{r.cleaner}</span>
+                          <span className="block truncate text-caption text-fg-muted">{r.zone}</span>
+                        </span>
+                      </span>
                     </Td>
                     <Td>
-                      <StatusPill tone={meta.tone}>{meta.label}</StatusPill>
+                      <span className="block text-caption text-fg-muted">Wed 2 Jul</span>
+                      <span className="font-mono">
+                        {fmtTime(r.scheduled[0])} → {fmtTime(r.scheduled[1])}
+                      </span>
                     </Td>
-                    <Td className="text-right">
-                      {t.status === "ready" ? (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() =>
-                            toast({
-                              tone: "success",
-                              title: "Timesheet approved",
-                              description: `${t.cleaner} · ${t.actual.toFixed(2)} h · week ending 28 June`,
-                            })
-                          }
-                        >
-                          Approve
-                        </Button>
+                    <Td numeric>{fmtTime(r.actual?.[0])}</Td>
+                    <Td numeric>{fmtTime(r.actual?.[1])}</Td>
+                    <Td>
+                      <span className="flex items-center gap-3">
+                        <span className="h-1.5 w-24 overflow-hidden rounded-pill bg-hover">
+                          <span
+                            className={cn(
+                              "block h-full rounded-pill",
+                              r.kind === "missing" ? "bg-critical" : "bg-success"
+                            )}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </span>
+                        <span className="font-mono text-caption text-fg-secondary">
+                          {r.actualHours !== undefined ? r.actualHours.toFixed(1) : "—"}/
+                          {r.scheduledHours.toFixed(1)}h
+                        </span>
+                      </span>
+                    </Td>
+                    <Td>
+                      {r.kind === "variance" ? (
+                        <Badge tone="warning">
+                          <span className="font-mono">
+                            {r.variance! > 0 ? `+${r.variance}` : r.variance} h
+                          </span>
+                        </Badge>
                       ) : (
-                        <Button size="sm" variant="ghost">
-                          View
-                        </Button>
+                        kindPill[r.kind]
                       )}
                     </Td>
+                    <Td>{statusChip[r.kind]}</Td>
                   </Tr>
                 );
               })}
@@ -177,9 +228,12 @@ export default function TimesheetsPage() {
           </CardHeader>
           <CardBody className="flex flex-col gap-5">
             {notes.map((t, i) => (
-              <div key={t.cleaner} className={i > 0 ? "border-t border-edge pt-5" : ""}>
-                <p className="text-body-sm font-medium text-fg">{t.cleaner}</p>
-                <p className="mt-1 text-body-sm text-fg-secondary">{t.note}</p>
+              <div key={t.cleaner} className={cn("flex items-start gap-3", i > 0 && "border-t border-edge pt-5")}>
+                <Avatar name={t.cleaner} size="sm" />
+                <div>
+                  <p className="text-body-sm font-medium text-fg">{t.cleaner}</p>
+                  <p className="mt-0.5 text-body-sm text-fg-secondary">{t.note}</p>
+                </div>
               </div>
             ))}
           </CardBody>

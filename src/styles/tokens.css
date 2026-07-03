@@ -69,12 +69,12 @@
   --text-disabled: #98a2b3;    /* gray-400 — non-AA by design, disabled only */
   --text-on-accent: #ffffff;
 
-  --accent: #465fff;           /* TailAdmin brand indigo-blue (4.8:1 w/ white) */
-  --accent-hover: #3641f5;
-  --accent-subtle: #ecf3ff;
-  --accent-text: #3641f5;
+  --accent: #101828;           /* ink primary buttons (owner reference build) */
+  --accent-hover: #253041;
+  --accent-subtle: #e9eef0;    /* cool teal-tinted well: active nav, avatar chips */
+  --accent-text: #0e7569;      /* teal links + live signals (FOCT family) */
 
-  --brand: var(--accent);
+  --brand: #00b4a6;
 
   --success: #2e7d4f;          /* muted green, Radix Grass-family */
   --success-subtle: #e7f3eb;
@@ -90,16 +90,16 @@
   --info-subtle: #e8eff7;
   --info-text: #33608f;
 
-  --focus-ring: #465fff;
+  --focus-ring: #0e7569;
 
   --overlay: rgb(16 24 40 / 0.45);   /* modal scrim */
 
-  /* Sidebar — light rail (TailAdmin style): white, hairline border */
+  /* Sidebar — light rail: white, hairline border, neutral active pill */
   --sidebar-bg: #ffffff;
   --sidebar-hover: #f2f4f7;
   --sidebar-fg: #344054;
   --sidebar-muted: #5a6779;
-  --sidebar-active: #3641f5;
+  --sidebar-active: #101828;
   --sidebar-border: #e4e7ec;
 
   --elevation-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 2px 8px rgb(16 24 40 / 0.04);

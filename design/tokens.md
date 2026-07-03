@@ -10,7 +10,7 @@ cannot drift; the tables at the bottom are that script's output (`--md` flag).
 
 | Theme | Personality | Neutral reference | Accent |
 | --- | --- | --- | --- |
-| **Graphite** (default) | Cool light-grey, crisp SaaS (TailAdmin/Untitled-UI-inspired, owner reference) | Untitled UI Gray (gray-50…900) | Vivid indigo-blue `#465fff` |
+| **Graphite** (default) | Cool light-grey, ink primary buttons, teal links (owner reference build) | Untitled UI Gray (gray-50…900) | Ink `#101828` buttons · teal `#0e7569` links |
 | **Harbour** | Melbourne CBD commercial, ink-navy on light grey | Radix Slate | Deep teal `#0e7568` (FOCT `#00b4a6` desaturated) |
 | **Eucalypt** | ESG / green-building clients | Radix Sage | Muted eucalyptus green `#3e7a52` |
 | **Sandstone** | Heritage / premium strata | Radix Sand, warmed | Restrained bronze `#82653f` |
@@ -175,10 +175,10 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 | `--text-muted` #5a6779 | `--bg-surface` #ffffff | 5.75:1 | 4.5:1 | ✅ | body text |
 | `--text-muted` #5a6779 | `--bg-raised` #ffffff | 5.75:1 | 4.5:1 | ✅ | body text |
 | `--text-muted` #5a6779 | `--bg-hover` #f2f4f7 | 5.22:1 | 4.5:1 | ✅ | body text |
-| `--accent-text` #3641f5 | `--bg-canvas` #f9fafb | 6.22:1 | 4.5:1 | ✅ | link text |
-| `--accent-text` #3641f5 | `--bg-surface` #ffffff | 6.50:1 | 4.5:1 | ✅ | link text |
-| `--text-on-accent` #ffffff | `--accent` #465fff | 4.84:1 | 4.5:1 | ✅ | primary button |
-| `--text-on-accent` #ffffff | `--accent-hover` #3641f5 | 6.50:1 | 4.5:1 | ✅ | primary button :hover |
+| `--accent-text` #0e7569 | `--bg-canvas` #f9fafb | 5.33:1 | 4.5:1 | ✅ | link text |
+| `--accent-text` #0e7569 | `--bg-surface` #ffffff | 5.57:1 | 4.5:1 | ✅ | link text |
+| `--text-on-accent` #ffffff | `--accent` #101828 | 17.75:1 | 4.5:1 | ✅ | primary button |
+| `--text-on-accent` #ffffff | `--accent-hover` #253041 | 13.31:1 | 4.5:1 | ✅ | primary button :hover |
 | `--text-on-accent` #ffffff | `--critical` #c24242 | 5.06:1 | 4.5:1 | ✅ | destructive button |
 | `--text-on-accent` #ffffff | `--critical-hover` #a93636 | 6.43:1 | 4.5:1 | ✅ | destructive button :hover |
 | `--success-text` #256b44 | `--success-subtle` #e7f3eb | 5.64:1 | 4.5:1 | ✅ | success pill |
@@ -189,17 +189,17 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 | `--critical-text` #b03030 | `--bg-surface` #ffffff | 6.34:1 | 4.5:1 | ✅ | critical inline text |
 | `--info-text` #33608f | `--info-subtle` #e8eff7 | 5.64:1 | 4.5:1 | ✅ | info pill |
 | `--info-text` #33608f | `--bg-surface` #ffffff | 6.54:1 | 4.5:1 | ✅ | info inline text |
-| `--accent-text` #3641f5 | `--accent-subtle` #ecf3ff | 5.83:1 | 4.5:1 | ✅ | selected/subtle accent |
+| `--accent-text` #0e7569 | `--accent-subtle` #e9eef0 | 4.77:1 | 4.5:1 | ✅ | selected/subtle accent |
 | `--sidebar-fg` #344054 | `--sidebar-bg` #ffffff | 10.46:1 | 4.5:1 | ✅ | sidebar item text |
 | `--sidebar-fg` #344054 | `--sidebar-hover` #f2f4f7 | 9.49:1 | 4.5:1 | ✅ | sidebar item :hover/active |
 | `--sidebar-muted` #5a6779 | `--sidebar-bg` #ffffff | 5.75:1 | 4.5:1 | ✅ | sidebar secondary text |
-| `--sidebar-active` #3641f5 | `--sidebar-bg` #ffffff | 6.50:1 | 4.5:1 | ✅ | sidebar active accent text |
-| `--sidebar-active` #3641f5 | `--sidebar-hover` #f2f4f7 | 5.90:1 | 4.5:1 | ✅ | sidebar active accent on fill |
-| `--sidebar-active` #3641f5 | `--accent-subtle` #ecf3ff | 5.83:1 | 4.5:1 | ✅ | sidebar active pill |
+| `--sidebar-active` #101828 | `--sidebar-bg` #ffffff | 17.75:1 | 4.5:1 | ✅ | sidebar active accent text |
+| `--sidebar-active` #101828 | `--sidebar-hover` #f2f4f7 | 16.11:1 | 4.5:1 | ✅ | sidebar active accent on fill |
+| `--sidebar-active` #101828 | `--accent-subtle` #e9eef0 | 15.17:1 | 4.5:1 | ✅ | sidebar active pill |
 | `--border-strong` #85909f | `--bg-surface` #ffffff | 3.24:1 | 3:1 | ✅ | input border (non-text) |
 | `--border-strong` #85909f | `--bg-canvas` #f9fafb | 3.10:1 | 3:1 | ✅ | input border (non-text) |
-| `--focus-ring` #465fff | `--bg-canvas` #f9fafb | 4.63:1 | 3:1 | ✅ | focus ring (non-text) |
-| `--focus-ring` #465fff | `--bg-surface` #ffffff | 4.84:1 | 3:1 | ✅ | focus ring (non-text) |
+| `--focus-ring` #0e7569 | `--bg-canvas` #f9fafb | 5.33:1 | 3:1 | ✅ | focus ring (non-text) |
+| `--focus-ring` #0e7569 | `--bg-surface` #ffffff | 5.57:1 | 3:1 | ✅ | focus ring (non-text) |
 
 ### Harbour
 
