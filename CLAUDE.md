@@ -1,4 +1,3 @@
-```markdown
 # FOCT BuildingOps — Project Memory
 
 ## What this product is
@@ -87,5 +86,16 @@ Rules:
 - Modules: Core + CleaningOps enabled; ConciergeDesk visible-disabled for Concierge Collective; Parcels/ResidentRequests/Integrations coming-soon
 - Users: 1 super admin, 1 strata manager, 1 cleaning manager, 3 cleaners, 1 concierge, 1 subcontractor admin
 - Theme: Aurora on Collins assigned "Harbour"; a second demo building later can use "Graphite" to prove theme switching.
-```
+
+## Compliance positioning (from market research — cite in UI + marketing)
+- Attendance/timesheet records must be retainable 7 years (Fair Work record-keeping). Timesheet data model: immutable event history, edits as audited adjustments, never destructive updates. Export includes original + adjusted values.
+- Victorian labour hire licensing applies to commercial cleaning: subcontractor-compliance module stores licence number + expiry and blocks rostering on expiry (admin override = audit-logged).
+- Biometrics are sensitive information (OAIC): v1 ships optional SELFIE photo proof only (stored as evidence photo, org-scoped storage). Facial recognition is explicitly out of scope until a consent + retention framework exists. Never suggest adding face-rec casually.
+- Check-in methods v1: QR, PIN, name-search+PIN, supervisor override, optional selfie, GPS geofence (mobile). NFC = registered coming-soon.
+
+## New module (register, coming-soon shell for v1)
+- equipment-register: assets per cleaning org (vacuum, scrubber, robot, charger, battery), assigned building, service due, fault status. Sits beside consumables in nav.
+
+## Reminder (do not violate)
+Colour values in any pasted brief (e.g. #2388FF primary blue etc.) are VOID. Tokens map only to documented designer-curated scales per the design system section. Font stack remains General Sans / Hanken Grotesk / Geist Mono — briefs suggesting Inter/SF Pro/Aptos are superseded.
 
