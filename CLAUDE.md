@@ -48,14 +48,14 @@ All five share identical semantic token names, spacing, radius, and status colou
 
 ### Typography (owner-approved font library — updated 2026-07-05, applies to ALL work)
 Only ever use fonts from this approved library — never pick fonts outside it:
-- **Finlandica · Mona Sans · Roboto / Roboto Mono · Radio Canada · Hubot Sans**
+- **Bricolage Grotesque · Onest · Finlandica · Mona Sans · Roboto / Roboto Mono · Radio Canada · Hubot Sans** (Bricolage + Onest added 2026-07-06 at owner direction — "bold, big, clean and clear, designer-recommended")
 - Reference set: **DM Sans** (clean with character) · **Satoshi** (aesthetic, not loud) · **Inter** (neutral, built for screens) · **Manrope** (data-heavy UI) · **General Sans** (elegant geometric)
 - Satoshi and General Sans are Fontshare-hosted (not bundleable from this build env); the rest are on npm via fontsource.
 
 Rules:
 - **Big numbers get big & thick** (bold display weights); small text stays regular/medium — never thin large numerals, never bold walls of small text.
 - Body line height 1.4–1.6 always.
-- Current shipping pairing: **Mona Sans** (headings + big numbers, 600–700), **DM Sans** (body/UI, 400/500), **Roboto Mono** (numerics/timestamps/IDs only, "SF Mono" as Apple-device fallback).
+- Current shipping pairing: **Bricolage Grotesque** (headings + big numbers, 700–800 — display voice), **Onest** (body/UI, 400/500 — from the owner's Datify reference), **Roboto Mono** (table timestamps/IDs only, "SF Mono" as Apple-device fallback). Big display numerals use the display face, not mono.
 - Type scale documented in design/tokens.md; no ad-hoc font sizes in components.
 
 ### Layout rules

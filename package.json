@@ -12,10 +12,12 @@
     "check:contrast": "node scripts/check-contrast.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.2.10",
     "@fontsource-variable/dm-sans": "^5.2.8",
     "@fontsource-variable/hanken-grotesk": "^5.2.8",
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource-variable/mona-sans": "^5.2.8",
+    "@fontsource-variable/onest": "^5.2.11",
     "@fontsource-variable/roboto": "^5.2.10",
     "@fontsource-variable/roboto-mono": "^5.2.9",
     "@radix-ui/react-dialog": "^1.1.14",

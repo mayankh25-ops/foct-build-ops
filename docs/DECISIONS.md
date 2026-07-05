@@ -74,3 +74,10 @@ Owner supplied an approved font library (Finlandica, Mona Sans, Roboto, Radio Ca
 
 ## 2026-07-05 — Five more palette variants (D–H) from owner references
 Owner found A/B/C (and the ink+teal default) "robotic, no human touch" and supplied five new references (Mangeo sunset brand, Booster violet+amber, Datify cobalt+blush, a navy/sky/gold scheme board, and a natural-greens CRM palette). Added five review-only themes, each with a warm/tinted canvas rather than sterile grey: `option-sunset` (cream + plum ink + burnt orange), `option-violet` (lilac + deep violet), `option-cobalt` (cool white + cobalt + blush wells), `option-nightfall` (navy ink + sky wells), `option-garden` (warm paper + charcoal + leaf green). All AA-verified (37 pairs × 13 themes). Same rule as A–C: the chosen one folds into the default, all other `option-*` blocks get deleted before Stage 2.
+
+## 2026-07-06 — Bricolage Grotesque + Onest; Sunset becomes the review default
+Owner: fonts still "automated machine fonts" — wants bold, big, clean, designer-recommended, and colours changed too. Actions:
+- **Bricolage Grotesque** (display, weights to 800) added to the approved library and shipped for headings + all big numbers, including the kiosk clock (mono demoted to table timestamps/durations/IDs only). It is the closest free-font spirit to the Halvar Breitschrift energy in the owner's Mangeo reference.
+- **Onest** (body) added and shipped — it appears by name in the owner's own Datify reference. Weight ramp now hero/display 800, title-1 700, title-2 700, title-3 650→600s, body 400/500.
+- **Default theme for the review build switched from grey Graphite to `option-sunset`** (layout + AppShell) so the app no longer opens in the cool-grey look the owner reads as robotic. Final default still awaits the owner's A–H pick; graphite tokens remain untouched underneath.
+- Mona Sans and DM Sans stay in the approved library as alternates; their font files remain vendored.

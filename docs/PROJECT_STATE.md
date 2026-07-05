@@ -14,7 +14,7 @@ History: Stage 1 → 1.5 premium upgrade + screens → 1.6 TailAdmin restyle (in
 - `design/tokens.md`: every token with reference, shadcn-name mapping, and **generated** WCAG tables — 37 pairs × 5 themes, 185 rows, all passing (`npm run check:contrast`, `--md` to regenerate).
 
 ### Fonts
-**Owner-approved library only** (CLAUDE.md → Typography, 2026-07-05). Shipping: Mona Sans (headings + big-and-thick display numerals, 600–700), DM Sans (body 400/500, line height 1.4–1.6), Roboto Mono (numerics; "SF Mono" fallback for Apple devices). All self-hosted in `src/fonts/`. Approved alternates on npm: Finlandica, Radio Canada, Hubot Sans, Manrope. Retired faces (Roboto sans, Hanken, Inter, Geist) still in repo/deps — safe to prune.
+**Owner-approved library only** (CLAUDE.md → Typography, updated 2026-07-06). Shipping: **Bricolage Grotesque** (headings + big bold numerals incl. kiosk clock, 700–800), **Onest** (body 400/500, from the owner's Datify reference), Roboto Mono (table timestamps/IDs only; "SF Mono" Apple fallback). All self-hosted in `src/fonts/`. Review build opens in `option-sunset` (warm) instead of grey graphite. Alternates on npm: Mona Sans, DM Sans, Finlandica, Radio Canada, Hubot Sans, Manrope. Retired font files still in repo — safe to prune.
 
 ### Components — `src/components/ui/`
 Stage 1: button, input, select, badge (Badge + StatusPill), card, table, tabs, modal, toast, empty-state, coming-soon-state, sidebar, top-bar, page-header.

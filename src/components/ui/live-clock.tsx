@@ -30,8 +30,8 @@ export function LiveClock({ variant = "display", showDate = true, className, ...
     <div className={cn(className)} {...props}>
       <p
         className={cn(
-          "font-mono text-fg tabular-nums",
-          variant === "hero" ? "text-hero" : "text-display"
+          "text-fg tabular-nums",
+          variant === "hero" ? "font-display text-hero" : "font-mono text-display"
         )}
       >
         {variant === "display" ? (

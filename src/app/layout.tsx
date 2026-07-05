@@ -4,37 +4,34 @@ import "./globals.css";
 
 /*
  * Owner-approved font library (see CLAUDE.md → Typography). Shipping trio:
- * - Mona Sans (variable): headings + BIG NUMBERS — big data gets big & thick.
- * - DM Sans (variable): body/UI — clean with character, 1.4–1.6 line height.
- * - Roboto Mono (variable): timestamps, IDs, table figures; "SF Mono" next
- *   in the stack for Apple devices (SF Mono is not redistributable).
+ * - Bricolage Grotesque (variable, to 800): headings + BIG BOLD NUMBERS —
+ *   characterful humanist grotesk, the display voice.
+ * - Onest (variable): body/UI — clean and clear (from the owner's Datify
+ *   reference), 1.4–1.6 line height.
+ * - Roboto Mono: table timestamps/IDs only; "SF Mono" next in the stack
+ *   for Apple devices (SF Mono is not redistributable).
  */
-const monaSans = localFont({
+const bricolage = localFont({
   src: [
     {
-      path: "../fonts/mona-sans/mona-sans-latin-wght-normal.woff2",
-      weight: "200 900",
+      path: "../fonts/bricolage/bricolage-grotesque-latin-wght-normal.woff2",
+      weight: "200 800",
       style: "normal",
     },
   ],
-  variable: "--font-mona",
+  variable: "--font-bricolage",
   display: "swap",
 });
 
-const dmSans = localFont({
+const onest = localFont({
   src: [
     {
-      path: "../fonts/dm-sans/dm-sans-latin-wght-normal.woff2",
+      path: "../fonts/onest/onest-latin-wght-normal.woff2",
       weight: "100 900",
       style: "normal",
     },
-    {
-      path: "../fonts/dm-sans/dm-sans-latin-wght-italic.woff2",
-      weight: "100 900",
-      style: "italic",
-    },
   ],
-  variable: "--font-dm",
+  variable: "--font-onest",
   display: "swap",
 });
 
@@ -61,9 +58,9 @@ export default function RootLayout({
   return (
     <html
       lang="en-AU"
-      data-theme="graphite"
+      data-theme="option-sunset"
       suppressHydrationWarning
-      className={`${monaSans.variable} ${dmSans.variable} ${robotoMono.variable}`}
+      className={`${bricolage.variable} ${onest.variable} ${robotoMono.variable}`}
     >
       <body>{children}</body>
     </html>

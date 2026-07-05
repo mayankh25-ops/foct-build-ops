@@ -119,9 +119,9 @@ Inter, Manrope, General Sans). Shipping trio:
 
 | Slot | Font | Loading |
 | --- | --- | --- |
-| Headings + **big numbers** | **Mona Sans** (variable 200–900) | Self-hosted woff2 (`src/fonts/mona-sans/`), `--font-mona`. Owner rule: **big numbers are big & thick** — display numerals run 600–700. |
-| Body / UI | **DM Sans** (variable) | Self-hosted woff2 (`src/fonts/dm-sans/`), `--font-dm`. Line height held to the 1.4–1.6 band for all reading sizes. |
-| Numerics, timestamps, IDs, table figures | **Roboto Mono** (variable) | Self-hosted woff2, `--font-roboto-mono`; `"SF Mono"` next in the stack for Apple devices (SF Mono is not redistributable). **Only** for numeric/tabular data; `.font-mono` sets `font-variant-numeric: tabular-nums`. |
+| Headings + **big numbers** (incl. kiosk clock) | **Bricolage Grotesque** (variable 200–800) | Self-hosted woff2 (`src/fonts/bricolage/`), `--font-bricolage`. Owner rule: **big numbers are big & thick** — display numerals run 700–800 in the display face, not mono. |
+| Body / UI | **Onest** (variable) | Self-hosted woff2 (`src/fonts/onest/`), `--font-onest` — from the owner's Datify reference. Line height held to the 1.4–1.6 band. |
+| Table timestamps, durations, IDs only | **Roboto Mono** (variable) | Self-hosted woff2, `--font-roboto-mono`; `"SF Mono"` next in the stack for Apple devices (SF Mono is not redistributable). `.font-mono` sets `font-variant-numeric: tabular-nums`. |
 
 Finlandica, Radio Canada, Hubot Sans and Manrope are approved alternates
 (available on npm, not currently loaded); Satoshi and General Sans are
@@ -134,9 +134,9 @@ No ad-hoc font sizes in components — only these utilities (Tailwind
 
 | Name | Size / line height | Tracking | Weight | Use |
 | --- | --- | --- | --- | --- |
-| `hero` | 72 px / 1 | −0.02em | 600 | Kiosk clock only (mono) |
-| `display` | 36 / 44 px | −0.02em | 700 | Page titles, metric numbers — big & thick |
-| `title-1` | 28 / 36 px | −0.015em | 650 | Section titles, hero stats |
+| `hero` | 72 px / 1 | −0.02em | 800 | Kiosk clock (display face) |
+| `display` | 36 / 44 px | −0.02em | 800 | Page titles, metric numbers — big & thick |
+| `title-1` | 28 / 36 px | −0.015em | 700 | Section titles, hero stats |
 | `title-2` | 22 / 30 px | −0.01em | 600 | Modal/drawer titles, `SectionHeader` |
 | `title-3` | 17 / 25 px | −0.005em | 600 | Card titles |
 | `body` | 16 / 24 px (1.5) | 0 | 400 | Default UI text, inputs, buttons (md) |

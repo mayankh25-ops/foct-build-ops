@@ -10,10 +10,11 @@
 /* Theme-independent tokens: type scale, spacing, radius             */
 /* ---------------------------------------------------------------- */
 :root {
-  /* Typography — owner-approved library (CLAUDE.md): Mona Sans display,
-     DM Sans body, Roboto Mono numerics. Big numbers = big & thick. */
-  --font-stack-display: var(--font-mona), "Mona Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-stack-body: var(--font-dm), "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  /* Typography — owner-approved library (CLAUDE.md): Bricolage Grotesque
+     display (big BOLD numbers, to 800), Onest body (from the owner's Datify
+     reference), Roboto Mono for table timestamps/IDs only. */
+  --font-stack-display: var(--font-bricolage), "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-stack-body: var(--font-onest), Onest, ui-sans-serif, system-ui, sans-serif;
   --font-stack-mono: var(--font-roboto-mono), "SF Mono", ui-monospace, "Roboto Mono", monospace;
 
   /* Type scale (size / line-height / tracking) — documented in design/tokens.md */

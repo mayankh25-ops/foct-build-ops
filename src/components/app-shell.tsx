@@ -32,7 +32,7 @@ import { building } from "@/lib/demo-data";
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div data-theme="graphite" className="flex h-screen overflow-hidden bg-canvas text-fg">
+    <div data-theme="option-sunset" className="flex h-screen overflow-hidden bg-canvas text-fg">
       <Sidebar
         buildingName={building.name}
         className="hidden lg:flex"

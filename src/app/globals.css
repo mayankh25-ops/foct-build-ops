@@ -64,15 +64,15 @@
   --text-hero: var(--fs-hero);
   --text-hero--line-height: var(--lh-hero);
   --text-hero--letter-spacing: var(--ls-hero);
-  --text-hero--font-weight: 600;
+  --text-hero--font-weight: 800;
   --text-display: var(--fs-display);
   --text-display--line-height: var(--lh-display);
   --text-display--letter-spacing: var(--ls-display);
-  --text-display--font-weight: 700;
+  --text-display--font-weight: 800;
   --text-title-1: var(--fs-title-1);
   --text-title-1--line-height: var(--lh-title-1);
   --text-title-1--letter-spacing: var(--ls-title-1);
-  --text-title-1--font-weight: 650;
+  --text-title-1--font-weight: 700;
   --text-title-2: var(--fs-title-2);
   --text-title-2--line-height: var(--lh-title-2);
   --text-title-2--letter-spacing: var(--ls-title-2);
