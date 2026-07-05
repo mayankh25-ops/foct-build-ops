@@ -633,3 +633,115 @@
   --elevation-card: 0 1px 2px rgb(36 36 36 / 0.05), 0 2px 8px rgb(36 36 36 / 0.04);
   --elevation-raised: 0 2px 4px rgb(36 36 36 / 0.07), 0 12px 32px rgb(36 36 36 / 0.10);
 }
+
+/* I — NATURE (Stitch "Soft Nature"): cream, sage, terracotta, extra-round */
+[data-theme="option-nature"] {
+  color-scheme: light;
+  --r-card: 1.75rem;
+  --r-control: 1.25rem;
+  --r-sm: 0.875rem;
+  --bg-canvas: #f9f7f2;
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #f1ede4;
+  --border-subtle: #e7e1d5;
+  --border-strong: #8f887a;
+  --text-primary: #262a22;
+  --text-secondary: #4d5347;
+  --text-muted: #5d6656;
+  --text-disabled: #a8ac9e;
+  --text-on-accent: #ffffff;
+  --accent: #55684b;
+  --accent-hover: #46563d;
+  --accent-subtle: #e9efe2;
+  --accent-text: #4c5f43;
+  --brand: #7d9070;
+  --success: #2e7d4f; --success-subtle: #e7f3eb; --success-text: #256b44;
+  --warning: #dc9a26; --warning-subtle: #f9f0dc; --warning-text: #8a6002;
+  --critical: #b1502f; --critical-hover: #96431f; --critical-subtle: #f9e7de; --critical-text: #a44526;
+  --info: #3a6b9e; --info-subtle: #e8eff7; --info-text: #33608f;
+  --focus-ring: #55684b;
+  --overlay: rgb(38 42 34 / 0.45);
+  --sidebar-bg: #fdfbf7; --sidebar-hover: #f1ede4; --sidebar-fg: #4d5347;
+  --sidebar-muted: #5d6656; --sidebar-active: #4c5f43; --sidebar-border: #e7e1d5;
+  --elevation-card: 0 8px 30px rgb(125 144 112 / 0.10);
+  --elevation-raised: 0 12px 40px rgb(125 144 112 / 0.18);
+}
+
+/* J — CYBER (Stitch "Cyberpunk Dark"): charcoal, neon cyan/purple, mono data voice */
+[data-theme="option-cyber"] {
+  color-scheme: dark;
+  --font-stack-display: var(--font-roboto-mono), "SF Mono", ui-monospace, monospace;
+  --bg-canvas: #0a0a0c;
+  --bg-surface: #111116;
+  --bg-raised: #17171d;
+  --bg-hover: #1c1c24;
+  --border-subtle: #212734;
+  --border-strong: #5c6b78;
+  --text-primary: #e2e8f0;
+  --text-secondary: #b5bfce;
+  --text-muted: #8e99a9;
+  --text-disabled: #5a616e;
+  --text-on-accent: #0a0a0c;
+  --accent: #00f2ff;
+  --accent-hover: #66f7ff;
+  --accent-subtle: #0b2f33;
+  --accent-text: #2ee2f0;
+  --brand: #bc13fe;
+  --success: #4caf74; --success-subtle: #12291c; --success-text: #7bd3a0;
+  --warning: #e5a63b; --warning-subtle: #2e2510; --warning-text: #e9b95c;
+  --critical: #e5605c; --critical-hover: #ec7a77; --critical-subtle: #351a1c; --critical-text: #f08c88;
+  --info: #bc13fe; --info-subtle: #2c0f3d; --info-text: #d16bff;
+  --focus-ring: #00f2ff;
+  --overlay: rgb(0 0 0 / 0.70);
+  --sidebar-bg: #0d0d11; --sidebar-hover: #1a1a22; --sidebar-fg: #cfd6e0;
+  --sidebar-muted: #8e99a9; --sidebar-active: #2ee2f0; --sidebar-border: #1f1f29;
+  --elevation-card: 0 0 0 1px rgb(0 242 255 / 0.07), 0 0 24px rgb(0 242 255 / 0.08);
+  --elevation-raised: 0 0 0 1px rgb(0 242 255 / 0.12), 0 0 40px rgb(0 242 255 / 0.14), 0 0 60px rgb(188 19 254 / 0.08);
+}
+/* faint cyan aurora on the cyber canvas */
+[data-theme="option-cyber"] {
+  background-image: radial-gradient(ellipse at top, rgb(0 242 255 / 0.06), transparent 55%);
+  background-attachment: fixed;
+}
+
+/* K — GLASS (Stitch "Vibrant Glassmorphism"): purple mesh, tonal frosted layers */
+[data-theme="option-glass"] {
+  color-scheme: dark;
+  --r-card: 1.5rem;
+  --bg-canvas: #241b3e;
+  --bg-surface: #322a4e;
+  --bg-raised: #3a3159;
+  --bg-hover: #413767;
+  --border-subtle: #473d6b;
+  --border-strong: #8d82b8;
+  --text-primary: #f2effc;
+  --text-secondary: #cdc5e8;
+  --text-muted: #b5acd9;
+  --text-disabled: #7a7099;
+  --text-on-accent: #241b3e;
+  --accent: #f5f2ff;
+  --accent-hover: #ddd6f2;
+  --accent-subtle: #3f3566;
+  --accent-text: #cabcff;
+  --brand: #a78bfa;
+  --success: #3ecf8e; --success-subtle: #1c3630; --success-text: #7be3b4;
+  --warning: #fbbf24; --warning-subtle: #3b3018; --warning-text: #fcd34d;
+  --critical: #fb7185; --critical-hover: #fda4af; --critical-subtle: #43222b; --critical-text: #fda4af;
+  --info: #93c5fd; --info-subtle: #223052; --info-text: #a8cffe;
+  --focus-ring: #cabcff;
+  --overlay: rgb(20 14 40 / 0.60);
+  --sidebar-bg: #2a2148; --sidebar-hover: #3a3161; --sidebar-fg: #d9d2ee;
+  --sidebar-muted: #b5acd9; --sidebar-active: #cabcff; --sidebar-border: #3d3465;
+  --elevation-card: 0 4px 30px rgb(0 0 0 / 0.22);
+  --elevation-raised: 0 8px 40px rgb(0 0 0 / 0.35);
+}
+/* the mesh-gradient backdrop that sells the glass look */
+[data-theme="option-glass"] {
+  background-image:
+    radial-gradient(at 40% 20%, rgb(147 51 234 / 0.32) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgb(59 130 246 / 0.28) 0px, transparent 50%),
+    radial-gradient(at 0% 55%, rgb(236 72 153 / 0.22) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, rgb(79 70 229 / 0.30) 0px, transparent 50%);
+  background-attachment: fixed;
+}

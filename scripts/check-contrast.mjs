@@ -18,7 +18,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const css = readFileSync(join(root, "src/styles/tokens.css"), "utf8");
 
 // ---- parse theme blocks -------------------------------------------------
-const THEMES = ["graphite", "harbour", "eucalypt", "sandstone", "ink", "option-analytics", "option-blush", "option-slate", "option-sunset", "option-violet", "option-nightfall", "option-garden"];
+const THEMES = ["graphite", "harbour", "eucalypt", "sandstone", "ink", "option-analytics", "option-blush", "option-slate", "option-sunset", "option-violet", "option-nightfall", "option-garden", "option-nature", "option-cyber", "option-glass"];
 const themes = {};
 const blockRe = /((?::root|\[data-theme="[a-z-]+"\])(?:\s*,\s*(?::root|\[data-theme="[a-z-]+"\]))*)\s*\{([^}]*)\}/g;
 
