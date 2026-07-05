@@ -572,37 +572,6 @@
   --elevation-raised: 0 2px 4px rgb(32 26 51 / 0.07), 0 12px 32px rgb(32 26 51 / 0.10);
 }
 
-/* F — COBALT (Datify ref): cool white, cobalt accent, blush wells */
-[data-theme="option-cobalt"] {
-  color-scheme: light;
-  --bg-canvas: #f5f7fe;
-  --bg-surface: #ffffff;
-  --bg-raised: #ffffff;
-  --bg-hover: #eceffb;
-  --border-subtle: #dfe4f6;
-  --border-strong: #7e89ae;
-  --text-primary: #131a3f;
-  --text-secondary: #3c4470;
-  --text-muted: #545d86;
-  --text-disabled: #9aa2c4;
-  --text-on-accent: #ffffff;
-  --accent: #2e51e8;
-  --accent-hover: #2440c9;
-  --accent-subtle: #fbe9e6;
-  --accent-text: #2440c9;
-  --brand: #2e51e8;
-  --success: #2e7d4f; --success-subtle: #e7f3eb; --success-text: #256b44;
-  --warning: #dc9a26; --warning-subtle: #f9f0dc; --warning-text: #8a6002;
-  --critical: #c24242; --critical-hover: #a93636; --critical-subtle: #faeceb; --critical-text: #b03030;
-  --info: #3a6b9e; --info-subtle: #e8eff7; --info-text: #33608f;
-  --focus-ring: #2e51e8;
-  --overlay: rgb(19 26 63 / 0.45);
-  --sidebar-bg: #ffffff; --sidebar-hover: #eceffb; --sidebar-fg: #3c4470;
-  --sidebar-muted: #545d86; --sidebar-active: #2440c9; --sidebar-border: #dfe4f6;
-  --elevation-card: 0 1px 2px rgb(19 26 63 / 0.05), 0 2px 8px rgb(19 26 63 / 0.04);
-  --elevation-raised: 0 2px 4px rgb(19 26 63 / 0.07), 0 12px 32px rgb(19 26 63 / 0.10);
-}
-
 /* G — NIGHTFALL (colour-scheme board ref): navy ink, sky wells, gold status */
 [data-theme="option-nightfall"] {
   color-scheme: light;

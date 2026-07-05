@@ -81,3 +81,6 @@ Owner: fonts still "automated machine fonts" — wants bold, big, clean, designe
 - **Onest** (body) added and shipped — it appears by name in the owner's own Datify reference. Weight ramp now hero/display 800, title-1 700, title-2 700, title-3 650→600s, body 400/500.
 - **Default theme for the review build switched from grey Graphite to `option-sunset`** (layout + AppShell) so the app no longer opens in the cool-grey look the owner reads as robotic. Final default still awaits the owner's A–H pick; graphite tokens remain untouched underneath.
 - Mona Sans and DM Sans stay in the approved library as alternates; their font files remain vendored.
+
+## 2026-07-06 (later) — Variant F (Cobalt) eliminated
+Owner: "Delete F." `option-cobalt` removed from tokens.css, the contrast suite (now 37 pairs × 12 themes, all passing) and the preview switcher. Remaining candidates: A Analytics, B Blush, C Slate, D Sunset (current review default), E Violet, G Nightfall, H Garden.
