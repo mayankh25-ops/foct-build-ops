@@ -64,7 +64,7 @@ export function Sidebar({
             <span className="size-3 rounded-pill bg-brand" />
           </span>
           <div className="leading-tight">
-            <p className="font-display text-body font-semibold tracking-tight text-sidebar-fg">
+            <p className="font-display text-body font-medium tracking-tight text-sidebar-fg">
               {productName}
             </p>
             {buildingName && (

@@ -1,40 +1,40 @@
 import type { Metadata } from "next";
-import { GeistMono } from "geist/font/mono";
 import localFont from "next/font/local";
 import "./globals.css";
 
 /*
- * Body/UI: Hanken Grotesk (variable, self-hosted).
- * Display: General Sans via @font-face in globals.css (drop-in files),
- *          with self-hosted Inter as the loaded fallback.
- * Numerics/tabular: Geist Mono (Vercel's package bundles the woff2 locally).
+ * Roboto family throughout (owner direction 2026-07-03):
+ * - Roboto variable (100–900): display AND body — weight carries hierarchy
+ *   (light display numerals, regular body, medium labels/buttons).
+ * - Roboto Mono variable: numerics, timestamps, IDs; "SF Mono" sits in the
+ *   fallback stack for Apple devices (SF Mono itself is not redistributable).
  */
-const hanken = localFont({
+const roboto = localFont({
   src: [
     {
-      path: "../fonts/hanken-grotesk/hanken-grotesk-latin-wght-normal.woff2",
+      path: "../fonts/roboto/roboto-latin-wght-normal.woff2",
       weight: "100 900",
       style: "normal",
     },
     {
-      path: "../fonts/hanken-grotesk/hanken-grotesk-latin-wght-italic.woff2",
+      path: "../fonts/roboto/roboto-latin-wght-italic.woff2",
       weight: "100 900",
       style: "italic",
     },
   ],
-  variable: "--font-hanken",
+  variable: "--font-roboto",
   display: "swap",
 });
 
-const inter = localFont({
+const robotoMono = localFont({
   src: [
     {
-      path: "../fonts/inter/inter-latin-opsz-normal.woff2",
-      weight: "100 900",
+      path: "../fonts/roboto-mono/roboto-mono-latin-wght-normal.woff2",
+      weight: "100 700",
       style: "normal",
     },
   ],
-  variable: "--font-inter",
+  variable: "--font-roboto-mono",
   display: "swap",
 });
 
@@ -51,7 +51,7 @@ export default function RootLayout({
       lang="en-AU"
       data-theme="graphite"
       suppressHydrationWarning
-      className={`${hanken.variable} ${inter.variable} ${GeistMono.variable}`}
+      className={`${roboto.variable} ${robotoMono.variable}`}
     >
       <body>{children}</body>
     </html>

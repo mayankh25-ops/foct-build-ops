@@ -10,10 +10,10 @@
 /* Theme-independent tokens: type scale, spacing, radius             */
 /* ---------------------------------------------------------------- */
 :root {
-  /* Typography — families are wired up in globals.css via next/font vars */
-  --font-stack-display: "General Sans", var(--font-inter), var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
-  --font-stack-body: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
-  --font-stack-mono: var(--font-geist-mono), ui-monospace, "SF Mono", "Cascadia Mono", monospace;
+  /* Typography — Roboto family (owner direction); weight carries hierarchy */
+  --font-stack-display: var(--font-roboto), Roboto, ui-sans-serif, system-ui, sans-serif;
+  --font-stack-body: var(--font-roboto), Roboto, ui-sans-serif, system-ui, sans-serif;
+  --font-stack-mono: var(--font-roboto-mono), "SF Mono", ui-monospace, "Roboto Mono", monospace;
 
   /* Type scale (size / line-height / tracking) — documented in design/tokens.md */
   --fs-hero: 4.5rem;         /* 72px — kiosk clock only */

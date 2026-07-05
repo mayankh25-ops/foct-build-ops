@@ -2,20 +2,6 @@
 @import "../styles/tokens.css";
 
 /*
- * General Sans (display) — served from /public/fonts/general-sans/.
- * The woff2 files are a licensed Fontshare download and are dropped in
- * manually (see design/tokens.md → Fonts). Until they exist the stack
- * falls back to self-hosted Inter, which next/font loads below.
- */
-@font-face {
-  font-family: "General Sans";
-  src: url("/fonts/general-sans/GeneralSans-Variable.woff2") format("woff2");
-  font-weight: 200 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-/*
  * Map semantic tokens into Tailwind v4 utilities.
  * Components use ONLY these utilities (or var(--…) directly) — never raw hex.
  */
@@ -73,26 +59,27 @@
 
   /* type scale — use text-display, text-title-1 … never ad-hoc sizes */
   --text-*: initial;
+  /* Roboto weight ramp: big = light, small = medium (hierarchy via weight) */
   --text-hero: var(--fs-hero);
   --text-hero--line-height: var(--lh-hero);
   --text-hero--letter-spacing: var(--ls-hero);
-  --text-hero--font-weight: 600;
+  --text-hero--font-weight: 200;
   --text-display: var(--fs-display);
   --text-display--line-height: var(--lh-display);
   --text-display--letter-spacing: var(--ls-display);
-  --text-display--font-weight: 600;
+  --text-display--font-weight: 300;
   --text-title-1: var(--fs-title-1);
   --text-title-1--line-height: var(--lh-title-1);
   --text-title-1--letter-spacing: var(--ls-title-1);
-  --text-title-1--font-weight: 600;
+  --text-title-1--font-weight: 300;
   --text-title-2: var(--fs-title-2);
   --text-title-2--line-height: var(--lh-title-2);
   --text-title-2--letter-spacing: var(--ls-title-2);
-  --text-title-2--font-weight: 600;
+  --text-title-2--font-weight: 400;
   --text-title-3: var(--fs-title-3);
   --text-title-3--line-height: var(--lh-title-3);
   --text-title-3--letter-spacing: var(--ls-title-3);
-  --text-title-3--font-weight: 600;
+  --text-title-3--font-weight: 500;
   --text-body: var(--fs-body);
   --text-body--line-height: var(--lh-body);
   --text-body-sm: var(--fs-body-sm);

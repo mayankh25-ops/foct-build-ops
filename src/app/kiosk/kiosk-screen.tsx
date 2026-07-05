@@ -57,7 +57,7 @@ export function KioskScreen() {
             <span className="size-3 rounded-pill bg-brand" />
           </span>
           <div className="leading-tight">
-            <p className="font-display text-title-3 font-semibold text-fg">Aurora on Collins</p>
+            <p className="font-display text-title-3 font-medium text-fg">Aurora on Collins</p>
             <p className="text-body-sm text-fg-muted">FOCT CleaningOps kiosk</p>
           </div>
         </div>

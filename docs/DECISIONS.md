@@ -62,3 +62,9 @@ Owner shared screenshots of their preferred FOCT build (plus Deputy references) 
 
 ## 2026-07-03 (later) — Three palette variants for owner selection
 Owner supplied three colour-palette references and asked for quick variants to choose from. Added three temporary review-only theme blocks to tokens.css (`option-analytics`, `option-blush`, `option-slate`), all AA-verified (37 pairs × 8 themes pass). The live preview artifact has a PALETTE switcher (Current / A / B / C). Once one is chosen it gets folded into Graphite as the default skin and all `option-*` blocks are deleted — they must not ship.
+
+## 2026-07-03 (later) — Typography switched to the Roboto family
+Owner direction: "Roboto family — light, ultralight, dark by category, or SF Mono." Implemented:
+- **Roboto variable (100–900)** self-hosted for both display and body; hierarchy now comes from weight, not family: hero 200, display/title-1 300, title-2 400, title-3/labels/buttons 500, body 400. Semibold usages retuned to medium (Roboto 600+ reads heavy).
+- **Roboto Mono variable** for all numerics/timestamps/IDs; `"SF Mono"` is next in the fallback stack so Apple hardware uses it natively — SF Mono itself is Apple-proprietary and cannot legally be bundled.
+- Hanken Grotesk, Inter, and the Geist Mono package usage are retired from the stacks; the General Sans `@font-face` drop-in slot is removed (README left in `public/fonts/general-sans/` as history). CLAUDE.md's typography section (General Sans/Hanken/Geist) is superseded by this entry at owner direction.

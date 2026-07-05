@@ -14,7 +14,7 @@ History: Stage 1 → 1.5 premium upgrade + screens → 1.6 TailAdmin restyle (in
 - `design/tokens.md`: every token with reference, shadcn-name mapping, and **generated** WCAG tables — 37 pairs × 5 themes, 185 rows, all passing (`npm run check:contrast`, `--md` to regenerate).
 
 ### Fonts
-Hanken Grotesk (body, self-hosted `src/fonts/`), Inter (interim display, self-hosted), Geist Mono (numerics only, `geist` package). General Sans = drop-in slot at `public/fonts/general-sans/` (see README; network policy blocked Fontshare).
+**Roboto family** (owner direction 2026-07-03): Roboto variable self-hosted (`src/fonts/roboto/`) for display+body with weight-based hierarchy (hero 200 / display+title-1 300 / title-2 400 / title-3+labels 500); Roboto Mono self-hosted for numerics with "SF Mono" next in the stack for Apple devices. Hanken/Inter/Geist/General-Sans retired (files still in repo; safe to prune).
 
 ### Components — `src/components/ui/`
 Stage 1: button, input, select, badge (Badge + StatusPill), card, table, tabs, modal, toast, empty-state, coming-soon-state, sidebar, top-bar, page-header.
@@ -44,7 +44,6 @@ None. No Supabase yet by design (DECISIONS.md) — first migration lands in Stag
 
 ## HANDOVER (half-finished / risky)
 - **All Stage 1.5 screens are static demos.** Buttons like "Approve", "Reassign zone", "Add shift" show toasts or nothing — no persistence. Kiosk PINs are a hardcoded demo map in `kiosk-screen.tsx`. Do not mistake these for working features.
-- **General Sans still not loading** — headings render in Inter until the woff2 is dropped in.
 - **Sidebar is desktop-only** (`hidden lg:flex`); no mobile nav drawer yet.
 - **Roster week view fabricates non-today days** from today's data (visual demo of the board layout only).
 - **Timesheets "Approve all ready" / per-row Approve don't change row state** — toast only.
