@@ -3,26 +3,38 @@ import localFont from "next/font/local";
 import "./globals.css";
 
 /*
- * Roboto family throughout (owner direction 2026-07-03):
- * - Roboto variable (100–900): display AND body — weight carries hierarchy
- *   (light display numerals, regular body, medium labels/buttons).
- * - Roboto Mono variable: numerics, timestamps, IDs; "SF Mono" sits in the
- *   fallback stack for Apple devices (SF Mono itself is not redistributable).
+ * Owner-approved font library (see CLAUDE.md → Typography). Shipping trio:
+ * - Mona Sans (variable): headings + BIG NUMBERS — big data gets big & thick.
+ * - DM Sans (variable): body/UI — clean with character, 1.4–1.6 line height.
+ * - Roboto Mono (variable): timestamps, IDs, table figures; "SF Mono" next
+ *   in the stack for Apple devices (SF Mono is not redistributable).
  */
-const roboto = localFont({
+const monaSans = localFont({
   src: [
     {
-      path: "../fonts/roboto/roboto-latin-wght-normal.woff2",
+      path: "../fonts/mona-sans/mona-sans-latin-wght-normal.woff2",
+      weight: "200 900",
+      style: "normal",
+    },
+  ],
+  variable: "--font-mona",
+  display: "swap",
+});
+
+const dmSans = localFont({
+  src: [
+    {
+      path: "../fonts/dm-sans/dm-sans-latin-wght-normal.woff2",
       weight: "100 900",
       style: "normal",
     },
     {
-      path: "../fonts/roboto/roboto-latin-wght-italic.woff2",
+      path: "../fonts/dm-sans/dm-sans-latin-wght-italic.woff2",
       weight: "100 900",
       style: "italic",
     },
   ],
-  variable: "--font-roboto",
+  variable: "--font-dm",
   display: "swap",
 });
 
@@ -51,7 +63,7 @@ export default function RootLayout({
       lang="en-AU"
       data-theme="graphite"
       suppressHydrationWarning
-      className={`${roboto.variable} ${robotoMono.variable}`}
+      className={`${monaSans.variable} ${dmSans.variable} ${robotoMono.variable}`}
     >
       <body>{children}</body>
     </html>

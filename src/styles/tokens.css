@@ -10,9 +10,10 @@
 /* Theme-independent tokens: type scale, spacing, radius             */
 /* ---------------------------------------------------------------- */
 :root {
-  /* Typography — Roboto family (owner direction); weight carries hierarchy */
-  --font-stack-display: var(--font-roboto), Roboto, ui-sans-serif, system-ui, sans-serif;
-  --font-stack-body: var(--font-roboto), Roboto, ui-sans-serif, system-ui, sans-serif;
+  /* Typography — owner-approved library (CLAUDE.md): Mona Sans display,
+     DM Sans body, Roboto Mono numerics. Big numbers = big & thick. */
+  --font-stack-display: var(--font-mona), "Mona Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-stack-body: var(--font-dm), "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-stack-mono: var(--font-roboto-mono), "SF Mono", ui-monospace, "Roboto Mono", monospace;
 
   /* Type scale (size / line-height / tracking) — documented in design/tokens.md */
@@ -36,7 +37,7 @@
   --fs-body-sm: 0.875rem;    /* 14px — tables, secondary copy (never smaller in tables) */
   --lh-body-sm: 1.25rem;     /* 20px */
   --fs-caption: 0.8125rem;   /* 13px — labels, hints, badges */
-  --lh-caption: 1.125rem;    /* 18px */
+  --lh-caption: 1.1875rem;   /* 19px — keeps caption inside the 1.4–1.6 band */
   --ls-caption: 0.005em;
 
   /* Radius — cards 16px, controls 12px */

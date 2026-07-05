@@ -14,7 +14,7 @@ History: Stage 1 → 1.5 premium upgrade + screens → 1.6 TailAdmin restyle (in
 - `design/tokens.md`: every token with reference, shadcn-name mapping, and **generated** WCAG tables — 37 pairs × 5 themes, 185 rows, all passing (`npm run check:contrast`, `--md` to regenerate).
 
 ### Fonts
-**Roboto family** (owner direction 2026-07-03): Roboto variable self-hosted (`src/fonts/roboto/`) for display+body with weight-based hierarchy (hero 200 / display+title-1 300 / title-2 400 / title-3+labels 500); Roboto Mono self-hosted for numerics with "SF Mono" next in the stack for Apple devices. Hanken/Inter/Geist/General-Sans retired (files still in repo; safe to prune).
+**Owner-approved library only** (CLAUDE.md → Typography, 2026-07-05). Shipping: Mona Sans (headings + big-and-thick display numerals, 600–700), DM Sans (body 400/500, line height 1.4–1.6), Roboto Mono (numerics; "SF Mono" fallback for Apple devices). All self-hosted in `src/fonts/`. Approved alternates on npm: Finlandica, Radio Canada, Hubot Sans, Manrope. Retired faces (Roboto sans, Hanken, Inter, Geist) still in repo/deps — safe to prune.
 
 ### Components — `src/components/ui/`
 Stage 1: button, input, select, badge (Badge + StatusPill), card, table, tabs, modal, toast, empty-state, coming-soon-state, sidebar, top-bar, page-header.

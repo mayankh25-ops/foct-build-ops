@@ -46,10 +46,16 @@ The product must look design-agency built: Stripe / Linear / Apple calibre. Calm
 
 All five share identical semantic token names, spacing, radius, and status colours (amber warning, restrained red critical, muted green success) — only the ramp values change.
 
-### Typography
-- Display/headings: General Sans (fallback: Inter Display / SF Pro Display feel)
-- Body/UI: Hanken Grotesk (fallback: Inter)
-- Numerics, timestamps, IDs, table figures: Geist Mono — ONLY for numeric/tabular data
+### Typography (owner-approved font library — updated 2026-07-05, applies to ALL work)
+Only ever use fonts from this approved library — never pick fonts outside it:
+- **Finlandica · Mona Sans · Roboto / Roboto Mono · Radio Canada · Hubot Sans**
+- Reference set: **DM Sans** (clean with character) · **Satoshi** (aesthetic, not loud) · **Inter** (neutral, built for screens) · **Manrope** (data-heavy UI) · **General Sans** (elegant geometric)
+- Satoshi and General Sans are Fontshare-hosted (not bundleable from this build env); the rest are on npm via fontsource.
+
+Rules:
+- **Big numbers get big & thick** (bold display weights); small text stays regular/medium — never thin large numerals, never bold walls of small text.
+- Body line height 1.4–1.6 always.
+- Current shipping pairing: **Mona Sans** (headings + big numbers, 600–700), **DM Sans** (body/UI, 400/500), **Roboto Mono** (numerics/timestamps/IDs only, "SF Mono" as Apple-device fallback).
 - Type scale documented in design/tokens.md; no ad-hoc font sizes in components.
 
 ### Layout rules

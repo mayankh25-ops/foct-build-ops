@@ -113,12 +113,19 @@ pairs are AA-verified below.
 
 ## Typography
 
+Fonts come ONLY from the owner-approved library in CLAUDE.md (Finlandica,
+Mona Sans, Roboto/Roboto Mono, Radio Canada, Hubot Sans + DM Sans, Satoshi,
+Inter, Manrope, General Sans). Shipping trio:
+
 | Slot | Font | Loading |
 | --- | --- | --- |
-| Display / headings + Body / UI | **Roboto** (variable 100–900) | Self-hosted woff2 (`src/fonts/roboto/`), `next/font/local`, `--font-roboto`. One family — **weight carries hierarchy**: hero 200, display/title-1 300, title-2 400, title-3/labels/buttons 500. |
-| Numerics, timestamps, IDs, table figures | **Roboto Mono** (variable) | Self-hosted woff2, `--font-roboto-mono`; `"SF Mono"` sits next in the stack so Apple devices render it natively (SF Mono is not redistributable). **Only** for numeric/tabular data; `.font-mono` sets `font-variant-numeric: tabular-nums`. |
+| Headings + **big numbers** | **Mona Sans** (variable 200–900) | Self-hosted woff2 (`src/fonts/mona-sans/`), `--font-mona`. Owner rule: **big numbers are big & thick** — display numerals run 600–700. |
+| Body / UI | **DM Sans** (variable) | Self-hosted woff2 (`src/fonts/dm-sans/`), `--font-dm`. Line height held to the 1.4–1.6 band for all reading sizes. |
+| Numerics, timestamps, IDs, table figures | **Roboto Mono** (variable) | Self-hosted woff2, `--font-roboto-mono`; `"SF Mono"` next in the stack for Apple devices (SF Mono is not redistributable). **Only** for numeric/tabular data; `.font-mono` sets `font-variant-numeric: tabular-nums`. |
 
-Previous faces (Hanken Grotesk, Inter, Geist Mono, General Sans slot) are retired per owner direction 2026-07-03.
+Finlandica, Radio Canada, Hubot Sans and Manrope are approved alternates
+(available on npm, not currently loaded); Satoshi and General Sans are
+Fontshare-hosted and cannot be bundled from this environment.
 
 ### Type scale
 
@@ -127,14 +134,14 @@ No ad-hoc font sizes in components — only these utilities (Tailwind
 
 | Name | Size / line height | Tracking | Weight | Use |
 | --- | --- | --- | --- | --- |
-| `hero` | 72 px / 1 | −0.02em | 200 (ultralight) | Kiosk clock only |
-| `display` | 36 / 44 px | −0.02em | 300 (light) | Page titles (`PageHeader`), metric numbers |
-| `title-1` | 28 / 36 px | −0.015em | 300 (light) | Section titles, kiosk buttons (buttons add `font-medium`) |
-| `title-2` | 22 / 30 px | −0.01em | 400 | Modal/drawer titles, `SectionHeader` |
-| `title-3` | 17 / 25 px | −0.005em | 500 | Card titles |
-| `body` | 16 / 24 px | 0 | 400 | Default UI text, inputs, buttons (md) |
-| `body-sm` | 14 / 20 px | 0 | 400 | Tables (never smaller), secondary copy, buttons (sm) |
-| `caption` | 13 / 18 px | +0.005em | 400–500 | Labels, hints, badges |
+| `hero` | 72 px / 1 | −0.02em | 600 | Kiosk clock only (mono) |
+| `display` | 36 / 44 px | −0.02em | 700 | Page titles, metric numbers — big & thick |
+| `title-1` | 28 / 36 px | −0.015em | 650 | Section titles, hero stats |
+| `title-2` | 22 / 30 px | −0.01em | 600 | Modal/drawer titles, `SectionHeader` |
+| `title-3` | 17 / 25 px | −0.005em | 600 | Card titles |
+| `body` | 16 / 24 px (1.5) | 0 | 400 | Default UI text, inputs, buttons (md) |
+| `body-sm` | 14 / 20 px (1.43) | 0 | 400 | Tables (never smaller), secondary copy, buttons (sm) |
+| `caption` | 13 / 19 px (1.46) | +0.005em | 400–500 | Labels, hints, badges |
 
 Table headers are sentence case (`text-body-sm font-medium text-fg-muted`) —
 no all-caps tracking-wide micro-labels anywhere in the system.
