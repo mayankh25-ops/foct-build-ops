@@ -18,14 +18,14 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const css = readFileSync(join(root, "src/styles/tokens.css"), "utf8");
 
 // ---- parse theme blocks -------------------------------------------------
-const THEMES = ["graphite", "harbour", "eucalypt", "sandstone", "ink"];
+const THEMES = ["graphite", "harbour", "eucalypt", "sandstone", "ink", "option-analytics", "option-blush", "option-slate"];
 const themes = {};
-const blockRe = /((?::root|\[data-theme="[a-z]+"\])(?:\s*,\s*(?::root|\[data-theme="[a-z]+"\]))*)\s*\{([^}]*)\}/g;
+const blockRe = /((?::root|\[data-theme="[a-z-]+"\])(?:\s*,\s*(?::root|\[data-theme="[a-z-]+"\]))*)\s*\{([^}]*)\}/g;
 
 for (const m of css.matchAll(blockRe)) {
   const selectors = m[1];
   const body = m[2];
-  const names = [...selectors.matchAll(/\[data-theme="([a-z]+)"\]/g)].map((x) => x[1]);
+  const names = [...selectors.matchAll(/\[data-theme="([a-z-]+)"\]/g)].map((x) => x[1]);
   if (names.length === 0) continue; // shared :root block (type scale etc.)
   const vars = {};
   for (const v of body.matchAll(/--([\w-]+):\s*([^;]+);/g)) vars[v[1]] = v[2].trim();

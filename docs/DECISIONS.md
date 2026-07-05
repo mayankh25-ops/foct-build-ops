@@ -59,3 +59,6 @@ Owner shared screenshots of their preferred FOCT build (plus Deputy references) 
 - **Timesheets rebuilt per reference**: per-shift rows with avatar chips, scheduled date/time, check in/out, hours progress bar (x/y h), variance pills (Missing red / ±h amber / On time green), status chips; "Approve week" ink button.
 - **Kiosk is now light** (Deputy-style): default light theme, white keypad card, teal "Clock in and out with ease" pill, "Welcome, {name}" once a known PIN is entered. Ink theme remains available for night mode but is no longer the kiosk default.
 - Sidebar regrouped into Core / Cleaning / Concierge / Automation with locked items per module packaging; top bar now has org + building switchers, a "Preview build" chip, and identity. New components: Avatar, LiveClock.
+
+## 2026-07-03 (later) — Three palette variants for owner selection
+Owner supplied three colour-palette references and asked for quick variants to choose from. Added three temporary review-only theme blocks to tokens.css (`option-analytics`, `option-blush`, `option-slate`), all AA-verified (37 pairs × 8 themes pass). The live preview artifact has a PALETTE switcher (Current / A / B / C). Once one is chosen it gets folded into Graphite as the default skin and all `option-*` blocks are deleted — they must not ship.

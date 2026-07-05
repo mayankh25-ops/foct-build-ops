@@ -339,3 +339,171 @@
   --elevation-card: 0 1px 2px rgb(0 0 0 / 0.20), 0 2px 8px rgb(0 0 0 / 0.24);
   --elevation-raised: 0 2px 4px rgb(0 0 0 / 0.28), 0 16px 40px rgb(0 0 0 / 0.42);
 }
+
+/* ================================================================ */
+/* REVIEW VARIANTS (temporary, owner palette references 2026-07-03) */
+/* Three candidate looks for the default app skin. The chosen one   */
+/* gets folded into Graphite; the other two get deleted.            */
+/* ================================================================ */
+
+/* A — ANALYTICS: cool blue-grey neutrals, charcoal buttons, green data accent */
+[data-theme="option-analytics"] {
+  color-scheme: light;
+
+  --bg-canvas: #f2f4f6;
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #e8ebee;
+
+  --border-subtle: #d8dee3;    /* #C6CED7 family */
+  --border-strong: #7f8a95;
+
+  --text-primary: #26292f;     /* #2F292B cooled */
+  --text-secondary: #494f58;   /* #42454B family */
+  --text-muted: #5d636c;
+  --text-disabled: #9aa1a8;    /* #989D9E family */
+  --text-on-accent: #ffffff;
+
+  --accent: #42454b;           /* smoking night blue — buttons */
+  --accent-hover: #33363c;
+  --accent-subtle: #e5f2ec;    /* green tint wells */
+  --accent-text: #14724d;      /* data green — links, live */
+
+  --brand: #00b4a6;
+
+  --success: #2e7d4f;
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+  --info: #3a6b9e;
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
+
+  --focus-ring: #14724d;
+
+  --overlay: rgb(38 41 47 / 0.45);
+
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #eceef0;
+  --sidebar-fg: #494f58;
+  --sidebar-muted: #5d636c;
+  --sidebar-active: #14724d;
+  --sidebar-border: #dfe3e6;
+
+  --elevation-card: 0 1px 2px rgb(38 41 47 / 0.04), 0 2px 8px rgb(38 41 47 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(38 41 47 / 0.06), 0 12px 32px rgb(38 41 47 / 0.10);
+}
+
+/* B — BLUSH: warm ivory canvas, refined green-ink buttons, soft pink wells */
+[data-theme="option-blush"] {
+  color-scheme: light;
+
+  --bg-canvas: #fbf5f1;        /* #FEF2EC softened */
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #f8ede7;
+
+  --border-subtle: #f0e2da;
+  --border-strong: #92857b;
+
+  --text-primary: #29332f;     /* #394541 deepened */
+  --text-secondary: #48544f;
+  --text-muted: #5d6a64;
+  --text-disabled: #a5aca8;    /* #ABB0AC family */
+  --text-on-accent: #ffffff;
+
+  --accent: #394541;           /* refined green ink — buttons */
+  --accent-hover: #2c3633;
+  --accent-subtle: #fde4e2;    /* sweet mallow pink wells */
+  --accent-text: #416a55;      /* garden green — links, live */
+
+  --brand: #00b4a6;
+
+  --success: #2e7d4f;
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+  --info: #3a6b9e;
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
+
+  --focus-ring: #416a55;
+
+  --overlay: rgb(41 51 47 / 0.45);
+
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #f8ede7;
+  --sidebar-fg: #48544f;
+  --sidebar-muted: #5d6a64;
+  --sidebar-active: #394541;
+  --sidebar-border: #f0e2da;
+
+  --elevation-card: 0 1px 2px rgb(57 69 65 / 0.05), 0 2px 8px rgb(57 69 65 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(57 69 65 / 0.07), 0 12px 32px rgb(57 69 65 / 0.10);
+}
+
+/* C — SLATE: blue-grey professional neutrals, muted brick accent */
+[data-theme="option-slate"] {
+  color-scheme: light;
+
+  --bg-canvas: #edeff3;        /* #E8EAEC family */
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #e1e4ea;
+
+  --border-subtle: #d2d6db;    /* #D2D6DB exact */
+  --border-strong: #7f8aa2;    /* #8892A9 deepened for 3:1 */
+
+  --text-primary: #20242e;
+  --text-secondary: #434b5c;
+  --text-muted: #5b6373;
+  --text-disabled: #9ba2b1;
+  --text-on-accent: #ffffff;
+
+  --accent: #2c3444;           /* deep slate-navy — buttons */
+  --accent-hover: #1f2531;
+  --accent-subtle: #f4eae8;    /* brick tint wells */
+  --accent-text: #845c58;      /* book-binder brick — links, live */
+
+  --brand: #00b4a6;
+
+  --success: #2e7d4f;
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+  --info: #3a6b9e;
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
+
+  --focus-ring: #845c58;
+
+  --overlay: rgb(32 36 46 / 0.45);
+
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #e8eaec;
+  --sidebar-fg: #434b5c;
+  --sidebar-muted: #5b6373;
+  --sidebar-active: #845c58;
+  --sidebar-border: #d9dce1;
+
+  --elevation-card: 0 1px 2px rgb(32 36 46 / 0.04), 0 2px 8px rgb(32 36 46 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(32 36 46 / 0.06), 0 12px 32px rgb(32 36 46 / 0.10);
+}
