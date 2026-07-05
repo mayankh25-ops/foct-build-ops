@@ -20,15 +20,19 @@ const css = readFileSync(join(root, "src/styles/tokens.css"), "utf8");
 // ---- parse theme blocks -------------------------------------------------
 const THEMES = ["graphite", "harbour", "eucalypt", "sandstone", "ink", "option-analytics", "option-blush", "option-slate", "option-sunset", "option-violet", "option-nightfall", "option-garden", "option-nature", "option-cyber", "option-glass"];
 const themes = {};
+const rootVars = {}; // :root-only defaults (structural hooks like --card-border)
 const blockRe = /((?::root|\[data-theme="[a-z-]+"\])(?:\s*,\s*(?::root|\[data-theme="[a-z-]+"\]))*)\s*\{([^}]*)\}/g;
 
 for (const m of css.matchAll(blockRe)) {
   const selectors = m[1];
   const body = m[2];
   const names = [...selectors.matchAll(/\[data-theme="([a-z-]+)"\]/g)].map((x) => x[1]);
-  if (names.length === 0) continue; // shared :root block (type scale etc.)
   const vars = {};
   for (const v of body.matchAll(/--([\w-]+):\s*([^;]+);/g)) vars[v[1]] = v[2].trim();
+  if (names.length === 0) {
+    Object.assign(rootVars, vars); // shared :root block (type scale, hooks)
+    continue;
+  }
   for (const n of names) themes[n] = { ...(themes[n] ?? {}), ...vars };
 }
 
@@ -37,6 +41,7 @@ for (const t of THEMES) {
     console.error(`✗ theme "${t}" not found in tokens.css`);
     process.exit(1);
   }
+  themes[t] = { ...rootVars, ...themes[t] }; // themes override root defaults, as in CSS
 }
 
 function resolve(theme, value, depth = 0) {
@@ -90,7 +95,7 @@ const PAIRS = [
   { fg: "sidebar-muted", bg: "sidebar-bg", min: 4.5, use: "sidebar secondary text" },
   { fg: "sidebar-active", bg: "sidebar-bg", min: 4.5, use: "sidebar active accent text" },
   { fg: "sidebar-active", bg: "sidebar-hover", min: 4.5, use: "sidebar active accent on fill" },
-  { fg: "sidebar-active", bg: "accent-subtle", min: 4.5, use: "sidebar active pill" },
+  { fg: "sidebar-active-fg", bg: "sidebar-active-bg", min: 4.5, use: "sidebar active pill" },
   // non-text UI: input borders and focus rings (WCAG 1.4.11, 3:1)
   { fg: "border-strong", bg: "bg-surface", min: 3.0, use: "input border (non-text)" },
   { fg: "border-strong", bg: "bg-canvas", min: 3.0, use: "input border (non-text)" },

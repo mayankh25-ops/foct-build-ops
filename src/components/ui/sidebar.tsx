@@ -101,7 +101,7 @@ export function Sidebar({
                   "relative flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-body-sm",
                   "transition-colors duration-150",
                   isActive
-                    ? "bg-accent-subtle font-medium text-sidebar-active"
+                    ? "bg-sidebar-active-bg font-medium text-sidebar-active-fg"
                     : item.disabled
                       ? "cursor-default text-sidebar-muted opacity-70"
                       : "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg"

@@ -3,7 +3,7 @@
 > Read this first, every session. Update it before ending any session.
 
 ## Current stage
-**Stage 1.8 — palette-variant exploration: TEN review-only theme candidates live in the preview, awaiting the owner's pick.**
+**Stage 1.8 — variant exploration narrowed: owner declared I · Nature and K · Glass the FINALISTS (2026-07-06); both rebuilt to copy their Stitch sources in full styling (tile anatomy, fonts, real glass translucency), other variants kept but frozen.**
 History: Stage 1 → 1.5 premium upgrade + screens → 1.6 TailAdmin restyle (indigo) → 1.7 owner-reference restyle (ink `#101828` buttons + teal `#0e7569` links, uppercase micro-labels, dashboard hero with LiveClock/weather/donut/activity feed/locked camera wall, per-shift timesheets, LIGHT Deputy-style kiosk) → 1.8 variant rounds (DECISIONS.md 2026-07-03 → 2026-07-06 entries): A Analytics, B Blush, C Slate, D Sunset (**current review default**), E Violet, G Nightfall, H Garden, and the three Google-Stitch-derived I Nature, J Cyber (mono display + neon glow), K Glass (violet mesh). F Cobalt deleted at owner direction. Fonts: Bricolage Grotesque + Onest + Roboto Mono. Live preview artifact with PALETTE switcher: https://claude.ai/code/artifact/ccade632-a546-4a3a-a90b-75d0039def15 (regenerate with scratchpad assemble script). **Gate: owner picks one variant → it folds into the permanent default, all other `option-*` blocks are deleted. Do not start Stage 2 until then.**
 
 ## What exists (sessions of 2026-07-02)
@@ -32,7 +32,7 @@ All consume semantic tokens only (`npm run check:tokens` enforces).
 - `/design-preview` — Stage 1 acceptance page, now including the new operational components; theme switcher + compare-all mode.
 
 ### Verified this session
-`check:tokens` ✓, `check:contrast` ✓ (37 pairs × 15 themes — 5 permanent + 10 review variants), `tsc` ✓, `next build` ✓, all three Stitch variants screenshotted and visually verified (Nature warm sage, Cyber neon mono, Glass violet mesh).
+`check:tokens` ✓, `check:contrast` ✓ (37 pairs × 15 themes — 5 permanent + 10 review variants; checker now merges `:root` structural-hook defaults), `tsc` ✓, `next build` ✓, Nature + Glass finalist rebuilds screenshotted and visually verified (borderless sage tiles / frosted mesh glass, true ring donut). New structural hooks: `--card-border` (+ `border-cardline` on Card), `--sidebar-active-bg/fg` (active-nav pill) — defaults keep every other theme pixel-identical.
 
 ## Migrations applied
 None. No Supabase yet by design (DECISIONS.md) — first migration lands in Stage 2.

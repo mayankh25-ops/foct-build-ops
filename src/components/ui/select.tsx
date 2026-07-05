@@ -65,7 +65,7 @@ export function Select({
             position="popper"
             sideOffset={4}
             className={cn(
-              "z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-control",
+              "z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-card",
               "border border-edge bg-raised shadow-raised"
             )}
           >

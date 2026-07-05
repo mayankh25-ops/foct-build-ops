@@ -61,7 +61,7 @@ function ShiftDrawer({ shift }: { shift: Shift }) {
             <p className="text-body-sm text-fg-secondary">Checked out</p>
             <p className="font-mono text-body-sm text-fg">{fmtTime(shift.actual?.[1])}</p>
           </div>
-          <div className="rounded-control border border-edge bg-canvas p-4">
+          <div className="rounded-card border border-edge bg-canvas p-4">
             <p className="text-body-sm font-medium text-fg">Supervisor note</p>
             <p className="mt-1 text-body-sm text-fg-muted">
               {shift.status === "missed"
@@ -171,7 +171,7 @@ export default function RosterPage() {
                 return (
                   <div
                     key={`${day}-${s.cleaner}`}
-                    className="rounded-control border border-edge bg-surface p-3.5 shadow-card"
+                    className="rounded-card border border-edge bg-surface p-3.5 shadow-card"
                   >
                     <p className="truncate text-body-sm font-medium text-fg">{s.cleaner}</p>
                     <p className="mt-0.5 font-mono text-caption text-fg-muted">

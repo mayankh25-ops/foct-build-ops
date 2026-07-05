@@ -16,6 +16,7 @@
 
   --color-edge: var(--border-subtle);
   --color-edge-strong: var(--border-strong);
+  --color-cardline: var(--card-border);
 
   --color-fg: var(--text-primary);
   --color-fg-secondary: var(--text-secondary);
@@ -34,6 +35,8 @@
   --color-sidebar-fg: var(--sidebar-fg);
   --color-sidebar-muted: var(--sidebar-muted);
   --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-bg: var(--sidebar-active-bg);
+  --color-sidebar-active-fg: var(--sidebar-active-fg);
   --color-sidebar-border: var(--sidebar-border);
 
   --color-success: var(--success);

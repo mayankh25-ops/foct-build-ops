@@ -46,6 +46,12 @@
   --r-control: 0.75rem;  /* 12px */
   --r-sm: 0.5rem;        /* 8px */
   --r-pill: 9999px;
+
+  /* Structural theme hooks — defaults preserve the classic look; a theme can
+     override them to change tile anatomy (borderless cards, solid nav pill). */
+  --card-border: var(--border-subtle);
+  --sidebar-active-bg: var(--accent-subtle);
+  --sidebar-active-fg: var(--sidebar-active);
 }
 
 /* ---------------------------------------------------------------- */
@@ -634,12 +640,18 @@
   --elevation-raised: 0 2px 4px rgb(36 36 36 / 0.07), 0 12px 32px rgb(36 36 36 / 0.10);
 }
 
-/* I — NATURE (Stitch "Soft Nature"): cream, sage, terracotta, extra-round */
+/* I — NATURE (Stitch "Soft Nature" v2, owner-final candidate):
+   cream canvas, BORDERLESS white cards floating on a sage-tinted shadow,
+   pill-shaped controls/chips, solid sage active-nav pill, one rounded
+   friendly family (Onest) for display AND body — the source design uses
+   Quicksand everywhere; Onest is its approved-library equivalent. */
 [data-theme="option-nature"] {
   color-scheme: light;
-  --r-card: 1.75rem;
-  --r-control: 1.25rem;
-  --r-sm: 0.875rem;
+  --font-stack-display: var(--font-onest), Onest, ui-sans-serif, system-ui, sans-serif;
+  --r-card: 1.5rem;          /* design borderRadius.DEFAULT */
+  --r-control: 9999px;       /* every control/chip is a full pill */
+  --r-sm: 0.75rem;
+  --card-border: transparent;  /* cards have NO border — shadow only */
   --bg-canvas: #f9f7f2;
   --bg-surface: #ffffff;
   --bg-raised: #ffffff;
@@ -651,21 +663,25 @@
   --text-muted: #5d6656;
   --text-disabled: #a8ac9e;
   --text-on-accent: #ffffff;
-  --accent: #55684b;
-  --accent-hover: #46563d;
-  --accent-subtle: #e9efe2;
-  --accent-text: #4c5f43;
-  --brand: #7d9070;
+  --accent: #657a59;         /* design sage #7d9070 darkened to AA for white text */
+  --accent-hover: #55684b;
+  --accent-subtle: #eaf0e2;
+  --accent-text: #596b4f;
+  --brand: #7d9070;          /* full-strength design sage — graphics/dots only */
   --success: #2e7d4f; --success-subtle: #e7f3eb; --success-text: #256b44;
   --warning: #dc9a26; --warning-subtle: #f9f0dc; --warning-text: #8a6002;
   --critical: #b1502f; --critical-hover: #96431f; --critical-subtle: #f9e7de; --critical-text: #a44526;
   --info: #3a6b9e; --info-subtle: #e8eff7; --info-text: #33608f;
   --focus-ring: #55684b;
   --overlay: rgb(38 42 34 / 0.45);
-  --sidebar-bg: #fdfbf7; --sidebar-hover: #f1ede4; --sidebar-fg: #4d5347;
-  --sidebar-muted: #5d6656; --sidebar-active: #4c5f43; --sidebar-border: #e7e1d5;
-  --elevation-card: 0 8px 30px rgb(125 144 112 / 0.10);
-  --elevation-raised: 0 12px 40px rgb(125 144 112 / 0.18);
+  --sidebar-bg: #f9f7f2;     /* rail sits on the cream canvas, per the design */
+  --sidebar-hover: #efeadf; --sidebar-fg: #4d5347;
+  --sidebar-muted: #5d6656; --sidebar-active: #4c5f43;
+  --sidebar-active-bg: #657a59;   /* solid sage pill, white label */
+  --sidebar-active-fg: #ffffff;
+  --sidebar-border: #e7e1d5;
+  --elevation-card: 0 8px 30px rgb(125 144 112 / 0.08);   /* design-exact soft sage */
+  --elevation-raised: 0 12px 40px rgb(125 144 112 / 0.16);
 }
 
 /* J — CYBER (Stitch "Cyberpunk Dark"): charcoal, neon cyan/purple, mono data voice */
@@ -705,12 +721,19 @@
   background-attachment: fixed;
 }
 
-/* K — GLASS (Stitch "Vibrant Glassmorphism"): purple mesh, tonal frosted layers */
+/* K — GLASS (Stitch "Vibrant Glassmorphism" v2, owner-final candidate):
+   violet gradient canvas with a blurred mesh, REAL frosted white/5 cards,
+   glass chip buttons + glowing white/10 active-nav pill, emerald/amber/rose
+   status, one family (Onest — the source uses Poppins everywhere).
+   The hexes below are the SOLID tonal equivalents the AA proof runs
+   against; the scoped rules after this block layer the translucency. */
 [data-theme="option-glass"] {
   color-scheme: dark;
+  --font-stack-display: var(--font-onest), Onest, ui-sans-serif, system-ui, sans-serif;
   --r-card: 1.5rem;
+  --card-border: #47406b;         /* ≈ 1px white/10 over the canvas */
   --bg-canvas: #241b3e;
-  --bg-surface: #322a4e;
+  --bg-surface: #322a4e;          /* ≈ white/5 over the gradient */
   --bg-raised: #3a3159;
   --bg-hover: #413767;
   --border-subtle: #473d6b;
@@ -719,29 +742,63 @@
   --text-secondary: #cdc5e8;
   --text-muted: #b5acd9;
   --text-disabled: #7a7099;
-  --text-on-accent: #241b3e;
-  --accent: #f5f2ff;
-  --accent-hover: #ddd6f2;
+  --text-on-accent: #ffffff;      /* white text on glass chips */
+  --accent: #4d4470;              /* ≈ white/12 glass chip (translucent via scoped rule) */
+  --accent-hover: #574e7c;
   --accent-subtle: #3f3566;
   --accent-text: #cabcff;
   --brand: #a78bfa;
-  --success: #3ecf8e; --success-subtle: #1c3630; --success-text: #7be3b4;
+  --success: #34d399; --success-subtle: #1c3630; --success-text: #7be3b4;
   --warning: #fbbf24; --warning-subtle: #3b3018; --warning-text: #fcd34d;
-  --critical: #fb7185; --critical-hover: #fda4af; --critical-subtle: #43222b; --critical-text: #fda4af;
-  --info: #93c5fd; --info-subtle: #223052; --info-text: #a8cffe;
+  --critical: #d12f4f; --critical-hover: #c9304c; --critical-subtle: #43222b; --critical-text: #fda4af;
+  --info: #60a5fa; --info-subtle: #223052; --info-text: #93c5fd;
   --focus-ring: #cabcff;
   --overlay: rgb(20 14 40 / 0.60);
   --sidebar-bg: #2a2148; --sidebar-hover: #3a3161; --sidebar-fg: #d9d2ee;
-  --sidebar-muted: #b5acd9; --sidebar-active: #cabcff; --sidebar-border: #3d3465;
-  --elevation-card: 0 4px 30px rgb(0 0 0 / 0.22);
+  --sidebar-muted: #b5acd9; --sidebar-active: #cabcff;
+  --sidebar-active-bg: #453b6a;   /* ≈ white/10 pill (glow via scoped rule) */
+  --sidebar-active-fg: #ffffff;
+  --sidebar-border: #3d3465;
+  --elevation-card: 0 4px 30px rgb(0 0 0 / 0.18);
   --elevation-raised: 0 8px 40px rgb(0 0 0 / 0.35);
 }
-/* the mesh-gradient backdrop that sells the glass look */
+/* The glass look itself: gradient + mesh canvas, then real frosted layers.
+   Decorative overrides only — every text/background pair is AA-proven
+   against the solid equivalents above (see design/tokens.md). */
 [data-theme="option-glass"] {
+  background-color: #241b3e;
   background-image:
-    radial-gradient(at 40% 20%, rgb(147 51 234 / 0.32) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, rgb(59 130 246 / 0.28) 0px, transparent 50%),
-    radial-gradient(at 0% 55%, rgb(236 72 153 / 0.22) 0px, transparent 50%),
-    radial-gradient(at 80% 100%, rgb(79 70 229 / 0.30) 0px, transparent 50%);
+    radial-gradient(at 40% 20%, rgb(147 51 234 / 0.30) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgb(59 130 246 / 0.30) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgb(236 72 153 / 0.30) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, rgb(79 70 229 / 0.30) 0px, transparent 50%),
+    linear-gradient(135deg, #2d1b4e 0%, #1a1a2e 100%);
   background-attachment: fixed;
 }
+[data-theme="option-glass"] .bg-canvas { background-color: transparent; }
+[data-theme="option-glass"] .bg-surface,
+[data-theme="option-glass"] .bg-raised {
+  background-color: rgb(255 255 255 / 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+[data-theme="option-glass"] .bg-sidebar {
+  background-color: rgb(255 255 255 / 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+[data-theme="option-glass"] .bg-accent {
+  background-color: rgb(255 255 255 / 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgb(255 255 255 / 0.20);
+}
+[data-theme="option-glass"] .bg-accent-subtle { background-color: rgb(255 255 255 / 0.10); }
+[data-theme="option-glass"] .bg-hover { background-color: rgb(255 255 255 / 0.10); }
+[data-theme="option-glass"] .bg-sidebar-active-bg {
+  background-color: rgb(255 255 255 / 0.10);
+  border: 1px solid rgb(255 255 255 / 0.20);
+  box-shadow: 0 0 15px rgb(255 255 255 / 0.10);
+}
+[data-theme="option-glass"] .border-cardline { border-color: rgb(255 255 255 / 0.10); }
+[data-theme="option-glass"] .border-edge { border-color: rgb(255 255 255 / 0.10); }

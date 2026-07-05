@@ -161,11 +161,19 @@ export default function DashboardPage() {
                 aria-valuemin={0}
                 aria-valuemax={100}
                 className="relative size-28 shrink-0 rounded-pill"
-                style={{
-                  background: `conic-gradient(var(--success) 0 ${(zoneProgress.complete / zonesTotal) * 100}%, var(--warning) ${(zoneProgress.complete / zonesTotal) * 100}% ${((zoneProgress.complete + zoneProgress.inProgress) / zonesTotal) * 100}%, var(--bg-hover) ${((zoneProgress.complete + zoneProgress.inProgress) / zonesTotal) * 100}% 100%)`,
-                }}
               >
-                <span className="absolute inset-3 flex flex-col items-center justify-center rounded-pill bg-surface">
+                {/* True ring: centre is masked out, so translucent card surfaces
+                    (glass variant) show through instead of a painted hole. */}
+                <span
+                  aria-hidden
+                  className="absolute inset-0 rounded-pill"
+                  style={{
+                    background: `conic-gradient(var(--success) 0 ${(zoneProgress.complete / zonesTotal) * 100}%, var(--warning) ${(zoneProgress.complete / zonesTotal) * 100}% ${((zoneProgress.complete + zoneProgress.inProgress) / zonesTotal) * 100}%, var(--bg-hover) ${((zoneProgress.complete + zoneProgress.inProgress) / zonesTotal) * 100}% 100%)`,
+                    WebkitMaskImage: "radial-gradient(closest-side, transparent 77%, var(--accent) 78%)",
+                    maskImage: "radial-gradient(closest-side, transparent 77%, var(--accent) 78%)",
+                  }}
+                />
+                <span className="absolute inset-3 flex flex-col items-center justify-center rounded-pill">
                   <span className="font-display text-title-1 text-fg tabular-nums">{cleanedPct}%</span>
                   <span className="text-caption tracking-[0.06em] text-fg-muted uppercase">cleaned</span>
                 </span>
@@ -215,7 +223,7 @@ export default function DashboardPage() {
           {cameraZones.map((c) => (
             <div
               key={c.name}
-              className="relative flex aspect-video flex-col justify-between rounded-control bg-accent p-4 text-on-accent"
+              className="relative flex aspect-video flex-col justify-between rounded-card bg-accent p-4 text-on-accent"
             >
               <div className="flex items-center justify-between text-caption opacity-70">
                 <span className="flex items-center gap-1.5">
