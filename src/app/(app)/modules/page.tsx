@@ -8,6 +8,7 @@ import {
   Package,
   ShieldCheck,
   SprayCan,
+  Ticket,
   Users,
   Waves,
 } from "lucide-react";
@@ -50,6 +51,12 @@ export default function ModulesPage() {
           icon={SprayCan}
           name="CleaningOps"
           description="Sign-in/out, kiosk and QR check-in, rosters, timesheets, missed check-in alerts, consumables, tasks with photos, site audits."
+          status="enabled"
+        />
+        <ModuleCard
+          icon={Ticket}
+          name="Service desk"
+          description="Zendesk-style ticketing: concierge or anyone with the QR/link lodges photo tickets, cleaners attend and close with before/after proof, followers get the closure PDF."
           status="enabled"
         />
         <ModuleCard

@@ -17,6 +17,7 @@ import {
   ScanLine,
   ShieldCheck,
   SprayCan,
+  Ticket,
   Timer,
   Waves,
 } from "lucide-react";
@@ -41,6 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             title: "Core",
             items: [
               { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+              { label: "Service desk", icon: Ticket, href: "/service-desk" },
               { label: "Tasks & incidents", icon: ListChecks, disabled: true },
               { label: "Calendar", icon: CalendarDays, disabled: true },
               { label: "Floor plans", icon: Map, disabled: true, disabledLabel: "Pro" },

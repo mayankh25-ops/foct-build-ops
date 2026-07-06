@@ -28,6 +28,7 @@ All consume semantic tokens only (`npm run check:tokens` enforces).
 - `/timesheets` — summary metrics, variance badges, approve actions (toast feedback), supervisor notes card.
 - `/consumables` — metrics, approval-queue order cards, category chip filter, stock table with level meters.
 - `/modules` — access-separation explainer + ModuleCard grid (Enabled / Not enabled / Coming soon / Requires Pro tiers).
+- `/service-desk` + `/service-desk/new` — Service Desk ticketing preview (queue with saved views/SLA chips/detail drawer incl. before-after + followers + internal notes; <60s raise-ticket form with multi-location, follower emails, public QR/link intake). PRD + backend gating: `docs/modules/SERVICE_DESK_PRD.md`.
 - `/kiosk` — full-screen LIGHT kiosk (Deputy-style): live 72px clock, teal welcome pill, white keypad card, Welcome-by-name on known PIN (demo PINs 1234/2345/3456), huge check-in/out buttons, site note, success screen with auto-reset.
 - `/design-preview` — Stage 1 acceptance page, now including the new operational components; theme switcher + compare-all mode.
 
