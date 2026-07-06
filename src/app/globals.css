@@ -56,6 +56,10 @@
   --color-focus: var(--focus-ring);
   --color-overlay: var(--overlay);
 
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+
   --font-display: var(--font-stack-display);
   --font-body: var(--font-stack-body);
   --font-mono: var(--font-stack-mono);

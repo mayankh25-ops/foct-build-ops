@@ -52,6 +52,13 @@
   --card-border: var(--border-subtle);
   --sidebar-active-bg: var(--accent-subtle);
   --sidebar-active-fg: var(--sidebar-active);
+
+  /* Data-viz palette — charts/donuts/graphs draw from these, NOT from the
+     status ramp, so every theme colours its data in its own voice.
+     Defaults derive from the theme's accent family; themes may override. */
+  --chart-1: var(--accent);    /* primary series / "complete" */
+  --chart-2: var(--warning);   /* secondary series / "in progress" */
+  --chart-3: var(--bg-hover);  /* track / "pending" */
 }
 
 /* ---------------------------------------------------------------- */
@@ -668,10 +675,13 @@
   --accent-subtle: #eaf0e2;
   --accent-text: #596b4f;
   --brand: #7d9070;          /* full-strength design sage — graphics/dots only */
-  --success: #2e7d4f; --success-subtle: #e7f3eb; --success-text: #256b44;
+  /* Status + info tuned to the palette: success IS the sage family,
+     info is a stone teal — no off-palette green/blue anywhere. */
+  --success: #657a59; --success-subtle: #eaf0e2; --success-text: #596b4f;
   --warning: #dc9a26; --warning-subtle: #f9f0dc; --warning-text: #8a6002;
   --critical: #b1502f; --critical-hover: #96431f; --critical-subtle: #f9e7de; --critical-text: #a44526;
-  --info: #3a6b9e; --info-subtle: #e8eff7; --info-text: #33608f;
+  --info: #4e7d74; --info-subtle: #e4efec; --info-text: #3e685f;
+  --chart-1: #657a59; --chart-2: #7d9070; --chart-3: #e5e1d3;   /* sage ramp donut, per the design */
   --focus-ring: #55684b;
   --overlay: rgb(38 42 34 / 0.45);
   --sidebar-bg: #f9f7f2;     /* rail sits on the cream canvas, per the design */
@@ -752,6 +762,7 @@
   --warning: #fbbf24; --warning-subtle: #3b3018; --warning-text: #fcd34d;
   --critical: #d12f4f; --critical-hover: #c9304c; --critical-subtle: #43222b; --critical-text: #fda4af;
   --info: #60a5fa; --info-subtle: #223052; --info-text: #93c5fd;
+  --chart-1: #60a5fa; --chart-2: #fbbf24; --chart-3: #3f3566;   /* blue + amber ring, per the design */
   --focus-ring: #cabcff;
   --overlay: rgb(20 14 40 / 0.60);
   --sidebar-bg: #2a2148; --sidebar-hover: #3a3161; --sidebar-fg: #d9d2ee;

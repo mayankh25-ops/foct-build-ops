@@ -111,6 +111,7 @@ pairs are AA-verified below.
 | `--focus-ring` | 2px offset outline on `:focus-visible` (global rule in `globals.css`) | Theme accent; ≥ 3:1 on canvas + surface per WCAG 1.4.11 |
 | `--overlay` | Modal scrim | Neutral ink at 45 % (60 % black in Ink) |
 | `--elevation-card` / `--elevation-raised` | Shadows: very soft for cards, fuller for popovers/modals | HIG-style soft shadows; heavier + darker in Ink |
+| `--chart-1` / `--chart-2` / `--chart-3` | Data-viz palette (donut ring, chart series/track). `:root` defaults derive from the theme accent family (`--accent` / `--warning` / `--bg-hover`) so every theme colours its charts in its own voice; Nature overrides to its sage ramp, Glass to the source's blue/amber/track | Structural hook 2026-07-06; decorative graphics, not held to text AA |
 | `--card-border` | Card outline colour (`border-cardline` on the Card primitive only). Defaults to `--border-subtle`; Nature sets it `transparent` (borderless floating tiles), Glass sets a white/10 equivalent | Structural hook, `:root` default 2026-07-06 |
 
 ## Typography
@@ -695,14 +696,14 @@ text (WCAG 2.1 AA 1.4.3), 3:1 for non-text UI boundaries and focus indicators
 | `--text-on-accent` #ffffff | `--accent-hover` #55684b | 6.06:1 | 4.5:1 | ✅ | primary button :hover |
 | `--text-on-accent` #ffffff | `--critical` #b1502f | 5.18:1 | 4.5:1 | ✅ | destructive button |
 | `--text-on-accent` #ffffff | `--critical-hover` #96431f | 6.73:1 | 4.5:1 | ✅ | destructive button :hover |
-| `--success-text` #256b44 | `--success-subtle` #e7f3eb | 5.64:1 | 4.5:1 | ✅ | success pill |
-| `--success-text` #256b44 | `--bg-surface` #ffffff | 6.43:1 | 4.5:1 | ✅ | success inline text |
+| `--success-text` #596b4f | `--success-subtle` #eaf0e2 | 4.96:1 | 4.5:1 | ✅ | success pill |
+| `--success-text` #596b4f | `--bg-surface` #ffffff | 5.77:1 | 4.5:1 | ✅ | success inline text |
 | `--warning-text` #8a6002 | `--warning-subtle` #f9f0dc | 4.93:1 | 4.5:1 | ✅ | warning pill |
 | `--warning-text` #8a6002 | `--bg-surface` #ffffff | 5.59:1 | 4.5:1 | ✅ | warning inline text |
 | `--critical-text` #a44526 | `--critical-subtle` #f9e7de | 5.06:1 | 4.5:1 | ✅ | critical pill |
 | `--critical-text` #a44526 | `--bg-surface` #ffffff | 6.07:1 | 4.5:1 | ✅ | critical inline text |
-| `--info-text` #33608f | `--info-subtle` #e8eff7 | 5.64:1 | 4.5:1 | ✅ | info pill |
-| `--info-text` #33608f | `--bg-surface` #ffffff | 6.54:1 | 4.5:1 | ✅ | info inline text |
+| `--info-text` #3e685f | `--info-subtle` #e4efec | 5.33:1 | 4.5:1 | ✅ | info pill |
+| `--info-text` #3e685f | `--bg-surface` #ffffff | 6.27:1 | 4.5:1 | ✅ | info inline text |
 | `--accent-text` #596b4f | `--accent-subtle` #eaf0e2 | 4.96:1 | 4.5:1 | ✅ | selected/subtle accent |
 | `--sidebar-fg` #4d5347 | `--sidebar-bg` #f9f7f2 | 7.42:1 | 4.5:1 | ✅ | sidebar item text |
 | `--sidebar-fg` #4d5347 | `--sidebar-hover` #efeadf | 6.62:1 | 4.5:1 | ✅ | sidebar item :hover/active |

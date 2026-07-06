@@ -168,7 +168,7 @@ export default function DashboardPage() {
                   aria-hidden
                   className="absolute inset-0 rounded-pill"
                   style={{
-                    background: `conic-gradient(var(--success) 0 ${(zoneProgress.complete / zonesTotal) * 100}%, var(--warning) ${(zoneProgress.complete / zonesTotal) * 100}% ${((zoneProgress.complete + zoneProgress.inProgress) / zonesTotal) * 100}%, var(--bg-hover) ${((zoneProgress.complete + zoneProgress.inProgress) / zonesTotal) * 100}% 100%)`,
+                    background: `conic-gradient(var(--chart-1) 0 ${(zoneProgress.complete / zonesTotal) * 100}%, var(--chart-2) ${(zoneProgress.complete / zonesTotal) * 100}% ${((zoneProgress.complete + zoneProgress.inProgress) / zonesTotal) * 100}%, var(--chart-3) ${((zoneProgress.complete + zoneProgress.inProgress) / zonesTotal) * 100}% 100%)`,
                     WebkitMaskImage: "radial-gradient(closest-side, transparent 77%, var(--accent) 78%)",
                     maskImage: "radial-gradient(closest-side, transparent 77%, var(--accent) 78%)",
                   }}
@@ -180,12 +180,12 @@ export default function DashboardPage() {
               </div>
               <ul className="flex flex-col gap-2.5 text-body-sm">
                 <li className="flex items-center gap-2">
-                  <span aria-hidden className="size-2 rounded-pill bg-success" />
+                  <span aria-hidden className="size-2 rounded-pill bg-chart-1" />
                   <span className="text-fg-secondary">Complete</span>
                   <span className="ml-auto font-mono text-fg">{zoneProgress.complete}</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span aria-hidden className="size-2 rounded-pill bg-warning" />
+                  <span aria-hidden className="size-2 rounded-pill bg-chart-2" />
                   <span className="text-fg-secondary">In progress</span>
                   <span className="ml-auto font-mono text-fg">{zoneProgress.inProgress}</span>
                 </li>
