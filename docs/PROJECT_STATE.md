@@ -28,7 +28,7 @@ All consume semantic tokens only (`npm run check:tokens` enforces).
 - `/timesheets` — summary metrics, variance badges, approve actions (toast feedback), supervisor notes card.
 - `/consumables` — metrics, approval-queue order cards, category chip filter, stock table with level meters.
 - `/modules` — access-separation explainer + ModuleCard grid (Enabled / Not enabled / Coming soon / Requires Pro tiers).
-- `/service-desk` + `/service-desk/new` — Service Desk ticketing preview (queue with saved views/SLA chips/detail drawer incl. before-after + followers + internal notes; <60s raise-ticket form with multi-location, follower emails, public QR/link intake). PRD + backend gating: `docs/modules/SERVICE_DESK_PRD.md`.
+- `/service-desk` + `/service-desk/new` — Service Desk ticketing, **FUNCTIONAL client-side** (Zustand store + localStorage; full lifecycle create→assign→attend→close-with-proof-photos→reopen→CSAT, internal notes, live follower emails, real photo compression + thumbnails, live saved-view counts, reset-demo; e2e-verified with Playwright incl. reload persistence). Notifications/PDF are simulated timeline events until backend stages. PRD + gating: `docs/modules/SERVICE_DESK_PRD.md`.
 - `/kiosk` — full-screen LIGHT kiosk (Deputy-style): live 72px clock, teal welcome pill, white keypad card, Welcome-by-name on known PIN (demo PINs 1234/2345/3456), huge check-in/out buttons, site note, success screen with auto-reset.
 - `/design-preview` — Stage 1 acceptance page, now including the new operational components; theme switcher + compare-all mode.
 
@@ -44,6 +44,7 @@ None. No Supabase yet by design (DECISIONS.md) — first migration lands in Stag
 3. Drop `GeneralSans-Variable.woff2` into `public/fonts/general-sans/` when obtainable (no code change).
 
 ## HANDOVER (half-finished / risky)
+- **Service Desk is the ONLY functional module** (client-side store, `foct-sd-demo-v1` in localStorage — clears with browser data; notifications/PDF simulated). All other screens remain static demos.
 - **All Stage 1.5 screens are static demos.** Buttons like "Approve", "Reassign zone", "Add shift" show toasts or nothing — no persistence. Kiosk PINs are a hardcoded demo map in `kiosk-screen.tsx`. Do not mistake these for working features.
 - **Sidebar is desktop-only** (`hidden lg:flex`); no mobile nav drawer yet.
 - **Roster week view fabricates non-today days** from today's data (visual demo of the board layout only).
