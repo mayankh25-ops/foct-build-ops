@@ -13,7 +13,7 @@ import type { Authored, TokenMap } from "@/lib/theme-builder";
 /** Demo tenancy scope (Stage 2 replaces with real org/building ids). */
 export const DEMO_ORG = "foct-cleaning";
 export const DEMO_BUILDING = "aurora-on-collins";
-export const DEFAULT_THEME = "option-sunset";
+export const DEFAULT_THEME = "option-nature"; // owner decision 2026-07-07
 
 export interface CustomTheme {
   id: string;

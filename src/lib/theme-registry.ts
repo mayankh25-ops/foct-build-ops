@@ -13,26 +13,24 @@ export interface BuiltinTheme {
 }
 
 export const BUILTIN_THEMES: BuiltinTheme[] = [
+  // Final set (owner decision 2026-07-07): Nature is the product default;
+  // Analytics/Blush/Slate/Sunset kept as selectable built-ins alongside the
+  // five originals. Violet/Nightfall/Garden/Cyber/Glass deleted.
+  { slug: "option-nature", name: "Nature", tagline: "The default — cream, sage, borderless soft tiles", kind: "finalist" },
   { slug: "graphite", name: "Graphite", tagline: "Cool neutrals, ink buttons, teal signals", kind: "permanent" },
   { slug: "harbour", name: "Harbour", tagline: "Ink-navy text, deep FOCT teal", kind: "permanent" },
   { slug: "eucalypt", name: "Eucalypt", tagline: "Warm neutrals, muted green — ESG clients", kind: "permanent" },
   { slug: "sandstone", name: "Sandstone", tagline: "Warm stone, restrained bronze — heritage strata", kind: "permanent" },
   { slug: "ink", name: "Ink", tagline: "The dark theme — night concierge and kiosks", kind: "permanent", dark: true },
-  { slug: "option-nature", name: "Nature", tagline: "Finalist — cream, sage, borderless soft tiles", kind: "finalist" },
-  { slug: "option-glass", name: "Glass", tagline: "Finalist — violet mesh, real frosted layers", kind: "finalist", dark: true },
-  { slug: "option-sunset", name: "Sunset", tagline: "Review default — cream, plum ink, burnt orange", kind: "review" },
-  { slug: "option-analytics", name: "Analytics", tagline: "Blue-grey neutrals, data green", kind: "review" },
-  { slug: "option-blush", name: "Blush", tagline: "Ivory, green ink, soft pink wells", kind: "review" },
-  { slug: "option-slate", name: "Slate", tagline: "Professional blue-grey, brick accents", kind: "review" },
-  { slug: "option-violet", name: "Violet", tagline: "Lilac canvas, deep violet", kind: "review" },
-  { slug: "option-nightfall", name: "Nightfall", tagline: "Navy ink, sky wells", kind: "review" },
-  { slug: "option-garden", name: "Garden", tagline: "Warm paper, leaf green", kind: "review" },
-  { slug: "option-cyber", name: "Cyber", tagline: "Near-black, neon cyan, mono display voice", kind: "review", dark: true },
+  { slug: "option-analytics", name: "Analytics", tagline: "Blue-grey neutrals, data green", kind: "permanent" },
+  { slug: "option-blush", name: "Blush", tagline: "Ivory, green ink, soft pink wells", kind: "permanent" },
+  { slug: "option-slate", name: "Slate", tagline: "Professional blue-grey, brick accents", kind: "permanent" },
+  { slug: "option-sunset", name: "Sunset", tagline: "Cream, plum ink, burnt orange", kind: "permanent" },
 ];
 
 export const themeKindLabel: Record<BuiltinTheme["kind"], { label: string; tone: "accent" | "success" | "neutral" }> = {
   permanent: { label: "Built-in", tone: "neutral" },
-  finalist: { label: "Finalist", tone: "success" },
+  finalist: { label: "Default", tone: "success" },
   review: { label: "Review variant", tone: "neutral" },
 };
 

@@ -88,7 +88,7 @@ export default function RootLayout({
   return (
     <html
       lang="en-AU"
-      data-theme="option-sunset"
+      data-theme="option-nature"
       suppressHydrationWarning
       className={`${bricolage.variable} ${onest.variable} ${robotoMono.variable} ${monaSans.variable} ${dmSans.variable} ${inter.variable} ${roboto.variable}`}
     >

@@ -27,6 +27,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import { TopBar } from "@/components/ui/top-bar";
 import { fontSlotStyle, ThemeRuntimeStyles } from "@/components/theme-runtime";
 import { building } from "@/lib/demo-data";
+import { BUILTIN_THEMES } from "@/lib/theme-registry";
 import { DEFAULT_THEME, useThemeRehydrate, useThemeStore } from "@/lib/theme-store";
 
 /**
@@ -46,7 +47,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const uploadedFonts = useThemeStore((s) => s.uploadedFonts);
 
   const custom = customThemes.find((t) => t.slug === assigned);
-  const dataTheme = custom ? custom.baseTheme : (assigned ?? DEFAULT_THEME);
+  // stale persisted slugs (e.g. a since-deleted review variant) fall back
+  const isKnown = custom || BUILTIN_THEMES.some((t) => t.slug === assigned);
+  const dataTheme = custom ? custom.baseTheme : isKnown ? assigned : DEFAULT_THEME;
 
   return (
     <div
