@@ -47,6 +47,36 @@ const robotoMono = localFont({
   display: "swap",
 });
 
+/* Approved-library alternates for the Theme Builder's font slots.
+   preload:false — they download only when a theme actually selects them. */
+const monaSans = localFont({
+  src: [{ path: "../fonts/mona-sans/mona-sans-latin-wght-normal.woff2", weight: "200 900", style: "normal" }],
+  variable: "--font-mona-sans",
+  display: "swap",
+  preload: false,
+});
+
+const dmSans = localFont({
+  src: [{ path: "../fonts/dm-sans/dm-sans-latin-wght-normal.woff2", weight: "100 900", style: "normal" }],
+  variable: "--font-dm-sans",
+  display: "swap",
+  preload: false,
+});
+
+const inter = localFont({
+  src: [{ path: "../fonts/inter/inter-latin-opsz-normal.woff2", weight: "100 900", style: "normal" }],
+  variable: "--font-inter",
+  display: "swap",
+  preload: false,
+});
+
+const roboto = localFont({
+  src: [{ path: "../fonts/roboto/roboto-latin-wght-normal.woff2", weight: "100 900", style: "normal" }],
+  variable: "--font-roboto",
+  display: "swap",
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: "FOCT BuildingOps",
   description: "Building operations for premium high-rise buildings.",
@@ -60,7 +90,7 @@ export default function RootLayout({
       lang="en-AU"
       data-theme="option-sunset"
       suppressHydrationWarning
-      className={`${bricolage.variable} ${onest.variable} ${robotoMono.variable}`}
+      className={`${bricolage.variable} ${onest.variable} ${robotoMono.variable} ${monaSans.variable} ${dmSans.variable} ${inter.variable} ${roboto.variable}`}
     >
       <body>{children}</body>
     </html>

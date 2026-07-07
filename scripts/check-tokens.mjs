@@ -11,7 +11,13 @@ import { dirname, join, relative } from "node:path";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const TARGETS = [join(root, "src/components"), join(root, "src/app"), join(root, "src/lib")];
-const ALLOW = new Set(["src/app/globals.css"]); // token mapping layer only
+const ALLOW = new Set([
+  "src/app/globals.css", // token mapping layer only
+  // Theme Builder data layer — these files GENERATE theme token values
+  // (same class as src/styles/tokens.css), they don't style components:
+  "src/lib/wcag.js",
+  "src/lib/theme-builder.ts",
+]);
 
 const RULES = [
   { name: "raw hex colour", re: /#[0-9a-fA-F]{3,8}\b/ },

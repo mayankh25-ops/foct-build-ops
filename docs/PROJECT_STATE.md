@@ -3,7 +3,8 @@
 > Read this first, every session. Update it before ending any session.
 
 ## Current stage
-**Stage 1.8 — variant exploration narrowed: owner declared I · Nature and K · Glass the FINALISTS (2026-07-06); both rebuilt to copy their Stitch sources in full styling (tile anatomy, fonts, real glass translucency), other variants kept but frozen.**
+**Stage 1.5 Theme Builder: SHIPPED (2026-07-07).** Appearance settings (`/settings/appearance`): all 15 themes as live preview cards applyable per building; custom theme creator (8 hex tokens, rest derived + contrast-nudged, WCAG AA validation with warn-on-save via the SAME shared pair list as the build gate); typography slots + woff2 upload; persisted in `foct-theme-builder-v1` mirroring the authored-but-not-yet-run `supabase/migrations/0001_theme_engine.sql` (+pgTAP test). Variant status unchanged underneath: Nature & Glass finalists, other option-* frozen, final pick still open.
+**NEXT GATE: owner's module priority order (checklist presented 2026-07-07) — no functionality coding until confirmed.**
 History: Stage 1 → 1.5 premium upgrade + screens → 1.6 TailAdmin restyle (indigo) → 1.7 owner-reference restyle (ink `#101828` buttons + teal `#0e7569` links, uppercase micro-labels, dashboard hero with LiveClock/weather/donut/activity feed/locked camera wall, per-shift timesheets, LIGHT Deputy-style kiosk) → 1.8 variant rounds (DECISIONS.md 2026-07-03 → 2026-07-06 entries): A Analytics, B Blush, C Slate, D Sunset (**current review default**), E Violet, G Nightfall, H Garden, and the three Google-Stitch-derived I Nature, J Cyber (mono display + neon glow), K Glass (violet mesh). F Cobalt deleted at owner direction. Fonts: Bricolage Grotesque + Onest + Roboto Mono. Live preview artifact with PALETTE switcher: https://claude.ai/code/artifact/ccade632-a546-4a3a-a90b-75d0039def15 (regenerate with scratchpad assemble script). **Gate: owner picks one variant → it folds into the permanent default, all other `option-*` blocks are deleted. Do not start Stage 2 until then.**
 
 ## What exists (sessions of 2026-07-02)
@@ -39,7 +40,8 @@ All consume semantic tokens only (`npm run check:tokens` enforces).
 None. No Supabase yet by design (DECISIONS.md) — first migration lands in Stage 2.
 
 ## Exact next steps
-1. Owner reviews the screens (`npm install && npm run dev`, start at `/`). **Gate.**
+1. Owner answers the module-priority checklist → record order here → propose adjusted end-to-end stage plan. **Gate.**
+2. Owner's final palette pick (Nature vs Glass) also still open.
 2. On approval: Stage 2 — Supabase (Sydney), core tables + RLS + pgTAP isolation tests, seed Aurora on Collins; then re-bind these screens to real data.
 3. Drop `GeneralSans-Variable.woff2` into `public/fonts/general-sans/` when obtainable (no code change).
 

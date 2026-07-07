@@ -13,6 +13,8 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { contrast } from "../src/lib/wcag.js";
+import { PAIRS } from "../src/lib/wcag-pairs.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const css = readFileSync(join(root, "src/styles/tokens.css"), "utf8");
@@ -51,57 +53,10 @@ function resolve(theme, value, depth = 0) {
   return value;
 }
 
-// ---- WCAG math ----------------------------------------------------------
-function hexToRgb(hex) {
-  const h = hex.replace("#", "");
-  return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
-}
-function luminance(hex) {
-  const [r, g, b] = hexToRgb(hex).map((c) =>
-    c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
-  );
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-function contrast(a, b) {
-  const [l1, l2] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-  return (l1 + 0.05) / (l2 + 0.05);
-}
+// ---- WCAG math: shared with the Theme Builder UI (src/lib/wcag.js) ------
 
 // ---- the pairs the system actually renders ------------------------------
-const TEXT_BGS = ["bg-canvas", "bg-surface", "bg-raised", "bg-hover"];
-const PAIRS = [
-  // body text on every background it can sit on
-  ...["text-primary", "text-secondary", "text-muted"].flatMap((fg) =>
-    TEXT_BGS.map((bg) => ({ fg, bg, min: 4.5, use: "body text" }))
-  ),
-  // accent-coloured text (links, active nav) on page backgrounds
-  ...["bg-canvas", "bg-surface"].map((bg) => ({ fg: "accent-text", bg, min: 4.5, use: "link text" })),
-  // text on solid accent (primary button) incl. hover
-  { fg: "text-on-accent", bg: "accent", min: 4.5, use: "primary button" },
-  { fg: "text-on-accent", bg: "accent-hover", min: 4.5, use: "primary button :hover" },
-  // destructive button
-  { fg: "text-on-accent", bg: "critical", min: 4.5, use: "destructive button" },
-  { fg: "text-on-accent", bg: "critical-hover", min: 4.5, use: "destructive button :hover" },
-  // status pill text on its tinted background, and on plain surface
-  ...["success", "warning", "critical", "info"].flatMap((s) => [
-    { fg: `${s}-text`, bg: `${s}-subtle`, min: 4.5, use: `${s} pill` },
-    { fg: `${s}-text`, bg: "bg-surface", min: 4.5, use: `${s} inline text` },
-  ]),
-  // accent text on accent-subtle (selected nav item, subtle badges)
-  { fg: "accent-text", bg: "accent-subtle", min: 4.5, use: "selected/subtle accent" },
-  // sidebar rail (dark in every theme)
-  { fg: "sidebar-fg", bg: "sidebar-bg", min: 4.5, use: "sidebar item text" },
-  { fg: "sidebar-fg", bg: "sidebar-hover", min: 4.5, use: "sidebar item :hover/active" },
-  { fg: "sidebar-muted", bg: "sidebar-bg", min: 4.5, use: "sidebar secondary text" },
-  { fg: "sidebar-active", bg: "sidebar-bg", min: 4.5, use: "sidebar active accent text" },
-  { fg: "sidebar-active", bg: "sidebar-hover", min: 4.5, use: "sidebar active accent on fill" },
-  { fg: "sidebar-active-fg", bg: "sidebar-active-bg", min: 4.5, use: "sidebar active pill" },
-  // non-text UI: input borders and focus rings (WCAG 1.4.11, 3:1)
-  { fg: "border-strong", bg: "bg-surface", min: 3.0, use: "input border (non-text)" },
-  { fg: "border-strong", bg: "bg-canvas", min: 3.0, use: "input border (non-text)" },
-  { fg: "focus-ring", bg: "bg-canvas", min: 3.0, use: "focus ring (non-text)" },
-  { fg: "focus-ring", bg: "bg-surface", min: 3.0, use: "focus ring (non-text)" },
-];
+// PAIRS shared with the Theme Builder validator: src/lib/wcag-pairs.js
 
 const md = process.argv.includes("--md");
 let failures = 0;

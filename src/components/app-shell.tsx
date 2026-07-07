@@ -21,19 +21,41 @@ import {
   Timer,
   Waves,
 } from "lucide-react";
+import { Palette } from "lucide-react";
 import { Sidebar } from "@/components/ui/sidebar";
 import { ToastProvider } from "@/components/ui/toast";
 import { TopBar } from "@/components/ui/top-bar";
+import { fontSlotStyle, ThemeRuntimeStyles } from "@/components/theme-runtime";
 import { building } from "@/lib/demo-data";
+import { DEFAULT_THEME, useThemeRehydrate, useThemeStore } from "@/lib/theme-store";
 
 /**
- * AppShell. Theme comes from the building's assignment in Stage 2; the design
- * review renders Graphite (owner-reference look, DECISIONS.md 2026-07-03).
- * Nav mirrors module packaging: locked modules stay visible but polished-off.
+ * AppShell. The rendered theme comes from the building's assignment in the
+ * Theme Builder store (Stage 2 moves it to building_theme_assignments).
+ * SSR renders the default; the persisted assignment applies post-hydration.
+ * Custom themes render as data-theme={base} + data-custom-theme={slug} so
+ * they inherit the base's radius/decorations while recolouring (see
+ * theme-runtime.tsx). Nav mirrors module packaging: locked modules stay
+ * visible but polished-off.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
+  useThemeRehydrate();
+  const assigned = useThemeStore((s) => s.assignedTheme);
+  const customThemes = useThemeStore((s) => s.customThemes);
+  const fontSlots = useThemeStore((s) => s.fontSlots);
+  const uploadedFonts = useThemeStore((s) => s.uploadedFonts);
+
+  const custom = customThemes.find((t) => t.slug === assigned);
+  const dataTheme = custom ? custom.baseTheme : (assigned ?? DEFAULT_THEME);
+
   return (
-    <div data-theme="option-sunset" className="flex h-screen overflow-hidden bg-canvas text-fg">
+    <div
+      data-theme={dataTheme}
+      data-custom-theme={custom?.slug}
+      style={fontSlotStyle(fontSlots, uploadedFonts)}
+      className="flex h-screen overflow-hidden bg-canvas text-fg"
+    >
+      <ThemeRuntimeStyles />
       <Sidebar
         buildingName={building.name}
         className="hidden lg:flex"
@@ -76,6 +98,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               { label: "Camera analytics", icon: Cctv, disabled: true, disabledLabel: "Pro" },
               { label: "Building automation", icon: Waves, disabled: true, disabledLabel: "Pro" },
             ],
+          },
+          {
+            title: "Settings",
+            items: [{ label: "Appearance", icon: Palette, href: "/settings/appearance" }],
           },
         ]}
         footer={
