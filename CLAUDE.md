@@ -1,7 +1,7 @@
 # FOCT BuildingOps — Project Memory
 
 ## What this product is
-Multi-tenant SaaS for Australian high-rise building operations. Melbourne CBD premium building feel. First commercial module: **CleaningOps** (cleaner sign-in/out, kiosk + QR check-in, rosters, missed check-in alerts, timesheets, variance reports, consumables/chemical ordering, cleaning tasks with photos, site audit forms). All other modules (ConciergeDesk, Parcels, ResidentRequests, Contractors, FloorPlans, BuildingCalendar, Audits, Integrations, Robots/Cameras/BMS) exist ONLY as registered-but-disabled modules with polished "Coming soon" / "Not enabled for this building" states. Never overbuild them. Never let a disabled module look broken.
+Multi-tenant SaaS for Australian high-rise building operations. Melbourne CBD premium building feel. First commercial module: **CleaningOps** (cleaner sign-in/out, kiosk + QR check-in, rosters, missed check-in alerts, timesheets, variance reports, consumables/chemical ordering, cleaning tasks with photos, site audit forms). Second module: **Service Desk** (added 2026-07-06 at owner direction — Zendesk-style ticketing: concierge/cleaners/anyone with the site QR-link lodges photo tickets, cleaners attend and close with before/after proof, follower emails get closure notifications + PDF; PRD at docs/modules/SERVICE_DESK_PRD.md; functional client-side today, backend gated on Stage 2). All other modules (ConciergeDesk, Parcels, ResidentRequests, Contractors, FloorPlans, BuildingCalendar, Audits, Integrations, Robots/Cameras/BMS) exist ONLY as registered-but-disabled modules with polished "Coming soon" / "Not enabled for this building" states. Never overbuild them. Never let a disabled module look broken.
 
 ## Tech stack (do not deviate without writing to docs/DECISIONS.md)
 - Next.js (App Router), TypeScript strict
@@ -33,11 +33,15 @@ themes, building_theme_assignments
 The product must look design-agency built: Stripe / Linear / Apple calibre. Calm, generous spacing, clear hierarchy, premium commercial-building feel.
 
 ### Token architecture
-- Semantic tokens only in components: `--bg-canvas`, `--bg-surface`, `--bg-raised`, `--border-subtle`, `--text-primary`, `--text-secondary`, `--text-muted`, `--accent`, `--accent-hover`, `--accent-subtle`, `--success`, `--warning`, `--critical`, `--focus-ring`.
-- Themes are token SETS applied via `data-theme="<name>"` on the app root. A building admin picks a theme per building/client; switching themes must never require touching component code.
+- Semantic tokens only in components: `--bg-canvas`, `--bg-surface`, `--bg-raised`, `--border-subtle`, `--text-primary`, `--text-secondary`, `--text-muted`, `--accent`, `--accent-hover`, `--accent-subtle`, `--success`, `--warning`, `--critical`, `--focus-ring` — plus (Stage 1.8 additions) structural hooks `--card-border`, `--sidebar-active-bg/fg` and the data-viz family `--chart-1/2/3` (charts colour from the theme's own palette, never the shared status ramp).
+- Themes are token SETS applied via `data-theme="<name>"` on the app root. A building admin picks a theme per building/client; switching themes must never require touching component code. Per-theme overrides may also change radius, elevation, and `--font-stack-*` (a theme can switch its display face).
 - Neutrals referenced against real systems: Apple HIG semantic colours (systemBackground/label hierarchy), Radix Colors scales (Slate/Sand/Sage), Figma/Material tonal ramps. Document the reference next to each token in `design/tokens.md`.
+- **Theme Builder (Stage 1.5, owner-directed 2026-07-06):** Appearance settings let an org admin apply any built-in theme per building, duplicate one into a custom theme (hex editing of canvas/surface/text/accent/status tokens with live preview + WCAG AA validation on save), and set display/body/mono font slots incl. org-scoped custom woff2 uploads. Custom themes persist per organisation/building in `themes` / `building_theme_assignments` (SQL authored in `supabase/migrations/`, executes at Stage 2; until then a store adapter with the identical row shape persists locally).
 
-### The 5 shipping themes (fixed names, tune values in Stage 1)
+### The current theme set (as in `src/styles/tokens.css` today)
+The 5 permanent themes below **plus 10 review-only variants** from the 2026-07-03→07-06 exploration: `option-analytics`, `option-blush`, `option-slate`, `option-sunset` (current review default), `option-violet`, `option-nightfall`, `option-garden`, `option-nature`, `option-cyber`, `option-glass`. Owner declared **Nature and Glass the finalists** (rebuilt to copy their Stitch sources in full — borderless sage tiles / real frosted glass). The eventual winner folds into the permanent default and the other `option-*` blocks are deleted before Stage 2; do not delete or rename any of them before that decision.
+
+### The 5 permanent themes (fixed names, tune values in Stage 1)
 1. **Graphite** (default) — warm off-white canvas (#FAFAF8 family / Radix Sand 1-2), charcoal-slate text (Radix Slate 12), deep graphite-blue accent. Apple HIG neutral discipline.
 2. **Harbour** — light grey canvas, ink-navy text, deep teal accent (FOCT signal teal #00B4A6 desaturated for UI, full strength for brand moments only).
 3. **Eucalypt** — warm neutral canvas, muted green accent (Radix Sage/Grass low-chroma), for ESG/green-building clients.
