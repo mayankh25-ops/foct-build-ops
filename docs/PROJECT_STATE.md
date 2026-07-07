@@ -4,7 +4,18 @@
 
 ## Current stage
 **Stage 1.5 Theme Builder: SHIPPED (2026-07-07).** Appearance settings (`/settings/appearance`): all 15 themes as live preview cards applyable per building; custom theme creator (8 hex tokens, rest derived + contrast-nudged, WCAG AA validation with warn-on-save via the SAME shared pair list as the build gate); typography slots + woff2 upload; persisted in `foct-theme-builder-v1` mirroring the authored-but-not-yet-run `supabase/migrations/0001_theme_engine.sql` (+pgTAP test). Variant status unchanged underneath: Nature & Glass finalists, other option-* frozen, final pick still open.
-**NEXT GATE: owner's module priority order (checklist presented 2026-07-07) — no functionality coding until confirmed.**
+**OWNER MODULE PRIORITY ORDER (recorded 2026-07-07, verbatim intent):**
+1. **Service Desk + Kiosk sign-in (Expo app or React, Android, QR sign-in) + Timesheets** — "most important is complete flow for ticket system and cleaners kiosk sign in and timesheet making automatic"
+2. Concierge Desk — for raising tickets
+3. Calendar
+4. Tasks & incidents — cleaners work them, concierge can also assign
+5. Site audits
+6. Rosters (full management UX; minimal roster data lands earlier because automatic timesheets need rostered hours for variance)
+7. Contractors
+8. Floor plans
+9. Parcels
+10. Automation set
+**NEXT GATE: owner confirms the adjusted end-to-end stage plan (proposed 2026-07-07) — no functionality coding until confirmed.**
 History: Stage 1 → 1.5 premium upgrade + screens → 1.6 TailAdmin restyle (indigo) → 1.7 owner-reference restyle (ink `#101828` buttons + teal `#0e7569` links, uppercase micro-labels, dashboard hero with LiveClock/weather/donut/activity feed/locked camera wall, per-shift timesheets, LIGHT Deputy-style kiosk) → 1.8 variant rounds (DECISIONS.md 2026-07-03 → 2026-07-06 entries): A Analytics, B Blush, C Slate, D Sunset (**current review default**), E Violet, G Nightfall, H Garden, and the three Google-Stitch-derived I Nature, J Cyber (mono display + neon glow), K Glass (violet mesh). F Cobalt deleted at owner direction. Fonts: Bricolage Grotesque + Onest + Roboto Mono. Live preview artifact with PALETTE switcher: https://claude.ai/code/artifact/ccade632-a546-4a3a-a90b-75d0039def15 (regenerate with scratchpad assemble script). **Gate: owner picks one variant → it folds into the permanent default, all other `option-*` blocks are deleted. Do not start Stage 2 until then.**
 
 ## What exists (sessions of 2026-07-02)
