@@ -41,6 +41,7 @@ All consume semantic tokens only (`npm run check:tokens` enforces).
 - `/consumables` — metrics, approval-queue order cards, category chip filter, stock table with level meters.
 - `/modules` — access-separation explainer + ModuleCard grid (Enabled / Not enabled / Coming soon / Requires Pro tiers).
 - `/service-desk` + `/service-desk/new` — Service Desk ticketing, **FUNCTIONAL client-side** (Zustand store + localStorage; full lifecycle create→assign→attend→close-with-proof-photos→reopen→CSAT, internal notes, live follower emails, real photo compression + thumbnails, live saved-view counts, reset-demo; e2e-verified with Playwright incl. reload persistence). Notifications/PDF are simulated timeline events until backend stages. PRD + gating: `docs/modules/SERVICE_DESK_PRD.md`.
+- `/support` + `/support/new` + `/support/jobs` — Service Desk MOBILE surface (owner's Claude Design handoff; own `support` theme, red/ink). FUNCTIONAL: same Zustand store as the desktop queue — phone-created tickets appear on `/service-desk` (e2e-proven). Tap-only 2-step create with camera photos; cleaner attend/complete with after-photo gate.
 - `/kiosk` — full-screen LIGHT kiosk (Deputy-style): live 72px clock, teal welcome pill, white keypad card, Welcome-by-name on known PIN (demo PINs 1234/2345/3456), huge check-in/out buttons, site note, success screen with auto-reset.
 - `/design-preview` — Stage 1 acceptance page, now including the new operational components; theme switcher + compare-all mode.
 

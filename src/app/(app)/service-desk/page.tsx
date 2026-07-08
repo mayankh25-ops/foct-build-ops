@@ -10,6 +10,7 @@ import {
   Plus,
   QrCode,
   RotateCcw,
+  Smartphone,
   ThumbsDown,
   ThumbsUp,
   Ticket,
@@ -526,10 +527,16 @@ export default function ServiceDeskPage() {
             >
               <RotateCcw aria-hidden /> Reset demo
             </Button>
+            <Link
+              href="/support"
+              className="inline-flex h-11 items-center gap-2 rounded-control border border-edge bg-surface px-4 text-body-sm font-medium text-fg transition-colors hover:bg-hover [&_svg]:size-4"
+            >
+              <Smartphone aria-hidden /> Mobile app
+            </Link>
             <Button
               variant="secondary"
               onClick={() => {
-                const url = `${window.location.origin}/service-desk/new`;
+                const url = `${window.location.origin}/support/new`;
                 void navigator.clipboard?.writeText(url).catch(() => {});
                 toast({ tone: "neutral", title: "Intake link copied", description: "Anyone with the link or QR can lodge — no login" });
               }}
