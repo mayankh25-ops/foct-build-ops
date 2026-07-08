@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "check:tokens": "node scripts/check-tokens.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
-    "export:themes": "node scripts/export-theme-tokens.mjs"
+    "export:themes": "node scripts/export-theme-tokens.mjs",
+    "build:apply-sql": "sh -c 'cat supabase/migrations/0000_platform_foundation.sql supabase/migrations/0001_theme_engine.sql supabase/seed.sql > supabase/APPLY_STAGE2.sql.tmp && (echo \"-- GENERATED one-paste apply \u2014 regenerate with npm run build:apply-sql\"; cat supabase/APPLY_STAGE2.sql.tmp) > supabase/APPLY_STAGE2.sql && rm supabase/APPLY_STAGE2.sql.tmp'"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.2.10",
@@ -25,6 +26,8 @@
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-toast": "^1.2.14",
+    "@supabase/supabase-js": "^2.110.1",
+    "@tanstack/react-query": "^5.101.2",
     "geist": "^1.7.2",
     "lucide-react": "^1.23.0",
     "next": "^15.3.4",

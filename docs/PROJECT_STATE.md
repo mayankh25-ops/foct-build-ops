@@ -15,7 +15,7 @@
 8. Floor plans
 9. Parcels
 10. Automation set
-**NEXT GATE: owner confirms the adjusted end-to-end stage plan (proposed 2026-07-07) — no functionality coding until confirmed.**
+**Stage 2 platform foundation: AUTHORED + LOCALLY VERIFIED (2026-07-07); awaiting the owner's one-paste apply.** Plan confirmed; PWA-first kiosk locked in; Supabase project supplied (Sydney) but unreachable from this build env (proxy blocks *.supabase.co) → migrations validated on a local PG16 cluster (23/23 RLS isolation assertions pass). Owner applies `supabase/APPLY_STAGE2.sql` in the SQL editor then runs `supabase/tests/isolation_check.sql` (see supabase/README.md). Next: Stage 3 — Service Desk store→Supabase swap + public intake + notifications + PDF.
 History: Stage 1 → 1.5 premium upgrade + screens → 1.6 TailAdmin restyle (indigo) → 1.7 owner-reference restyle (ink `#101828` buttons + teal `#0e7569` links, uppercase micro-labels, dashboard hero with LiveClock/weather/donut/activity feed/locked camera wall, per-shift timesheets, LIGHT Deputy-style kiosk) → 1.8 variant rounds (DECISIONS.md 2026-07-03 → 2026-07-06 entries): A Analytics, B Blush, C Slate, D Sunset (**current review default**), E Violet, G Nightfall, H Garden, and the three Google-Stitch-derived I Nature, J Cyber (mono display + neon glow), K Glass (violet mesh). F Cobalt deleted at owner direction. Fonts: Bricolage Grotesque + Onest + Roboto Mono. Live preview artifact with PALETTE switcher: https://claude.ai/code/artifact/ccade632-a546-4a3a-a90b-75d0039def15 (regenerate with scratchpad assemble script). **Gate: owner picks one variant → it folds into the permanent default, all other `option-*` blocks are deleted. Do not start Stage 2 until then.**
 
 ## What exists (sessions of 2026-07-02)
@@ -48,13 +48,13 @@ All consume semantic tokens only (`npm run check:tokens` enforces).
 `check:tokens` ✓, `check:contrast` ✓ (37 pairs × 15 themes — 5 permanent + 10 review variants; checker now merges `:root` structural-hook defaults), `tsc` ✓, `next build` ✓, Nature + Glass finalist rebuilds screenshotted and visually verified (borderless sage tiles / frosted mesh glass, true ring donut). New structural hooks: `--card-border` (+ `border-cardline` on Card), `--sidebar-active-bg/fg` (active-nav pill) — defaults keep every other theme pixel-identical.
 
 ## Migrations applied
-None. No Supabase yet by design (DECISIONS.md) — first migration lands in Stage 2.
+Authored + locally verified, pending owner's dashboard apply: `0000_platform_foundation.sql`, `0001_theme_engine.sql`, `seed.sql` (see supabase/README.md).
 
 ## Exact next steps
-1. Owner answers the module-priority checklist → record order here → propose adjusted end-to-end stage plan. **Gate.**
-2. Owner's final palette pick (Nature vs Glass) also still open.
-2. On approval: Stage 2 — Supabase (Sydney), core tables + RLS + pgTAP isolation tests, seed Aurora on Collins; then re-bind these screens to real data.
-3. Drop `GeneralSans-Variable.woff2` into `public/fonts/general-sans/` when obtainable (no code change).
+1. **Owner applies `supabase/APPLY_STAGE2.sql`** in the SQL editor + runs `tests/isolation_check.sql` (expect 23 ok-notices) — supabase/README.md. **Gate for anything that touches live data.**
+2. Stage 3 (Service Desk end-to-end): swap the Service Desk store internals to Supabase (screens unchanged), public QR intake route, Storage photos, Realtime, Resend email adapter, PDF job, concierge ticket surface.
+3. Stage 4: kiosk PWA (offline queue) + automatic timesheets + minimal roster CRUD + missed check-in alerts.
+4. Then the owner's order: Calendar → Tasks & incidents → Site audits → full Rosters → Contractors → Floor plans → Parcels → Automation.
 
 ## HANDOVER (half-finished / risky)
 - **Service Desk is the ONLY functional module** (client-side store, `foct-sd-demo-v1` in localStorage — clears with browser data; notifications/PDF simulated). All other screens remain static demos.

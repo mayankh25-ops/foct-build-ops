@@ -87,10 +87,7 @@ alter table public.building_theme_assignments enable row level security;
 
 -- read: anyone who can access the building (the app must render its theme).
 create policy bta_read on public.building_theme_assignments
-  for select using (app.is_org_member((select b.owner_org_id from public.buildings b where b.id = building_id))
-                    or exists (select 1 from public.building_organisations bo
-                               where bo.building_id = building_theme_assignments.building_id
-                                 and app.is_org_member(bo.organisation_id)));
+  for select using (app.can_access_building(building_id));
 
 -- write: building managers/owner org only.
 create policy bta_write on public.building_theme_assignments
@@ -108,3 +105,6 @@ end $$ language plpgsql;
 
 create trigger themes_touch before update on public.themes
   for each row execute function public.touch_updated_at();
+
+-- grants (0000's grant-all predates these tables)
+grant all on public.themes, public.building_theme_assignments to authenticated, service_role;
