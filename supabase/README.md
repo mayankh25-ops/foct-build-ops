@@ -44,7 +44,9 @@ psql -f supabase/tests/isolation_check.sql   # expect 23 ok-notices
 ```
 
 ## Stage 3 apply (Service Desk backend)
-1. SQL Editor → paste **`supabase/APPLY_STAGE3.sql`** → Run (idempotent).
+1. SQL Editor → paste **`supabase/APPLY_STAGE3.sql`** → Run (idempotent; includes
+   `0003_anon_hardening.sql`, which strips Supabase's default anon table grants
+   down to the single intake RPC — required for the test's strict anon check).
 2. New query → paste **`supabase/tests/sd_isolation_check.sql`** → Run.
    Expect **15 `ok:` notices** (anon QR-intake RPC works; internal notes
    invisible to concierge AND building owner; rival org sees nothing).
