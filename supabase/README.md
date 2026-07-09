@@ -43,6 +43,17 @@ psql -f supabase/seed.sql
 psql -f supabase/tests/isolation_check.sql   # expect 23 ok-notices
 ```
 
+## Stage 3 apply (Service Desk backend)
+1. SQL Editor → paste **`supabase/APPLY_STAGE3.sql`** → Run (idempotent).
+2. New query → paste **`supabase/tests/sd_isolation_check.sql`** → Run.
+   Expect **15 `ok:` notices** (anon QR-intake RPC works; internal notes
+   invisible to concierge AND building owner; rival org sees nothing).
+3. To go LIVE in the app on your machine/Vercel: set `NEXT_PUBLIC_SD_LIVE=1`
+   in `.env.local`, set a password for `priya@foct.demo` in Authentication →
+   Users, sign in at `/sign-in`, then open `/service-desk`. The public intake
+   (`/support/new`, QR form) lodges through the token RPC without a login.
+   Until the flag is set, all screens keep the local demo store.
+
 ## App wiring
 `.env.local` (gitignored) carries `NEXT_PUBLIC_SUPABASE_URL` +
 `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see `.env.example`); the browser client is

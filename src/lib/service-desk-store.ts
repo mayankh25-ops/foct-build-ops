@@ -17,6 +17,7 @@ import {
   type SdPriority,
   type SdTicket,
 } from "@/lib/service-desk-data";
+import { fetchLiveTickets, lodgeViaIntake, SD_LIVE_FLAG, sdLive } from "@/lib/sd-supabase";
 
 export interface SdTicketLive extends SdTicket {
   /** Downscaled data-URL thumbnails for tickets created/closed in this browser. */
@@ -57,6 +58,9 @@ function nextRef(tickets: SdTicketLive[]): string {
 
 interface SdState {
   tickets: SdTicketLive[];
+  /** "off" = local demo store; "on" = rows loaded from Supabase (NEXT_PUBLIC_SD_LIVE=1). */
+  liveState: "off" | "loading" | "on" | "error";
+  initLive: () => Promise<void>;
   createTicket: (input: NewTicketInput) => string;
   assign: (ref: string, cleaner: string) => void;
   attend: (ref: string, by: string) => void;
@@ -109,6 +113,19 @@ export const useSdStore = create<SdState>()(
   persist(
     (set) => ({
       tickets: sdTickets as SdTicketLive[],
+      liveState: "off",
+
+      initLive: async () => {
+        if (!SD_LIVE_FLAG) return;
+        set({ liveState: "loading" });
+        try {
+          const tickets = await fetchLiveTickets();
+          set({ tickets, liveState: "on" });
+        } catch (e) {
+          console.warn("sd live load failed — staying on local demo data", e);
+          set({ liveState: "error" });
+        }
+      },
 
       createTicket: (input) => {
         let ref = "";
@@ -145,10 +162,16 @@ export const useSdStore = create<SdState>()(
           };
           return { tickets: [ticket, ...s.tickets] };
         });
+        if (SD_LIVE_FLAG) {
+          void lodgeViaIntake(input)
+            .then(() => useSdStore.getState().initLive()) // server ref becomes truth
+            .catch((e) => console.warn("sd live lodge failed", e));
+        }
         return ref;
       },
 
-      assign: (ref, cleaner) =>
+      assign: (ref, cleaner) => {
+        if (SD_LIVE_FLAG) void sdLive.assign(ref, cleaner).catch((e) => console.warn(e));
         set((s) => ({
           tickets: update(s.tickets, ref, (t) =>
             withEvent(
@@ -156,9 +179,11 @@ export const useSdStore = create<SdState>()(
               { who: "Priya Sharma", what: `Assigned ${cleaner}`, kind: "status" }
             )
           ),
-        })),
+        }));
+      },
 
-      attend: (ref, by) =>
+      attend: (ref, by) => {
+        if (SD_LIVE_FLAG) void sdLive.attend(ref, by).catch((e) => console.warn(e));
         set((s) => ({
           tickets: update(s.tickets, ref, (t) =>
             withEvent(
@@ -171,9 +196,11 @@ export const useSdStore = create<SdState>()(
               { who: by, what: "Attending — status In progress", kind: "status" }
             )
           ),
-        })),
+        }));
+      },
 
-      close: (ref, { by, note, photoUrls }) =>
+      close: (ref, { by, note, photoUrls }) => {
+        if (SD_LIVE_FLAG) void sdLive.close(ref, { by, note, photoUrls }).catch((e) => console.warn(e));
         set((s) => ({
           tickets: update(s.tickets, ref, (t) => {
             let next: SdTicketLive = {
@@ -197,9 +224,11 @@ export const useSdStore = create<SdState>()(
             });
             return next;
           }),
-        })),
+        }));
+      },
 
-      reopen: (ref, by) =>
+      reopen: (ref, by) => {
+        if (SD_LIVE_FLAG) void sdLive.reopen(ref, by).catch((e) => console.warn(e));
         set((s) => ({
           tickets: update(s.tickets, ref, (t) =>
             withEvent(
@@ -207,16 +236,20 @@ export const useSdStore = create<SdState>()(
               { who: by, what: "Reopened — issue not fixed. Manager alerted (simulated)", kind: "status" }
             )
           ),
-        })),
+        }));
+      },
 
-      addInternalNote: (ref, by, text) =>
+      addInternalNote: (ref, by, text) => {
+        if (SD_LIVE_FLAG) void sdLive.addInternalNote(ref, by, text).catch((e) => console.warn(e));
         set((s) => ({
           tickets: update(s.tickets, ref, (t) =>
             withEvent(t, { who: by, what: text, internal: true, kind: "note" })
           ),
-        })),
+        }));
+      },
 
-      addFollower: (ref, email) =>
+      addFollower: (ref, email) => {
+        if (SD_LIVE_FLAG) void sdLive.addFollower(ref, email).catch((e) => console.warn(e));
         set((s) => ({
           tickets: update(s.tickets, ref, (t) =>
             t.followers.includes(email)
@@ -226,17 +259,21 @@ export const useSdStore = create<SdState>()(
                   { who: "Priya Sharma", what: `Added follower ${email}`, kind: "notify" }
                 )
           ),
-        })),
+        }));
+      },
 
-      removeFollower: (ref, email) =>
+      removeFollower: (ref, email) => {
+        if (SD_LIVE_FLAG) void sdLive.removeFollower(ref, email).catch((e) => console.warn(e));
         set((s) => ({
           tickets: update(s.tickets, ref, (t) => ({
             ...t,
             followers: t.followers.filter((f) => f !== email),
           })),
-        })),
+        }));
+      },
 
-      setCsat: (ref, rating) =>
+      setCsat: (ref, rating) => {
+        if (SD_LIVE_FLAG) void sdLive.setCsat(ref, rating).catch((e) => console.warn(e));
         set((s) => ({
           tickets: update(s.tickets, ref, (t) =>
             withEvent({ ...t, csat: rating }, {
@@ -245,7 +282,8 @@ export const useSdStore = create<SdState>()(
               kind: "csat",
             })
           ),
-        })),
+        }));
+      },
 
       resetDemo: () => set({ tickets: sdTickets as SdTicketLive[] }),
     }),
@@ -266,6 +304,7 @@ export function useSdRehydrate() {
     if (!done.current) {
       done.current = true;
       void useSdStore.persist.rehydrate();
+      void useSdStore.getState().initLive(); // no-op unless NEXT_PUBLIC_SD_LIVE=1
     }
   }, []);
 }
