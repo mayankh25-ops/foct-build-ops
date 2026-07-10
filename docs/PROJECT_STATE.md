@@ -26,7 +26,7 @@ History: Stage 1 → 1.5 premium upgrade + screens → 1.6 TailAdmin restyle (in
 - `design/tokens.md`: every token with reference, shadcn-name mapping, and **generated** WCAG tables — 37 pairs × 5 themes, 185 rows, all passing (`npm run check:contrast`, `--md` to regenerate).
 
 ### Fonts
-**Owner-approved library only** (CLAUDE.md → Typography, updated 2026-07-06). Shipping: **Bricolage Grotesque** (headings + big bold numerals incl. kiosk clock, 700–800), **Onest** (body 400/500, from the owner's Datify reference), Roboto Mono (table timestamps/IDs only; "SF Mono" Apple fallback). All self-hosted in `src/fonts/`. Review build opens in `option-sunset` (warm) instead of grey graphite. Alternates on npm: Mona Sans, DM Sans, Finlandica, Radio Canada, Hubot Sans, Manrope. Retired font files still in repo — safe to prune.
+**REWRITTEN 2026-07-10 (owner direction — Power BI / Zendesk / Freshdesk reference; see CLAUDE.md → Typography).** UI text (display + body) = the **native system font stack** (Zendesk's exact stack: SF on Mac, Segoe UI on Windows, Roboto on Android — zero webfont downloads for text). Numbers (metric values, clocks, callouts) = **Barlow 600–800** (free DIN-alike per Power BI's DIN data labels; `--font-stack-numeric` / `font-numeric` utility; "DIN Alternate" macOS fallback next in stack). Roboto Mono for timestamps/IDs only. Segoe UI / SF / DIN are proprietary — never bundle; the stack IS the implementation. Bricolage, Onest, Mona Sans, DM Sans, Inter, Roboto remain vendored in `src/fonts/` as Theme Builder alternates (preload:false). Theme Builder default slots: system-ui / system-ui / roboto-mono.
 
 ### Components — `src/components/ui/`
 Stage 1: button, input, select, badge (Badge + StatusPill), card, table, tabs, modal, toast, empty-state, coming-soon-state, sidebar, top-bar, page-header.
@@ -42,11 +42,18 @@ All consume semantic tokens only (`npm run check:tokens` enforces).
 - `/modules` — access-separation explainer + ModuleCard grid (Enabled / Not enabled / Coming soon / Requires Pro tiers).
 - `/service-desk` + `/service-desk/new` — Service Desk ticketing, **FUNCTIONAL client-side** (Zustand store + localStorage; full lifecycle create→assign→attend→close-with-proof-photos→reopen→CSAT, internal notes, live follower emails, real photo compression + thumbnails, live saved-view counts, reset-demo; e2e-verified with Playwright incl. reload persistence). Notifications/PDF are simulated timeline events until backend stages. PRD + gating: `docs/modules/SERVICE_DESK_PRD.md`.
 - `/support` + `/support/new` + `/support/jobs` — Service Desk MOBILE surface (owner's Claude Design handoff; own `support` theme, red/ink). FUNCTIONAL: same Zustand store as the desktop queue — phone-created tickets appear on `/service-desk` (e2e-proven). Tap-only 2-step create with camera photos; cleaner attend/complete with after-photo gate.
+- `/scope` — **Scope module (added 2026-07-10, owner's "Aurora Scope Explorer" upload)**: contract-scope analytics over `src/lib/scope-data.ts` (dataset reconciles to 393.0 h/wk, 222+16 items, 60.0/46.5 day totals; renamed to demo cast). Five tabs: Overview / Scope explorer (entity pills + frequency filter) / Weekly roster (expandable shift drawers) / Day gantt (weekday-weekend toggle, hover tooltips, night-security band) / Periodic planner (12-month due grid). Read-only; every colour is a theme token — the red frequency ramp is color-mix'd from `--critical` so it re-tints per theme.
 - `/kiosk` — full-screen LIGHT kiosk (Deputy-style): live 72px clock, teal welcome pill, white keypad card, Welcome-by-name on known PIN (demo PINs 1234/2345/3456), huge check-in/out buttons, site note, success screen with auto-reset.
 - `/design-preview` — Stage 1 acceptance page, now including the new operational components; theme switcher + compare-all mode.
 
 ### Verified this session
 `check:tokens` ✓, `check:contrast` ✓ (37 pairs × 15 themes — 5 permanent + 10 review variants; checker now merges `:root` structural-hook defaults), `tsc` ✓, `next build` ✓, Nature + Glass finalist rebuilds screenshotted and visually verified (borderless sage tiles / frosted mesh glass, true ring donut). New structural hooks: `--card-border` (+ `border-cardline` on Card), `--sidebar-active-bg/fg` (active-nav pill) — defaults keep every other theme pixel-identical.
+
+### Session 2026-07-10 — fonts overhaul + Scope module + Subzero theme
+- Typography system swapped to system-stack UI text + Barlow DIN-style numerals (see Fonts section above; DECISIONS 2026-07-10).
+- `subzero` theme added (12th tokens.css block, red-on-black from the owner's Scope design; in BUILTIN_THEMES, contrast gate now 37 pairs × 12 themes, all AA).
+- `/scope` module shipped and screenshot-verified under Nature AND Subzero (whole portal re-tints; Nature remains default via theme-store).
+- Gates all green: `check:tokens` ✓ · `check:contrast` (37×12) ✓ · `tsc` ✓ · `next build` ✓ (19 static routes). Preview artifact refreshed at the same URL (13 pages, Subzero in the palette switcher).
 
 ## Migrations applied
 Authored + locally verified, pending owner's dashboard apply: `0000_platform_foundation.sql`, `0001_theme_engine.sql`, `seed.sql` (see supabase/README.md).

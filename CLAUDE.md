@@ -1,7 +1,7 @@
 # FOCT BuildingOps — Project Memory
 
 ## What this product is
-Multi-tenant SaaS for Australian high-rise building operations. Melbourne CBD premium building feel. First commercial module: **CleaningOps** (cleaner sign-in/out, kiosk + QR check-in, rosters, missed check-in alerts, timesheets, variance reports, consumables/chemical ordering, cleaning tasks with photos, site audit forms). Second module: **Service Desk** (added 2026-07-06 at owner direction — Zendesk-style ticketing: concierge/cleaners/anyone with the site QR-link lodges photo tickets, cleaners attend and close with before/after proof, follower emails get closure notifications + PDF; PRD at docs/modules/SERVICE_DESK_PRD.md; functional client-side today, backend gated on Stage 2). All other modules (ConciergeDesk, Parcels, ResidentRequests, Contractors, FloorPlans, BuildingCalendar, Audits, Integrations, Robots/Cameras/BMS) exist ONLY as registered-but-disabled modules with polished "Coming soon" / "Not enabled for this building" states. Never overbuild them. Never let a disabled module look broken.
+Multi-tenant SaaS for Australian high-rise building operations. Melbourne CBD premium building feel. First commercial module: **CleaningOps** (cleaner sign-in/out, kiosk + QR check-in, rosters, missed check-in alerts, timesheets, variance reports, consumables/chemical ordering, cleaning tasks with photos, site audit forms). Second module: **Service Desk** (added 2026-07-06 at owner direction — Zendesk-style ticketing: concierge/cleaners/anyone with the site QR-link lodges photo tickets, cleaners attend and close with before/after proof, follower emails get closure notifications + PDF; PRD at docs/modules/SERVICE_DESK_PRD.md; functional client-side today, backend gated on Stage 2). Third module: **Scope** (added 2026-07-10 at owner direction — contract-scope explorer for the cleaning agreement, ported from the owner's "Aurora Scope Explorer" design: Overview / Scope explorer / Weekly roster / Day gantt / Periodic planner over the agreement dataset in src/lib/scope-data.ts; read-only analytics, all colour from theme tokens incl. a color-mix frequency ramp off `--critical`). All other modules (ConciergeDesk, Parcels, ResidentRequests, Contractors, FloorPlans, BuildingCalendar, Audits, Integrations, Robots/Cameras/BMS) exist ONLY as registered-but-disabled modules with polished "Coming soon" / "Not enabled for this building" states. Never overbuild them. Never let a disabled module look broken.
 
 ## Tech stack (do not deviate without writing to docs/DECISIONS.md)
 - Next.js (App Router), TypeScript strict
@@ -39,7 +39,7 @@ The product must look design-agency built: Stripe / Linear / Apple calibre. Calm
 - **Theme Builder (Stage 1.5, owner-directed 2026-07-06):** Appearance settings let an org admin apply any built-in theme per building, duplicate one into a custom theme (hex editing of canvas/surface/text/accent/status tokens with live preview + WCAG AA validation on save), and set display/body/mono font slots incl. org-scoped custom woff2 uploads. Custom themes persist per organisation/building in `themes` / `building_theme_assignments` (SQL authored in `supabase/migrations/`, executes at Stage 2; until then a store adapter with the identical row shape persists locally).
 
 ### The current theme set (FINAL — owner decision 2026-07-07)
-Ten built-in themes ship: the 5 permanent themes below plus the kept exploration variants **`option-analytics` (A), `option-blush` (B), `option-slate` (C), `option-sunset` (D)** — and **`option-nature` (Nature) is THE product default** (set in layout + theme-store, applied per building via the Theme Builder). Nature: cream canvas, sage accents, borderless soft tiles, pill controls, Onest display voice. Violet/Nightfall/Garden/Cyber/Glass were deleted per the same decision — do not resurrect them.
+Eleven built-in themes ship: the 5 permanent themes below plus the kept exploration variants **`option-analytics` (A), `option-blush` (B), `option-slate` (C), `option-sunset` (D)**, plus **`subzero`** (added 2026-07-10, owner-directed: red-on-black dark theme from the owner's Aurora Scope Explorer design — near-black #0B0C0E canvas, graphite surfaces, #DE192A signal red; the dark sibling of the `support` mobile theme) — and **`option-nature` (Nature) is THE product default** (set in layout + theme-store, applied per building via the Theme Builder). Nature: cream canvas, sage accents, borderless soft tiles, pill controls. Violet/Nightfall/Garden/Cyber/Glass were deleted per the 2026-07-07 decision — do not resurrect them. (`support` also exists in tokens.css but is the Service Desk mobile surface's own theme, not a Theme Builder built-in.)
 
 ### The 5 permanent themes (fixed names, tune values in Stage 1)
 1. **Graphite** (default) — warm off-white canvas (#FAFAF8 family / Radix Sand 1-2), charcoal-slate text (Radix Slate 12), deep graphite-blue accent. Apple HIG neutral discipline.
@@ -50,16 +50,17 @@ Ten built-in themes ship: the 5 permanent themes below plus the kept exploration
 
 All five share identical semantic token names, spacing, radius, and status colours (amber warning, restrained red critical, muted green success) — only the ramp values change.
 
-### Typography (owner-approved font library — updated 2026-07-05, applies to ALL work)
-Only ever use fonts from this approved library — never pick fonts outside it:
-- **Bricolage Grotesque · Onest · Finlandica · Mona Sans · Roboto / Roboto Mono · Radio Canada · Hubot Sans** (Bricolage + Onest added 2026-07-06 at owner direction — "bold, big, clean and clear, designer-recommended")
-- Reference set: **DM Sans** (clean with character) · **Satoshi** (aesthetic, not loud) · **Inter** (neutral, built for screens) · **Manrope** (data-heavy UI) · **General Sans** (elegant geometric)
-- Satoshi and General Sans are Fontshare-hosted (not bundleable from this build env); the rest are on npm via fontsource.
+### Typography (owner direction 2026-07-07 — Power BI / Zendesk / Freshdesk reference; applies to ALL work)
+**Current shipping system:**
+- **UI text (display + body): the NATIVE system font stack** — exactly the Zendesk/Freshdesk approach: `system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif`. Renders as SF on Apple, Segoe UI on Windows, Roboto on Android. Zero webfont downloads for text; hierarchy comes from weight (semibold for emphasis, like Zendesk).
+- **Numbers (metric values, clocks, callouts): DIN-style face like Power BI's data labels** — **Barlow** 600–800 (free DIN-flavoured grotesque, self-hosted; macOS-native `"DIN Alternate"` next in the stack). Exposed as `--font-stack-numeric` / `font-numeric`; Segoe UI and DIN themselves are proprietary and must never be bundled — the stack IS the implementation.
+- **Roboto Mono** for table timestamps/IDs only ("SF Mono" Apple fallback).
 
-Rules:
-- **Big numbers get big & thick** (bold display weights); small text stays regular/medium — never thin large numerals, never bold walls of small text.
+Approved library (Theme Builder selectable alternates; never pick outside it): System UI stack · Barlow · Bricolage Grotesque · Onest · Finlandica · Mona Sans · Roboto / Roboto Mono · Radio Canada · Hubot Sans; reference set DM Sans · Satoshi · Inter · Manrope · General Sans (Fontshare ones not bundleable).
+
+Rules (unchanged):
+- **Big numbers get big & thick**; small text stays regular/medium — never thin large numerals, never bold walls of small text.
 - Body line height 1.4–1.6 always.
-- Current shipping pairing: **Bricolage Grotesque** (headings + big numbers, 700–800 — display voice), **Onest** (body/UI, 400/500 — from the owner's Datify reference), **Roboto Mono** (table timestamps/IDs only, "SF Mono" as Apple-device fallback). Big display numerals use the display face, not mono.
 - Type scale documented in design/tokens.md; no ad-hoc font sizes in components.
 
 ### Layout rules
