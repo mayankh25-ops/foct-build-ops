@@ -9,13 +9,24 @@
 -- public intake RPC (SECURITY DEFINER, so it needs no table grants).
 -- =============================================================================
 
--- take back everything the project defaults handed out
-revoke all on all tables    in schema public from anon;
-revoke all on all sequences in schema public from anon;
+-- take back everything the project defaults handed out (also from PUBLIC —
+-- anon inherits anything granted to the PUBLIC pseudo-role)
+revoke all on all tables    in schema public from anon, public;
+revoke all on all sequences in schema public from anon, public;
 
 -- and stop future tables from being auto-granted to anon
 alter default privileges for role postgres in schema public revoke all on tables    from anon;
 alter default privileges for role postgres in schema public revoke all on sequences from anon;
+
+-- belt-and-braces: revoke per-table explicitly (grantor-independent when run
+-- as the table owner), so a silently no-op'd blanket revoke can't leave gaps
+do $$
+declare t record;
+begin
+  for t in select tablename from pg_tables where schemaname = 'public' loop
+    execute format('revoke all on public.%I from anon', t.tablename);
+  end loop;
+end $$;
 
 -- anon keeps exactly one capability: lodging a ticket via the intake token
 grant usage on schema public to anon;
