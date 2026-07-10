@@ -26,6 +26,7 @@ export const BUILTIN_THEMES: BuiltinTheme[] = [
   { slug: "option-blush", name: "Blush", tagline: "Ivory, green ink, soft pink wells", kind: "permanent" },
   { slug: "option-slate", name: "Slate", tagline: "Professional blue-grey, brick accents", kind: "permanent" },
   { slug: "option-sunset", name: "Sunset", tagline: "Cream, plum ink, burnt orange", kind: "permanent" },
+  { slug: "subzero", name: "Subzero", tagline: "Red on black — the Scope explorer look", kind: "permanent", dark: true },
 ];
 
 export const themeKindLabel: Record<BuiltinTheme["kind"], { label: string; tone: "accent" | "success" | "neutral" }> = {
@@ -48,6 +49,18 @@ export interface FontOption {
 }
 
 export const FONT_OPTIONS: FontOption[] = [
+  {
+    id: "system-ui",
+    name: "System UI (SF / Segoe)",
+    stack: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif',
+    slots: ["display", "body"],
+  },
+  {
+    id: "barlow",
+    name: "Barlow (DIN-style numerals)",
+    stack: 'var(--font-barlow), Barlow, "DIN Alternate", "Segoe UI", system-ui, sans-serif',
+    slots: ["display", "mono"],
+  },
   {
     id: "bricolage",
     name: "Bricolage Grotesque",
@@ -92,4 +105,4 @@ export const FONT_OPTIONS: FontOption[] = [
   },
 ];
 
-export const DEFAULT_SLOTS = { display: "bricolage", body: "onest", mono: "roboto-mono" } as const;
+export const DEFAULT_SLOTS = { display: "system-ui", body: "system-ui", mono: "roboto-mono" } as const;

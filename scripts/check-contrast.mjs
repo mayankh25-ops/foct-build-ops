@@ -20,7 +20,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const css = readFileSync(join(root, "src/styles/tokens.css"), "utf8");
 
 // ---- parse theme blocks -------------------------------------------------
-const THEMES = ["graphite", "harbour", "eucalypt", "sandstone", "ink", "option-analytics", "option-blush", "option-slate", "option-sunset", "option-nature", "support"];
+const THEMES = ["graphite", "harbour", "eucalypt", "sandstone", "ink", "option-analytics", "option-blush", "option-slate", "option-sunset", "option-nature", "support", "subzero"];
 const themes = {};
 const rootVars = {}; // :root-only defaults (structural hooks like --card-border)
 const blockRe = /((?::root|\[data-theme="[a-z-]+"\])(?:\s*,\s*(?::root|\[data-theme="[a-z-]+"\]))*)\s*\{([^}]*)\}/g;

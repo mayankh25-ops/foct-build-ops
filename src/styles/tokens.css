@@ -645,3 +645,66 @@
   --elevation-card: 0 1px 2px rgb(14 15 17 / 0.04), 0 2px 8px rgb(14 15 17 / 0.04);
   --elevation-raised: 0 10px 30px rgb(14 15 17 / 0.18);
 }
+
+/* SUBZERO — red on black (owner's "Aurora Scope Explorer" dark design,
+   2026-07-10). The dark sibling of `support`: near-black ground, graphite
+   surfaces, the same #de192a signal red. Ships as a selectable built-in;
+   Nature stays the product default. */
+[data-theme="subzero"] {
+  color-scheme: dark;
+
+  --bg-canvas: #0b0c0e;
+  --bg-surface: #16181c;
+  --bg-raised: #1b1e23;
+  --bg-hover: #22262c;
+
+  --border-subtle: #22262c;
+  --border-strong: #6a737f;
+
+  --text-primary: #f2f4f6;
+  --text-secondary: #b7bfc8;
+  --text-muted: #939da9;
+  --text-disabled: #6a737f;
+  --text-on-accent: #ffffff;
+
+  --accent: #de192a;           /* the design's signal red — 4.91:1 with white */
+  --accent-hover: #c4111f;
+  --accent-subtle: #33161a;
+  --accent-text: #f4737e;
+
+  --brand: #de192a;
+
+  --success: #3dbe85;
+  --success-subtle: #122c22;
+  --success-text: #7cd8ac;
+  --warning: #e0a33b;
+  --warning-subtle: #33270f;
+  --warning-text: #e9b95c;
+  --critical: #c4111f;
+  --critical-hover: #a30c18;
+  --critical-subtle: #3a161a;
+  --critical-text: #f58f98;
+  --info: #7fb1e8;
+  --info-subtle: #16283c;
+  --info-text: #9cc3ee;
+
+  --focus-ring: #f0525f;
+
+  --overlay: rgb(0 0 0 / 0.60);
+
+  --sidebar-bg: #101114;
+  --sidebar-hover: #1b1e23;
+  --sidebar-fg: #f2f4f6;
+  --sidebar-muted: #98a1ac;
+  --sidebar-active: #f4737e;
+  --sidebar-active-bg: #de192a;
+  --sidebar-active-fg: #ffffff;
+  --sidebar-border: #22262c;
+
+  --chart-1: #c6cad1;
+  --chart-2: #de192a;
+  --chart-3: #22262c;
+
+  --elevation-card: 0 1px 2px rgb(0 0 0 / 0.30), 0 2px 8px rgb(0 0 0 / 0.30);
+  --elevation-raised: 0 4px 12px rgb(0 0 0 / 0.40), 0 16px 40px rgb(0 0 0 / 0.50);
+}

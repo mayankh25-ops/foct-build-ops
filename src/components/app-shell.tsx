@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Cctv,
   ClipboardList,
+  FileSearch,
   Landmark,
   LayoutDashboard,
   LayoutGrid,
@@ -77,6 +78,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {
             title: "Cleaning",
             items: [
+              { label: "Scope", icon: FileSearch, href: "/scope" },
               { label: "Roster", icon: ClipboardList, href: "/roster" },
               { label: "Kiosk & QR", icon: ScanLine, href: "/kiosk" },
               { label: "Timesheets", icon: Timer, href: "/timesheets" },
