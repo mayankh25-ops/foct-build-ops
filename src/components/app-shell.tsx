@@ -69,6 +69,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             items: [
               { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
               { label: "Service desk", icon: Ticket, href: "/service-desk" },
+              { label: "Scope", icon: FileSearch, href: "/scope" },
               { label: "Tasks & incidents", icon: ListChecks, disabled: true },
               { label: "Calendar", icon: CalendarDays, disabled: true },
               { label: "Floor plans", icon: Map, disabled: true, disabledLabel: "Pro" },
@@ -78,7 +79,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {
             title: "Cleaning",
             items: [
-              { label: "Scope", icon: FileSearch, href: "/scope" },
               { label: "Roster", icon: ClipboardList, href: "/roster" },
               { label: "Kiosk & QR", icon: ScanLine, href: "/kiosk" },
               { label: "Timesheets", icon: Timer, href: "/timesheets" },
