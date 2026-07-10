@@ -45,6 +45,7 @@ alter table public.themes enable row level security;
 
 -- read: built-ins are visible to every authenticated user; customs only to
 -- members of the owning org.
+drop policy if exists themes_read on public.themes;
 create policy themes_read on public.themes
   for select using (
     is_builtin
@@ -52,12 +53,14 @@ create policy themes_read on public.themes
   );
 
 -- write: only members of the owning org, never on built-ins.
+drop policy if exists themes_insert on public.themes;
 create policy themes_insert on public.themes
   for insert with check (
     not is_builtin
     and org_id = app.current_org_id()
   );
 
+drop policy if exists themes_update on public.themes;
 create policy themes_update on public.themes
   for update using (
     not is_builtin and app.is_org_member(org_id)
@@ -65,6 +68,7 @@ create policy themes_update on public.themes
     not is_builtin and org_id = app.current_org_id()
   );
 
+drop policy if exists themes_delete on public.themes;
 create policy themes_delete on public.themes
   for delete using (
     not is_builtin and app.is_org_member(org_id)
@@ -86,10 +90,12 @@ create table if not exists public.building_theme_assignments (
 alter table public.building_theme_assignments enable row level security;
 
 -- read: anyone who can access the building (the app must render its theme).
+drop policy if exists bta_read on public.building_theme_assignments;
 create policy bta_read on public.building_theme_assignments
   for select using (app.can_access_building(building_id));
 
 -- write: building managers/owner org only.
+drop policy if exists bta_write on public.building_theme_assignments;
 create policy bta_write on public.building_theme_assignments
   for all using (app.manages_building(building_id))
   with check (app.manages_building(building_id));
@@ -103,6 +109,7 @@ begin
   return new;
 end $$ language plpgsql;
 
+drop trigger if exists themes_touch on public.themes;
 create trigger themes_touch before update on public.themes
   for each row execute function public.touch_updated_at();
 

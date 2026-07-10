@@ -282,14 +282,20 @@ alter table public.integration_credentials enable row level security;
 
 -- reference data: readable by any authenticated user, written by nobody (seeds
 -- run as postgres/service_role which bypass RLS)
+drop policy if exists ref_read_org_types on public.organisation_types;
 create policy ref_read_org_types on public.organisation_types for select using (auth.uid() is not null);
+drop policy if exists ref_read_roles on public.roles;
 create policy ref_read_roles on public.roles for select using (auth.uid() is not null);
+drop policy if exists ref_read_permissions on public.permissions;
 create policy ref_read_permissions on public.permissions for select using (auth.uid() is not null);
+drop policy if exists ref_read_role_permissions on public.role_permissions;
 create policy ref_read_role_permissions on public.role_permissions for select using (auth.uid() is not null);
+drop policy if exists ref_read_modules on public.modules;
 create policy ref_read_modules on public.modules for select using (auth.uid() is not null);
 
 -- organisations: members see their own orgs; anyone linked to one of my
 -- buildings sees the org's NAME row too (needed to render "serviced by")
+drop policy if exists organisations_read on public.organisations;
 create policy organisations_read on public.organisations for select using (
   app.is_org_member(id)
   or app.is_super_admin()
@@ -300,10 +306,12 @@ create policy organisations_read on public.organisations for select using (
     where bo.org_id = organisations.id and bo.active and app.is_org_member(mine.org_id)
   )
 );
+drop policy if exists organisations_write on public.organisations;
 create policy organisations_write on public.organisations for update
   using (app.has_role(id, array['org_admin'])) with check (app.has_role(id, array['org_admin']));
 
 -- users: yourself + people in your orgs
+drop policy if exists users_read on public.users;
 create policy users_read on public.users for select using (
   id = auth.uid()
   or app.is_super_admin()
@@ -314,59 +322,78 @@ create policy users_read on public.users for select using (
     where them.user_id = users.id and them.active and me.user_id = auth.uid()
   )
 );
+drop policy if exists users_self_update on public.users;
 create policy users_self_update on public.users for update
   using (id = auth.uid()) with check (id = auth.uid());
 
 -- memberships: visible inside the org; managed by that org's admins
+drop policy if exists memberships_read on public.organisation_memberships;
 create policy memberships_read on public.organisation_memberships for select
   using (app.is_org_member(org_id) or app.is_super_admin());
+drop policy if exists memberships_write on public.organisation_memberships;
 create policy memberships_write on public.organisation_memberships for all
   using (app.has_role(org_id, array['org_admin']) or app.is_super_admin())
   with check (app.has_role(org_id, array['org_admin']) or app.is_super_admin());
 
 -- buildings: visible to every org linked to them; owner org admins write
+drop policy if exists buildings_read on public.buildings;
 create policy buildings_read on public.buildings for select using (app.can_access_building(id));
+drop policy if exists buildings_write on public.buildings;
 create policy buildings_write on public.buildings for all
   using (app.manages_building(id)) with check (app.manages_building(id));
 
+drop policy if exists building_orgs_read on public.building_organisations;
 create policy building_orgs_read on public.building_organisations for select
   using (app.can_access_building(building_id));
+drop policy if exists building_orgs_write on public.building_organisations;
 create policy building_orgs_write on public.building_organisations for all
   using (app.manages_building(building_id)) with check (app.manages_building(building_id));
 
 -- building staff lists: only YOUR OWN org's rows at buildings you can access
 -- (a cleaning company never sees another contractor's staffing)
+drop policy if exists building_memberships_read on public.building_memberships;
 create policy building_memberships_read on public.building_memberships for select
   using (app.is_org_member(org_id) or app.manages_building(building_id));
+drop policy if exists building_memberships_write on public.building_memberships;
 create policy building_memberships_write on public.building_memberships for all
   using (app.has_role(org_id, array['org_admin','manager']))
   with check (app.has_role(org_id, array['org_admin','manager']) and app.org_serves_building(org_id, building_id));
 
+drop policy if exists building_modules_read on public.building_modules;
 create policy building_modules_read on public.building_modules for select
   using (app.can_access_building(building_id));
+drop policy if exists building_modules_write on public.building_modules;
 create policy building_modules_write on public.building_modules for all
   using (app.manages_building(building_id)) with check (app.manages_building(building_id));
 
+drop policy if exists org_module_access_read on public.organisation_module_access;
 create policy org_module_access_read on public.organisation_module_access for select
   using (app.is_org_member(org_id) or app.manages_building(building_id));
+drop policy if exists org_module_access_write on public.organisation_module_access;
 create policy org_module_access_write on public.organisation_module_access for all
   using (app.manages_building(building_id)) with check (app.manages_building(building_id));
 
 -- contracts: parties only
+drop policy if exists contracts_read on public.service_contracts;
 create policy contracts_read on public.service_contracts for select
   using (app.is_org_member(provider_org_id) or app.is_org_member(client_org_id) or app.is_super_admin());
+drop policy if exists contracts_write on public.service_contracts;
 create policy contracts_write on public.service_contracts for all
   using (app.has_role(client_org_id, array['org_admin']) or app.is_super_admin())
   with check (app.has_role(client_org_id, array['org_admin']) or app.is_super_admin());
 
 -- audit: append-only from your own org; readable by that org's admins
+drop policy if exists audit_insert on public.audit_logs;
 create policy audit_insert on public.audit_logs for insert
   with check (org_id is not null and app.is_org_member(org_id) and actor_id = auth.uid());
+drop policy if exists audit_read on public.audit_logs;
 create policy audit_read on public.audit_logs for select
   using (app.has_role(org_id, array['org_admin','manager']) or app.is_super_admin());
 
 -- integrations: catalogue public to authed; credentials org-admin only
+drop policy if exists providers_read on public.integration_providers;
 create policy providers_read on public.integration_providers for select using (auth.uid() is not null);
+drop policy if exists credentials_rw on public.integration_credentials;
 create policy credentials_rw on public.integration_credentials for all
   using (app.has_role(org_id, array['org_admin']) or app.is_super_admin())
   with check (app.has_role(org_id, array['org_admin']) or app.is_super_admin());

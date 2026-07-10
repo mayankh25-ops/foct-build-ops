@@ -225,21 +225,26 @@ alter table public.sd_ticket_followers enable row level security;
 alter table public.sd_intake_tokens    enable row level security;
 alter table public.sd_ref_counters     enable row level security;   -- no policies: RPC-only
 
+drop policy if exists sd_categories_read on public.sd_categories;
 create policy sd_categories_read on public.sd_categories for select using (
   org_id is null or app.is_org_member(org_id)
   or (building_id is not null and app.can_access_building(building_id))
 );
+drop policy if exists sd_categories_write on public.sd_categories;
 create policy sd_categories_write on public.sd_categories for all
   using (org_id is not null and app.has_role(org_id, array['org_admin','manager']))
   with check (org_id is not null and app.has_role(org_id, array['org_admin','manager']));
 
 -- staff lists: your own org's roster, or the building manager's overview
+drop policy if exists sd_staff_read on public.sd_site_staff;
 create policy sd_staff_read on public.sd_site_staff for select
   using (app.is_org_member(org_id) or app.manages_building(building_id));
+drop policy if exists sd_staff_write on public.sd_site_staff;
 create policy sd_staff_write on public.sd_site_staff for all
   using (app.has_role(org_id, array['org_admin','manager']))
   with check (app.has_role(org_id, array['org_admin','manager']) and app.org_serves_building(org_id, building_id));
 
+drop policy if exists sd_sla_rw on public.sd_sla_policies;
 create policy sd_sla_rw on public.sd_sla_policies for all
   using (app.is_org_member(org_id))
   with check (app.has_role(org_id, array['org_admin','manager']));
@@ -247,39 +252,50 @@ create policy sd_sla_rw on public.sd_sla_policies for all
 -- tickets: visible to every org serving the building (concierge lodged it,
 -- cleaning attends it, owner oversees it); written by the servicing org and
 -- building managers. Public intake bypasses via the definer RPC.
+drop policy if exists sd_tickets_read on public.sd_tickets;
 create policy sd_tickets_read on public.sd_tickets for select
   using (app.can_access_building(building_id));
+drop policy if exists sd_tickets_insert on public.sd_tickets;
 create policy sd_tickets_insert on public.sd_tickets for insert
   with check (app.can_access_building(building_id));
+drop policy if exists sd_tickets_update on public.sd_tickets;
 create policy sd_tickets_update on public.sd_tickets for update
   using (app.is_org_member(org_id) or app.manages_building(building_id))
   with check (app.is_org_member(org_id) or app.manages_building(building_id));
 
+drop policy if exists sd_locations_read on public.sd_ticket_locations;
 create policy sd_locations_read on public.sd_ticket_locations for select using (
   exists (select 1 from public.sd_tickets t where t.id = ticket_id and app.can_access_building(t.building_id)));
+drop policy if exists sd_locations_write on public.sd_ticket_locations;
 create policy sd_locations_write on public.sd_ticket_locations for insert with check (
   exists (select 1 from public.sd_tickets t where t.id = ticket_id
           and (app.is_org_member(t.org_id) or app.can_access_building(t.building_id))));
 
+drop policy if exists sd_photos_read on public.sd_ticket_photos;
 create policy sd_photos_read on public.sd_ticket_photos for select using (
   exists (select 1 from public.sd_tickets t where t.id = ticket_id and app.can_access_building(t.building_id)));
+drop policy if exists sd_photos_insert on public.sd_ticket_photos;
 create policy sd_photos_insert on public.sd_ticket_photos for insert with check (
   exists (select 1 from public.sd_tickets t where t.id = ticket_id
           and (app.is_org_member(t.org_id) or app.can_access_building(t.building_id))));
 
 -- timeline: INTERNAL notes are visible ONLY to the servicing org (+ building
 -- managers see public events, never internal ones from another org)
+drop policy if exists sd_events_read on public.sd_ticket_events;
 create policy sd_events_read on public.sd_ticket_events for select using (
   exists (select 1 from public.sd_tickets t where t.id = ticket_id
           and app.can_access_building(t.building_id)
           and (not sd_ticket_events.internal or app.is_org_member(t.org_id))));
+drop policy if exists sd_events_insert on public.sd_ticket_events;
 create policy sd_events_insert on public.sd_ticket_events for insert with check (
   exists (select 1 from public.sd_tickets t where t.id = ticket_id
           and (app.is_org_member(t.org_id) or app.can_access_building(t.building_id)))
   and (not internal or exists (select 1 from public.sd_tickets t2 where t2.id = ticket_id and app.is_org_member(t2.org_id))));
 
+drop policy if exists sd_followers_read on public.sd_ticket_followers;
 create policy sd_followers_read on public.sd_ticket_followers for select using (
   exists (select 1 from public.sd_tickets t where t.id = ticket_id and app.can_access_building(t.building_id)));
+drop policy if exists sd_followers_write on public.sd_ticket_followers;
 create policy sd_followers_write on public.sd_ticket_followers for all using (
   exists (select 1 from public.sd_tickets t where t.id = ticket_id
           and (app.is_org_member(t.org_id) or app.can_access_building(t.building_id))))
@@ -289,9 +305,11 @@ create policy sd_followers_write on public.sd_ticket_followers for all using (
 
 -- intake tokens: managed by building managers; NEVER selectable by app roles
 -- beyond that (the RPC reads them as definer)
+drop policy if exists sd_tokens_rw on public.sd_intake_tokens;
 create policy sd_tokens_rw on public.sd_intake_tokens for all
   using (app.manages_building(building_id)) with check (app.manages_building(building_id));
 
+drop trigger if exists sd_tickets_touch on public.sd_tickets;
 create trigger sd_tickets_touch before update on public.sd_tickets
   for each row execute function public.touch_updated_at();
 
