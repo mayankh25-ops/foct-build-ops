@@ -62,6 +62,7 @@
 
   --font-display: var(--font-stack-display);
   --font-body: var(--font-stack-body);
+  --font-numeric: var(--font-stack-numeric);
   --font-mono: var(--font-stack-mono);
 
   /* type scale — use text-display, text-title-1 … never ad-hoc sizes */

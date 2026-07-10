@@ -10,11 +10,17 @@
 /* Theme-independent tokens: type scale, spacing, radius             */
 /* ---------------------------------------------------------------- */
 :root {
-  /* Typography — owner-approved library (CLAUDE.md): Bricolage Grotesque
-     display (big BOLD numbers, to 800), Onest body (from the owner's Datify
-     reference), Roboto Mono for table timestamps/IDs only. */
-  --font-stack-display: var(--font-bricolage), "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
-  --font-stack-body: var(--font-onest), Onest, ui-sans-serif, system-ui, sans-serif;
+  /* Typography (owner direction 2026-07-07, Power BI / Zendesk / Freshdesk
+     reference): UI text uses the NATIVE system stack — SF on Apple, Segoe UI
+     on Windows, Roboto on Android — exactly like Zendesk/Freshdesk; hierarchy
+     comes from weight. NUMBERS (metric values, clocks, callouts) use a
+     DIN-style face like Power BI's data labels: Barlow (free DIN-flavoured
+     grotesque; macOS's native "DIN Alternate" is next in the stack).
+     Roboto Mono stays for timestamps/IDs. Previous faces remain selectable
+     in the Theme Builder. */
+  --font-stack-display: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  --font-stack-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  --font-stack-numeric: var(--font-barlow), Barlow, "DIN Alternate", "Segoe UI", system-ui, sans-serif;
   --font-stack-mono: var(--font-roboto-mono), "SF Mono", ui-monospace, "Roboto Mono", monospace;
 
   /* Type scale (size / line-height / tracking) — documented in design/tokens.md */
@@ -562,7 +568,6 @@
    Quicksand everywhere; Onest is its approved-library equivalent. */
 [data-theme="option-nature"] {
   color-scheme: light;
-  --font-stack-display: var(--font-onest), Onest, ui-sans-serif, system-ui, sans-serif;
   --r-card: 1.5rem;          /* design borderRadius.DEFAULT */
   --r-control: 9999px;       /* every control/chip is a full pill */
   --r-sm: 0.75rem;

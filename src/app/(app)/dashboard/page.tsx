@@ -49,7 +49,7 @@ function HeroStat({ label, value, tone }: { label: string; value: number; tone?:
       <p className="text-caption font-medium tracking-[0.08em] text-fg-muted uppercase">{label}</p>
       <p
         className={cn(
-          "mt-1 font-display text-title-1 tabular-nums",
+          "mt-1 font-numeric text-title-1 tabular-nums",
           tone === "accent" && "text-accent-text",
           tone === "warning" && "text-warning-text",
           tone === "critical" && "text-critical-text",
@@ -125,7 +125,7 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="mt-3 flex items-center gap-3">
-              <p className="font-display text-display text-fg tabular-nums">{weather.tempC}°</p>
+              <p className="font-numeric text-display text-fg tabular-nums">{weather.tempC}°</p>
               <div className="text-body-sm text-fg-muted">
                 <p>{weather.condition}</p>
                 <p>Feels like {weather.feelsLikeC}°</p>
@@ -174,7 +174,7 @@ export default function DashboardPage() {
                   }}
                 />
                 <span className="absolute inset-3 flex flex-col items-center justify-center rounded-pill">
-                  <span className="font-display text-title-1 text-fg tabular-nums">{cleanedPct}%</span>
+                  <span className="font-numeric text-title-1 text-fg tabular-nums">{cleanedPct}%</span>
                   <span className="text-caption tracking-[0.06em] text-fg-muted uppercase">cleaned</span>
                 </span>
               </div>
@@ -319,7 +319,7 @@ export default function DashboardPage() {
               <CardTitle>Hours this week</CardTitle>
               <p className="mt-1 text-body-sm text-fg-muted">Actual vs rostered · week of 30 June</p>
             </div>
-            <p className="font-display text-title-2 text-fg tabular-nums">
+            <p className="font-numeric text-title-2 text-fg tabular-nums">
               57.9<span className="text-body-sm font-normal text-fg-muted"> / 142.5 h</span>
             </p>
           </CardHeader>
@@ -374,7 +374,7 @@ export default function DashboardPage() {
               <StatusPill tone="success">On target</StatusPill>
             </CardHeader>
             <CardBody>
-              <p className="font-display text-display text-fg tabular-nums">96%</p>
+              <p className="font-numeric text-display text-fg tabular-nums">96%</p>
               <p className="mt-1 text-body-sm text-fg-muted">
                 Last audit 28 June · two follow-up photos requested
               </p>

@@ -96,7 +96,7 @@ export function MetricCard({
         </p>
         <p
           className={cn(
-            "mt-1 font-display text-display [font-variant-numeric:tabular-nums]",
+            "mt-1 font-numeric text-display [font-variant-numeric:tabular-nums]",
             valueTones[tone]
           )}
         >

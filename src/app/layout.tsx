@@ -47,6 +47,18 @@ const robotoMono = localFont({
   display: "swap",
 });
 
+/* Barlow — DIN-style numerals (Power BI reference, owner direction
+   2026-07-07). Big numbers only; UI text is the native system stack. */
+const barlow = localFont({
+  src: [
+    { path: "../fonts/barlow/barlow-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../fonts/barlow/barlow-latin-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../fonts/barlow/barlow-latin-800-normal.woff2", weight: "800", style: "normal" },
+  ],
+  variable: "--font-barlow",
+  display: "swap",
+});
+
 /* Approved-library alternates for the Theme Builder's font slots.
    preload:false — they download only when a theme actually selects them. */
 const monaSans = localFont({
@@ -90,7 +102,7 @@ export default function RootLayout({
       lang="en-AU"
       data-theme="option-nature"
       suppressHydrationWarning
-      className={`${bricolage.variable} ${onest.variable} ${robotoMono.variable} ${monaSans.variable} ${dmSans.variable} ${inter.variable} ${roboto.variable}`}
+      className={`${barlow.variable} ${bricolage.variable} ${onest.variable} ${robotoMono.variable} ${monaSans.variable} ${dmSans.variable} ${inter.variable} ${roboto.variable}`}
     >
       <body>{children}</body>
     </html>

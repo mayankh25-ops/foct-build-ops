@@ -31,7 +31,7 @@ export function LiveClock({ variant = "display", showDate = true, className, ...
       <p
         className={cn(
           "text-fg tabular-nums",
-          variant === "hero" ? "font-display text-hero" : "font-mono text-display"
+          variant === "hero" ? "font-numeric text-hero" : "font-mono text-display"
         )}
       >
         {variant === "display" ? (
