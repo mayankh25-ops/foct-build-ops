@@ -72,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               { label: "Service desk", icon: Ticket, href: "/service-desk" },
               { label: "Scope", icon: FileSearch, href: "/scope" },
               { label: "Tasks & incidents", icon: ListChecks, disabled: true },
-              { label: "Calendar", icon: CalendarDays, disabled: true },
+              { label: "Calendar", icon: CalendarDays, href: "/calendar" },
               { label: "Floor plans", icon: Map, disabled: true, disabledLabel: "Pro" },
               { label: "Module access", icon: LayoutGrid, href: "/modules" },
             ],
