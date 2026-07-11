@@ -35,6 +35,8 @@ export interface CalEvent {
   oc?: string;
   billable?: boolean;
   source: "scope" | "seed" | "manual";
+  /** email reminder queued for this event (sends via the email adapter) */
+  reminder?: { email: string; daysBefore: number };
 }
 
 export const calCategoryMeta: Record<
@@ -115,6 +117,7 @@ interface CalendarState {
     time?: number;
     category: CalCategory;
     detail?: string;
+    reminder?: { email: string; daysBefore: number };
   }) => void;
   removeJob: (id: string) => void;
   resetDemo: () => void;
@@ -180,4 +183,23 @@ export function useCalendarReady(): boolean {
     setReady(true);
   }, []);
   return ready;
+}
+
+/** Every event (scope periodic + seeded + manual) between two dates inclusive. */
+export function eventsForRange(start: Date, end: Date, manual: CalEvent[]): CalEvent[] {
+  const out: CalEvent[] = [];
+  const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+  const startKey = monthKey(start.getFullYear(), start.getMonth(), start.getDate());
+  const endKey = monthKey(end.getFullYear(), end.getMonth(), end.getDate());
+  while (cursor <= end) {
+    out.push(
+      ...scopeEventsForMonth(cursor.getFullYear(), cursor.getMonth()),
+      ...seededEventsForMonth(cursor.getFullYear(), cursor.getMonth())
+    );
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+  out.push(...manual);
+  return out
+    .filter((e) => e.date >= startKey && e.date <= endKey)
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? 24) - (b.time ?? 24));
 }

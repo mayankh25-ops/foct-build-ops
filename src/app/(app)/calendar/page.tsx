@@ -102,6 +102,12 @@ function DayDrawer({
                   </div>
                   <p className="mt-1.5 font-mono text-caption text-fg-muted">{fmtT(e.time)}</p>
                   {e.detail && <p className="mt-1.5 text-body-sm text-fg-secondary">{e.detail}</p>}
+                  {e.reminder && (
+                    <p className="mt-1.5 text-caption text-fg-muted">
+                      ✉ Reminder to <span className="font-mono">{e.reminder.email}</span>{" "}
+                      {e.reminder.daysBefore === 0 ? "on the day" : `${e.reminder.daysBefore} day${e.reminder.daysBefore === 1 ? "" : "s"} before`}
+                    </p>
+                  )}
                   <div className="mt-2 flex items-center gap-2">
                     {e.billable && <Badge tone="warning">Billable extra — quote first</Badge>}
                     {e.source === "scope" && <Badge tone="neutral">From the agreement</Badge>}
@@ -137,6 +143,8 @@ function AddJobDrawer({ defaultDate }: { defaultDate: string }) {
   const [allDay, setAllDay] = React.useState(false);
   const [category, setCategory] = React.useState<CalCategory>("contractor");
   const [detail, setDetail] = React.useState("");
+  const [remindEmail, setRemindEmail] = React.useState("");
+  const [remindDays, setRemindDays] = React.useState("1");
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
@@ -194,6 +202,30 @@ function AddJobDrawer({ defaultDate }: { defaultDate: string }) {
               onChange={(e) => setDetail(e.target.value)}
             />
           </label>
+          <div className="rounded-card border border-edge bg-canvas p-4">
+            <p className="text-body-sm font-medium text-fg">Email reminder (optional)</p>
+            <p className="mt-0.5 text-caption text-fg-muted">
+              Any address — contractor, BM, committee member. Sends via the org’s email provider.
+            </p>
+            <div className="mt-3 grid grid-cols-[1fr_8rem] gap-2">
+              <Input
+                type="email"
+                placeholder="name@company.com.au"
+                value={remindEmail}
+                onChange={(e) => setRemindEmail(e.target.value)}
+              />
+              <Select
+                options={[
+                  { value: "0", label: "On the day" },
+                  { value: "1", label: "1 day before" },
+                  { value: "2", label: "2 days before" },
+                  { value: "7", label: "1 week before" },
+                ]}
+                value={remindDays}
+                onValueChange={setRemindDays}
+              />
+            </div>
+          </div>
         </DrawerBody>
         <DrawerFooter>
           <Button variant="secondary" onClick={() => setOpen(false)}>
@@ -203,17 +235,28 @@ function AddJobDrawer({ defaultDate }: { defaultDate: string }) {
             disabled={!title.trim() || !date}
             onClick={() => {
               const [h, m] = time.split(":").map(Number);
+              const reminder = remindEmail.trim()
+                ? { email: remindEmail.trim(), daysBefore: Number(remindDays) }
+                : undefined;
               addJob({
                 title: title.trim(),
                 date,
                 time: allDay ? undefined : (h ?? 0) + (m ?? 0) / 60,
                 category,
                 detail: detail.trim() || undefined,
+                reminder,
               });
               setOpen(false);
               setTitle("");
               setDetail("");
-              toast({ tone: "success", title: "Job added to the calendar", description: title.trim() });
+              setRemindEmail("");
+              toast({
+                tone: "success",
+                title: "Job added to the calendar",
+                description: reminder
+                  ? `${title.trim()} · reminder to ${reminder.email} queued`
+                  : title.trim(),
+              });
             }}
           >
             Add job
@@ -362,6 +405,33 @@ export default function CalendarPage() {
           </div>
         </CardBody>
       </Card>
+
+      {manualEvents.some((e) => e.reminder) && (
+        <Card className="mt-6">
+          <CardBody>
+            <p className="text-body-sm font-medium text-fg">Queued email reminders</p>
+            <div className="mt-3 flex flex-col gap-2">
+              {manualEvents
+                .filter((e) => e.reminder)
+                .map((e) => {
+                  const send = new Date(`${e.date}T09:00:00`);
+                  send.setDate(send.getDate() - (e.reminder?.daysBefore ?? 0));
+                  return (
+                    <p key={e.id} className="text-body-sm text-fg-secondary">
+                      <span className="font-mono">{e.reminder!.email}</span> — “{e.title}” · sends{" "}
+                      {send.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" })}{" "}
+                      09:00
+                    </p>
+                  );
+                })}
+            </div>
+            <p className="mt-3 text-caption text-fg-muted">
+              Delivery runs through the org’s configured email provider (Resend by default) once the
+              calendar backend stage is live — reminders queue now so nothing set today is lost.
+            </p>
+          </CardBody>
+        </Card>
+      )}
 
       <p className="mt-4 text-body-sm text-fg-muted">
         Periodic chips come straight from the FOCT Cleaning service agreement — the same dataset as

@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -28,7 +29,6 @@ import {
   fmtTime,
   shiftStatusMeta,
   stock,
-  weather,
   zoneProgress,
 } from "@/lib/demo-data";
 import {
@@ -39,6 +39,12 @@ import {
   useAttendanceReady,
   useAttendanceStore,
 } from "@/lib/attendance-store";
+import { calCategoryMeta, eventsForRange, useCalendarReady, useCalendarStore } from "@/lib/calendar-store";
+import { useHandoverReady, useHandoverStore } from "@/lib/handover-store";
+import { useLiveWeather } from "@/lib/live-weather";
+import { useSdRehydrate, useSdStore } from "@/lib/service-desk-store";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/cn";
 
 const lowStock = stock.filter((s) => s.level <= 0.25);
@@ -80,7 +86,34 @@ export function DashboardClient() {
   const now = useAttendanceReady();
   const shiftsAll = useAttendanceStore((s) => s.shifts);
   const events = useAttendanceStore((s) => s.events);
+  const weather = useLiveWeather();
+  useCalendarReady();
+  useHandoverReady();
+  useSdRehydrate();
+  const manualEvents = useCalendarStore((s) => s.manualEvents);
+  const notes = useHandoverStore((s) => s.notes);
+  const addNote = useHandoverStore((s) => s.addNote);
+  const tickets = useSdStore((s) => s.tickets);
+  const { toast } = useToast();
+  const [noteText, setNoteText] = React.useState("");
   if (!now) return null;
+
+  // calendar: due today + the coming week
+  const weekEnd = new Date(now);
+  weekEnd.setDate(now.getDate() + 6);
+  const dueWeek = eventsForRange(now, weekEnd, manualEvents);
+  const todayIso = dateKey(now);
+  const dueToday = dueWeek.filter((e) => e.date === todayIso);
+  const dueLater = dueWeek.filter((e) => e.date !== todayIso);
+
+  // service desk: open tickets by status + priority
+  const OPEN = ["new", "open", "in-progress", "reopened"] as const;
+  const sdByStatus = OPEN.map((st) => ({
+    label: st === "in-progress" ? "In progress" : st.charAt(0).toUpperCase() + st.slice(1),
+    count: tickets.filter((t) => t.status === st).length,
+  }));
+  const sdMax = Math.max(1, ...sdByStatus.map((r) => r.count));
+  const sdUrgentOpen = tickets.filter((t) => t.priority === "urgent" && OPEN.includes(t.status as (typeof OPEN)[number])).length;
 
   const today = dateKey(now);
   const views = shiftsAll
@@ -183,7 +216,7 @@ export function DashboardClient() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-caption font-medium tracking-[0.08em] text-fg-muted uppercase">
-                  Weather
+                  Weather{weather.live && <span className="text-accent-text"> · live</span>}
                 </p>
                 <p className="mt-1 text-body-sm font-medium text-fg">{weather.city}</p>
               </div>
@@ -387,6 +420,105 @@ export function DashboardClient() {
         </Card>
       </div>
 
+      {/* due this week + handover */}
+      <div className="mt-8 grid gap-6 xl:grid-cols-3">
+        <Card className="min-w-0 xl:col-span-2">
+          <CardHeader>
+            <div>
+              <CardTitle>Due at the building</CardTitle>
+              <p className="mt-1 text-body-sm text-fg-muted">
+                From the shared calendar — periodic works, contractors, bookings
+              </p>
+            </div>
+            <Link href="/calendar" className="flex items-center gap-1 text-body-sm font-medium text-accent-text">
+              Calendar <ArrowRight aria-hidden className="size-4" />
+            </Link>
+          </CardHeader>
+          <CardBody className="grid gap-6 md:grid-cols-2">
+            <div>
+              <p className="text-caption font-medium tracking-[0.08em] text-fg-muted uppercase">
+                Today · {dueToday.length}
+              </p>
+              <div className="mt-3 flex flex-col gap-2.5">
+                {dueToday.length === 0 && (
+                  <p className="text-body-sm text-fg-muted">Nothing due today.</p>
+                )}
+                {dueToday.slice(0, 5).map((e) => (
+                  <div key={e.id} className="flex items-start gap-2.5">
+                    <span aria-hidden className={cn("mt-1.5 size-2 shrink-0 rounded-pill",
+                      e.category === "periodic" ? "bg-critical" : e.category === "contractor" ? "bg-warning" : e.category === "waste" ? "bg-success" : "bg-info")} />
+                    <div className="min-w-0">
+                      <p className="truncate text-body-sm text-fg">{e.title}</p>
+                      <p className="text-caption text-fg-muted">{calCategoryMeta[e.category].label}</p>
+                    </div>
+                  </div>
+                ))}
+                {dueToday.length > 5 && (
+                  <p className="text-caption text-fg-muted">+{dueToday.length - 5} more on the calendar</p>
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="text-caption font-medium tracking-[0.08em] text-fg-muted uppercase">
+                Next 7 days · {dueLater.length}
+              </p>
+              <div className="mt-3 flex flex-col gap-2.5">
+                {dueLater.slice(0, 5).map((e) => (
+                  <div key={e.id} className="flex items-start gap-2.5">
+                    <span className="mt-0.5 w-9 shrink-0 font-mono text-caption text-fg-muted">
+                      {new Date(`${e.date}T12:00:00`).toLocaleDateString("en-AU", { weekday: "short" })}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-body-sm text-fg">{e.title}</p>
+                      <p className="text-caption text-fg-muted">{calCategoryMeta[e.category].label}</p>
+                    </div>
+                  </div>
+                ))}
+                {dueLater.length > 5 && (
+                  <p className="text-caption text-fg-muted">+{dueLater.length - 5} more on the calendar</p>
+                )}
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card className="min-w-0 self-start">
+          <CardHeader>
+            <CardTitle>Team handover</CardTitle>
+            <Badge tone="neutral">FOCT Cleaning only</Badge>
+          </CardHeader>
+          <CardBody className="flex flex-col gap-4">
+            <div className="flex items-end gap-2">
+              <Input
+                placeholder="Note for the next shift…"
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+              />
+              <Button
+                size="sm"
+                disabled={!noteText.trim()}
+                onClick={() => {
+                  addNote("Priya Sharma", noteText.trim());
+                  setNoteText("");
+                  toast({ tone: "success", title: "Handover note saved" });
+                }}
+              >
+                Save
+              </Button>
+            </div>
+            {notes.slice(0, 3).map((n, i) => (
+              <div key={n.id} className={cn("flex items-start gap-3", i > 0 && "border-t border-edge pt-4")}>
+                <Avatar name={n.author} size="sm" />
+                <div className="min-w-0">
+                  <p className="text-body-sm font-medium text-fg">{n.author}</p>
+                  <p className="mt-0.5 text-body-sm text-fg-secondary">{n.text}</p>
+                </div>
+              </div>
+            ))}
+          </CardBody>
+        </Card>
+      </div>
+
       {/* hours + supplies */}
       <div className="mt-8 grid gap-6 xl:grid-cols-3">
         <Card className="min-w-0 xl:col-span-2">
@@ -411,6 +543,28 @@ export function DashboardClient() {
         </Card>
 
         <div className="flex min-w-0 flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Service desk</CardTitle>
+              <Link href="/service-desk" className="flex items-center gap-1 text-body-sm font-medium text-accent-text">
+                Queue <ArrowRight aria-hidden className="size-4" />
+              </Link>
+            </CardHeader>
+            <CardBody className="flex flex-col gap-3">
+              {sdByStatus.map((r) => (
+                <div key={r.label} className="flex items-center gap-3">
+                  <span className="w-20 text-body-sm text-fg-secondary">{r.label}</span>
+                  <span className="h-2.5 flex-1 overflow-hidden rounded-pill bg-hover">
+                    <span className="block h-full rounded-pill bg-chart-1" style={{ width: `${(r.count / sdMax) * 100}%` }} />
+                  </span>
+                  <span className="w-6 text-right font-numeric text-body-sm text-fg tabular-nums">{r.count}</span>
+                </div>
+              ))}
+              <p className="mt-1 text-caption text-fg-muted">
+                {sdUrgentOpen ? `${sdUrgentOpen} urgent open — attend first` : "No urgent tickets open"}
+              </p>
+            </CardBody>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle>Low stock</CardTitle>
