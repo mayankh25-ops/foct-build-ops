@@ -4,29 +4,50 @@ import * as React from "react";
 import { CheckCircle2, Delete, Info, LogIn, LogOut } from "lucide-react";
 import { KioskButton } from "@/components/ui/kiosk-button";
 import { LiveClock } from "@/components/ui/live-clock";
+import { staffDirectory, useAttendanceReady, useAttendanceStore } from "@/lib/attendance-store";
 import { cn } from "@/lib/cn";
 
 const PIN_LENGTH = 4;
-/** Demo staff directory — replaced by real lookup in Stage 2. */
-const staff: Record<string, string> = {
-  "1234": "Marcus Chen",
-  "2345": "Leila Haddad",
-  "3456": "Sofia Marino",
-};
 
 type Phase = "idle" | "done";
 
 export function KioskScreen() {
+  useAttendanceReady(); // rehydrate + seed the attendance store
+  const checkInAction = useAttendanceStore((s) => s.checkIn);
+  const checkOutAction = useAttendanceStore((s) => s.checkOut);
+
   const [pin, setPin] = React.useState("");
   const [phase, setPhase] = React.useState<Phase>("idle");
   const [action, setAction] = React.useState<"in" | "out">("in");
   const [stamp, setStamp] = React.useState("");
+  const [notice, setNotice] = React.useState<string | null>(null);
+  const [doneName, setDoneName] = React.useState<string | undefined>();
 
-  const name = staff[pin];
+  const name = staffDirectory.find((m) => m.pin === pin)?.name;
   const ready = pin.length === PIN_LENGTH;
 
-  const press = (d: string) => setPin((p) => (p.length < PIN_LENGTH ? p + d : p));
+  const press = (d: string) => {
+    setNotice(null);
+    setPin((p) => (p.length < PIN_LENGTH ? p + d : p));
+  };
   const complete = (a: "in" | "out") => {
+    const result = a === "in" ? checkInAction(pin) : checkOutAction(pin);
+    if (!result.ok) {
+      setNotice("PIN not recognised — check with your supervisor.");
+      setPin("");
+      return;
+    }
+    if (a === "in" && result.already) {
+      setNotice(`${result.staff!.name.split(" ")[0]}, you're already checked in — use Check out when you leave.`);
+      setPin("");
+      return;
+    }
+    if (a === "out" && result.noOpenShift) {
+      setNotice(`${result.staff!.name.split(" ")[0]}, there's no open shift to check out of — use Check in first.`);
+      setPin("");
+      return;
+    }
+    setDoneName(result.staff?.name);
     setAction(a);
     setStamp(
       new Date().toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: false })
@@ -35,6 +56,7 @@ export function KioskScreen() {
   };
   const reset = () => {
     setPin("");
+    setNotice(null);
     setPhase("idle");
   };
 
@@ -75,7 +97,7 @@ export function KioskScreen() {
             </span>
             <h1 className="mt-8 font-display text-display text-fg">
               {action === "in" ? "You’re checked in" : "You’re checked out"}
-              {name && `, ${name.split(" ")[0]}`}
+              {doneName && `, ${doneName.split(" ")[0]}`}
             </h1>
             <p className="mt-3 text-title-3 font-normal text-fg-secondary">
               {action === "in"
@@ -117,6 +139,14 @@ export function KioskScreen() {
                 >
                   {name ? `Welcome, ${name.split(" ")[0]}` : "Enter your staff PIN"}
                 </p>
+                {notice && (
+                  <p
+                    aria-live="assertive"
+                    className="mt-3 rounded-sm bg-warning-subtle px-3 py-2 text-center text-body-sm text-warning-text"
+                  >
+                    {notice}
+                  </p>
+                )}
 
                 <div aria-label="PIN entry" className="mt-6 flex items-center justify-center gap-4">
                   {Array.from({ length: PIN_LENGTH }, (_, i) => (
