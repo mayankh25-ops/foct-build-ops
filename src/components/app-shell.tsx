@@ -67,6 +67,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {
             title: "Core",
             items: [
+              { label: "Portfolio", icon: Building2, href: "/portfolio" },
               { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
               { label: "Service desk", icon: Ticket, href: "/service-desk" },
               { label: "Scope", icon: FileSearch, href: "/scope" },
