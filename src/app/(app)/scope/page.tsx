@@ -20,6 +20,7 @@ import {
   type ScopePosition,
   type ScopeShift,
 } from "@/lib/scope-data";
+import { QuoteStudioView } from "./quote-studio";
 import "./scope.css";
 
 /*
@@ -914,6 +915,7 @@ export default function ScopePage() {
           <TabsTrigger value="roster">Weekly roster</TabsTrigger>
           <TabsTrigger value="gantt">Day gantt</TabsTrigger>
           <TabsTrigger value="periodic">Periodic planner</TabsTrigger>
+          <TabsTrigger value="quote">Quote studio</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
           <OverviewView />
@@ -928,6 +930,9 @@ export default function ScopePage() {
           <GanttView />
         </TabsContent>
         <TabsContent value="periodic">{now && <PeriodicView now={now} />}</TabsContent>
+        <TabsContent value="quote">
+          <QuoteStudioView />
+        </TabsContent>
       </Tabs>
     </div>
   );
