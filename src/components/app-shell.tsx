@@ -90,7 +90,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {
             title: "Concierge",
             items: [
-              { label: "Concierge desk", icon: Building2, disabled: true, disabledLabel: "Locked" },
+              { label: "Concierge desk", icon: Building2, href: "/concierge" },
               { label: "Parcels", icon: Package, disabled: true },
               { label: "Resident requests", icon: MonitorSmartphone, disabled: true },
             ],
