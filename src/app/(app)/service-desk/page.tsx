@@ -43,6 +43,7 @@ import {
   sdStatusMeta,
   type SdTicket,
 } from "@/lib/service-desk-data";
+import { SyncPill } from "@/components/ui/sync-pill";
 import { useSdRehydrate, useSdStore, type SdTicketLive } from "@/lib/service-desk-store";
 import { cn } from "@/lib/cn";
 
@@ -517,6 +518,7 @@ export default function ServiceDeskPage() {
         description="Concierge-reported cleaning & facilities issues — attended and closed with photo proof."
         actions={
           <>
+            <SyncPill />
             <Button
               variant="ghost"
               size="sm"

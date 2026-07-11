@@ -17,7 +17,8 @@ import {
   type SdPriority,
   type SdTicket,
 } from "@/lib/service-desk-data";
-import { fetchLiveTickets, lodgeViaIntake, SD_LIVE_FLAG, sdLive } from "@/lib/sd-supabase";
+import { fetchLiveTickets, SD_LIVE_FLAG } from "@/lib/sd-supabase";
+import { flush, queueOp } from "@/lib/sd-offline";
 
 export interface SdTicketLive extends SdTicket {
   /** Downscaled data-URL thumbnails for tickets created/closed in this browser. */
@@ -163,15 +164,17 @@ export const useSdStore = create<SdState>()(
           return { tickets: [ticket, ...s.tickets] };
         });
         if (SD_LIVE_FLAG) {
-          void lodgeViaIntake(input)
-            .then(() => useSdStore.getState().initLive()) // server ref becomes truth
+          // queue offline-first; after the outbox drains the server ref becomes truth
+          void queueOp("lodge", input)
+            .then(() => flush())
+            .then(() => useSdStore.getState().initLive())
             .catch((e) => console.warn("sd live lodge failed", e));
         }
         return ref;
       },
 
       assign: (ref, cleaner) => {
-        if (SD_LIVE_FLAG) void sdLive.assign(ref, cleaner).catch((e) => console.warn(e));
+        if (SD_LIVE_FLAG) void queueOp("assign", { ref, cleaner });
         set((s) => ({
           tickets: update(s.tickets, ref, (t) =>
             withEvent(
@@ -183,7 +186,7 @@ export const useSdStore = create<SdState>()(
       },
 
       attend: (ref, by) => {
-        if (SD_LIVE_FLAG) void sdLive.attend(ref, by).catch((e) => console.warn(e));
+        if (SD_LIVE_FLAG) void queueOp("attend", { ref, by });
         set((s) => ({
           tickets: update(s.tickets, ref, (t) =>
             withEvent(
@@ -200,7 +203,7 @@ export const useSdStore = create<SdState>()(
       },
 
       close: (ref, { by, note, photoUrls }) => {
-        if (SD_LIVE_FLAG) void sdLive.close(ref, { by, note, photoUrls }).catch((e) => console.warn(e));
+        if (SD_LIVE_FLAG) void queueOp("close", { ref, args: { by, note, photoUrls } });
         set((s) => ({
           tickets: update(s.tickets, ref, (t) => {
             let next: SdTicketLive = {
@@ -228,7 +231,7 @@ export const useSdStore = create<SdState>()(
       },
 
       reopen: (ref, by) => {
-        if (SD_LIVE_FLAG) void sdLive.reopen(ref, by).catch((e) => console.warn(e));
+        if (SD_LIVE_FLAG) void queueOp("reopen", { ref, by });
         set((s) => ({
           tickets: update(s.tickets, ref, (t) =>
             withEvent(
@@ -240,7 +243,7 @@ export const useSdStore = create<SdState>()(
       },
 
       addInternalNote: (ref, by, text) => {
-        if (SD_LIVE_FLAG) void sdLive.addInternalNote(ref, by, text).catch((e) => console.warn(e));
+        if (SD_LIVE_FLAG) void queueOp("addInternalNote", { ref, by, text });
         set((s) => ({
           tickets: update(s.tickets, ref, (t) =>
             withEvent(t, { who: by, what: text, internal: true, kind: "note" })
@@ -249,7 +252,7 @@ export const useSdStore = create<SdState>()(
       },
 
       addFollower: (ref, email) => {
-        if (SD_LIVE_FLAG) void sdLive.addFollower(ref, email).catch((e) => console.warn(e));
+        if (SD_LIVE_FLAG) void queueOp("addFollower", { ref, email });
         set((s) => ({
           tickets: update(s.tickets, ref, (t) =>
             t.followers.includes(email)
@@ -263,7 +266,7 @@ export const useSdStore = create<SdState>()(
       },
 
       removeFollower: (ref, email) => {
-        if (SD_LIVE_FLAG) void sdLive.removeFollower(ref, email).catch((e) => console.warn(e));
+        if (SD_LIVE_FLAG) void queueOp("removeFollower", { ref, email });
         set((s) => ({
           tickets: update(s.tickets, ref, (t) => ({
             ...t,
@@ -273,7 +276,7 @@ export const useSdStore = create<SdState>()(
       },
 
       setCsat: (ref, rating) => {
-        if (SD_LIVE_FLAG) void sdLive.setCsat(ref, rating).catch((e) => console.warn(e));
+        if (SD_LIVE_FLAG) void queueOp("setCsat", { ref, rating });
         set((s) => ({
           tickets: update(s.tickets, ref, (t) =>
             withEvent({ ...t, csat: rating }, {

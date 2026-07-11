@@ -1,5 +1,6 @@
 "use client";
 
+import { SyncPill } from "@/components/ui/sync-pill";
 import * as React from "react";
 import Link from "next/link";
 import { Camera, ClipboardList, Search } from "lucide-react";
@@ -20,6 +21,7 @@ export default function SupportHomePage() {
     <main className="flex flex-1 flex-col px-5 pt-14 pb-9">
       <div className="flex items-center justify-between pb-4">
         <p className="font-display text-body-sm font-bold tracking-tight">FOCT BuildingOps</p>
+        <SyncPill />
         <SyncedChip />
       </div>
 
