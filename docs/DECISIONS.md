@@ -189,3 +189,12 @@ Owner uploaded their standalone "Aurora Scope & Roster — Subzero" HTML and dir
 
 ## 2026-07-10 — Owner clarification: Scope belongs to the Service Desk suite
 Correction to the entry above: Scope is NOT a Cleaning-section module. The owner's "Subzero" design set is one product family attached to the Service Desk — the phone screens are the PHONE APP (`/support` mobile surface) and the Scope explorer is the ADMIN DASHBOARD VIEW. Nav entry moved from Cleaning to Core, directly under Service desk. The `subzero` theme addition and Nature-stays-default are unchanged.
+
+## 2026-07-10 — Roadmap wave 1 shipped in the approved order (owner: "Do in your above order")
+All five items from docs/PRODUCT_ROADMAP.md's recommended order, each functional client-side on the established store-first pattern (Supabase swap at each module's backend stage):
+1. **Flow #1 complete**: new `attendance-store` — the kiosk writes real check-in/out events (wrong-PIN + double-punch guards); roster statuses, dashboard signals, missed-check-in alerts (15-min grace) and weekly timesheets with variance/approve/CSV ALL derive from events vs rostered shifts. Roster gains Add-shift; dashboard hero/metrics/activity/week-chart went live (page split into a client component). Today's demo cast anchors to the clock so the status mix shows at any hour.
+2. **Portfolio** (`/portfolio`, top of nav): exception-first head-office triage; Aurora's signals live from the attendance + SD stores, 7 seeded sister buildings; tile drill-down to the dashboard.
+3. **Calendar** (`/calendar`, unlocked): periodic works auto-generated from the Scope dataset (planner cadence rules), seeded building events, category filters, day drawer, persisted Add-job.
+4. **Scope Quote studio** (6th Scope tab): editable areas/rates → calculated vs contract hours per entity with under-scoped flags, machine fleet sized from m², award-rate weekly/annual pricing with on-costs + margin.
+5. **Concierge desk** (`/concierge`, unlocked): tickets lodge into the SHARED SD store (e2e cross-surface proof), parcels register, org-private handover notes.
+All gates green (tokens, 37×12 contrast, tsc, build, Playwright e2e). Backend note: attendance/calendar/concierge tables + RLS follow the Stage-2/3 migration pattern when the owner calls for them.
