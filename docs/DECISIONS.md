@@ -198,3 +198,8 @@ All five items from docs/PRODUCT_ROADMAP.md's recommended order, each functional
 4. **Scope Quote studio** (6th Scope tab): editable areas/rates → calculated vs contract hours per entity with under-scoped flags, machine fleet sized from m², award-rate weekly/annual pricing with on-costs + margin.
 5. **Concierge desk** (`/concierge`, unlocked): tickets lodge into the SHARED SD store (e2e cross-surface proof), parcels register, org-private handover notes.
 All gates green (tokens, 37×12 contrast, tsc, build, Playwright e2e). Backend note: attendance/calendar/concierge tables + RLS follow the Stage-2/3 migration pattern when the owner calls for them.
+
+## 2026-07-10 — Dashboard goes fully live + calendar email reminders (owner request)
+- Dashboard: Open-Meteo live weather (demo fallback, "live" tag), "Due at the building" (today + next-7-days from the shared calendar), org-private Team handover notes (new handover-store), Service desk open-by-status chart. Everything on the dashboard now derives from stores or live APIs — no static counters remain.
+- Calendar: optional email reminder per job (any address; on-the-day/1d/2d/1wk lead). Reminders queue visibly (calendar outbox + day drawer); actual SMTP delivery goes through the integrations email adapter (Resend default) when the calendar backend stage lands — needs the owner's Resend API key.
+- Confirmed to owner: Service Desk desktop+phone and the kiosk→timesheets loop were already fully functional; Android tablets just open /kiosk in a browser (PWA path per the 2026-07-07 decision).
