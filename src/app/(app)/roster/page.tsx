@@ -383,7 +383,6 @@ export default function RosterPage() {
               <Th numeric>Scheduled</Th>
               <Th numeric>Check-in</Th>
               <Th numeric>Check-out</Th>
-              <Th numeric>Duration</Th>
               <Th>Status</Th>
               <Th />
             </Tr>
@@ -391,10 +390,6 @@ export default function RosterPage() {
           <TBody>
             {filtered.map((v) => {
               const meta = shiftStatusMeta[v.status];
-              const dur =
-                v.checkIn && v.checkOut
-                  ? ((v.checkOut.getTime() - v.checkIn.getTime()) / 3600000).toFixed(2)
-                  : "—";
               return (
                 <Tr key={v.shift.id}>
                   <Td className="font-medium">{v.staff.name}</Td>
@@ -404,7 +399,6 @@ export default function RosterPage() {
                   </Td>
                   <Td numeric>{fmtClock(v.checkIn)}</Td>
                   <Td numeric>{fmtClock(v.checkOut)}</Td>
-                  <Td numeric>{dur}</Td>
                   <Td>
                     <StatusPill tone={meta.tone}>{meta.label}</StatusPill>
                   </Td>

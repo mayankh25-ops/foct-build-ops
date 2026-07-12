@@ -7,8 +7,6 @@ import {
   Camera,
   Cloud,
   CloudRain,
-  Flag,
-  Lock,
   MapPin,
   Package,
   ScanLine,
@@ -301,7 +299,7 @@ export function DashboardClient() {
       </div>
 
       {/* stat row */}
-      <div className="mt-4 grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-4 xl:grid-cols-3">
         <MetricCard label="Shifts today" value={views.length} context={`${onSite} in progress · ${done} done`} />
         <MetricCard label="Check-ins" value={checkInsToday} context="Kiosk events today" />
         <MetricCard
@@ -314,38 +312,19 @@ export function DashboardClient() {
           }
           tone={missed.length ? "critical" : "neutral"}
         />
-        <MetricCard label="Cleaning progress" value={`${cleanedPct}%`} context={`${zoneProgress.complete}/${zonesTotal} zones done`} tone="success" />
       </div>
 
-      {/* camera wall — locked module, polished */}
+      {/* camera wall — locked module, one quiet line */}
       <Card className="mt-6">
-        <CardHeader>
-          <div>
-            <CardTitle>Live camera wall</CardTitle>
-            <p className="mt-1 text-body-sm text-fg-muted">
-              Presence verification from building cameras, tied to zones and shifts.
-            </p>
-          </div>
+        <CardBody className="flex flex-wrap items-center gap-4 py-4">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-control bg-hover">
+            <Camera aria-hidden className="size-4 text-fg-muted" />
+          </span>
+          <p className="min-w-0 flex-1 text-body-sm text-fg-secondary">
+            <span className="font-medium text-fg">Live camera wall</span> — presence verification
+            from building cameras ({cameraZones.length} zones ready to connect)
+          </p>
           <Badge tone="info">Requires Automation Pro</Badge>
-        </CardHeader>
-        <CardBody className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {cameraZones.map((c) => (
-            <div
-              key={c.name}
-              className="relative flex aspect-video flex-col justify-between rounded-card bg-accent p-4 text-on-accent"
-            >
-              <div className="flex items-center justify-between text-caption opacity-70">
-                <span className="flex items-center gap-1.5">
-                  <Camera aria-hidden className="size-3.5" /> Preview
-                </span>
-                <Lock aria-hidden className="size-3.5" />
-              </div>
-              <div>
-                <p className="text-body-sm font-medium">{c.name}</p>
-                <p className="text-caption tracking-[0.06em] uppercase opacity-70">{c.where}</p>
-              </div>
-            </div>
-          ))}
         </CardBody>
       </Card>
 
@@ -607,19 +586,6 @@ export function DashboardClient() {
             </CardBody>
           </Card>
 
-          <Card>
-            <CardBody className="flex items-start gap-3">
-              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-control bg-warning-subtle">
-                <Flag aria-hidden className="size-4 text-warning-text" />
-              </span>
-              <div>
-                <p className="text-body-sm font-medium text-fg">Graffiti at the loading dock</p>
-                <p className="mt-0.5 text-body-sm text-fg-muted">
-                  Flagged by Daniel with a photo, 08:40. May need a contractor.
-                </p>
-              </div>
-            </CardBody>
-          </Card>
         </div>
       </div>
     </>

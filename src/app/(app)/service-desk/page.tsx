@@ -8,7 +8,6 @@ import {
   FileText,
   Link2,
   Plus,
-  QrCode,
   RotateCcw,
   Smartphone,
   ThumbsDown,
@@ -567,23 +566,6 @@ export default function ServiceDeskPage() {
         <MetricCard label="Avg time to resolve" value="38m" context="Target 4h · this week" icon={TimerReset} />
         <MetricCard label="SLA compliance" value="94%" context="Last 30 days" icon={UserRound} tone="success" />
       </div>
-
-      {/* public intake strip */}
-      <Card className="mt-6">
-        <CardBody className="flex flex-wrap items-center gap-4 py-4">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-card bg-accent-subtle">
-            <QrCode aria-hidden className="size-5 text-accent-text" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-body-sm font-medium text-fg">Public intake form — QR &amp; link</p>
-            <p className="text-body-sm text-fg-muted">
-              Anyone with the site QR or link can lodge on this form — concierge desk, cleaning team, or
-              a tenant rep. No password; the form is scoped to Aurora on Collins.
-            </p>
-          </div>
-          <Badge tone="info">Per-site form · org-configurable</Badge>
-        </CardBody>
-      </Card>
 
       <div className="mt-8">
         <FilterBar>
