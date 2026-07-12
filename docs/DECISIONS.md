@@ -217,3 +217,10 @@ Theme-independent structural rhythm, applied in the shared components so every t
 - Scope masthead retired: slim eyebrow/title header with the agreement note behind a "about this agreement" disclosure; stats sit in flow (flatter tiles). "Where the hours go" moved from below the fold to y≈434 at 1440×900 — data owns the first screen.
 - Sidebar collapses to a 76px icon rail (PanelLeft toggle, tooltips on icons, state persists per device via localStorage `foct-sidebar-collapsed`).
 - The page-by-page density pass continues (dashboard/roster next); principle recorded: content above the fold, one accent per view, disclosures over paragraphs.
+
+## 2026-07-12 — Part B: app.can() unified authorisation (owner-approved plan, conditions met)
+- `0004_authz_can.sql`: app.can(user, org, building, module, action) — SECURITY DEFINER, null-skippable clauses, fails closed, super-admin bypass matching is_super_admin. 18 core-table policies rerouted 1:1; sd_* stay on the proven helpers; users_read/organisations_read keep bespoke name-visibility; audit_insert unchanged (no super bypass by design). public.can RPC wrapper answers self-queries only.
+- Condition 1 (both outputs pasted): BEFORE 38/38 ok, AFTER 38/38 ok on fresh DBs; APPLY_STAGE2 double-run with 0 errors both times (idempotent).
+- Condition 2: APPLY_STAGE2 regenerated with a "WHAT CHANGED" banner — everything above it byte-identical to the applied copy; only 0004 below.
+- Condition 3: authz.ts demo stub gated behind NEXT_PUBLIC_AUTHZ_DEMO_ALLOW_ALL=1 (default off, loud red console warning when on, fails closed otherwise).
+- docs/ARCHITECTURE.md added (mermaid ERD + permission-flow walkthrough).
