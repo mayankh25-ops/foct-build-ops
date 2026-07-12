@@ -19,7 +19,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div
-      className={cn("flex flex-wrap items-end justify-between gap-4 pb-8", className)}
+      className={cn("flex flex-wrap items-end justify-between gap-4 pb-10", className)}
       {...props}
     >
       <div className="min-w-0">

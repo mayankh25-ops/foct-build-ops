@@ -125,7 +125,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
         <ToastProvider>
           <main className="min-w-0 flex-1 overflow-y-auto">
-            <div className="mx-auto max-w-[1440px] px-6 py-8 lg:px-10">{children}</div>
+            <div className="mx-auto max-w-[1440px] px-6 py-10 lg:px-12">{children}</div>
           </main>
         </ToastProvider>
       </div>

@@ -57,7 +57,7 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-5 rounded-card border border-edge bg-surface p-6 shadow-card",
+        "flex flex-col gap-6 rounded-card border border-edge bg-surface p-6 shadow-card",
         className
       )}
       {...props}
@@ -96,13 +96,13 @@ export function MetricCard({
         </p>
         <p
           className={cn(
-            "mt-1 font-numeric text-display [font-variant-numeric:tabular-nums]",
+            "mt-2 font-numeric text-display [font-variant-numeric:tabular-nums]",
             valueTones[tone]
           )}
         >
           {value}
         </p>
-        {context && <p className="mt-1 truncate text-caption text-fg-muted">{context}</p>}
+        {context && <p className="mt-1.5 truncate text-body-sm text-fg-muted">{context}</p>}
       </div>
     </div>
   );

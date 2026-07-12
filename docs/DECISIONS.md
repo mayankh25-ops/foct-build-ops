@@ -209,3 +209,6 @@ Plan in docs/modules/TICKETING_IMPORT_PLAN.md approved verbatim. Step 1 shipped:
 
 ## 2026-07-10 — Halo theme (owner's DeGirum Cloud reference): "platform clean"
 Owner shared DeGirum Cloud Platform screenshots asking for a cleaner portal look. Delivered as the 13th built-in theme `option-halo` rather than mutating Nature: gallery-white canvas (#fbfbfc/#fff), hairline #ececee borders, near-black ink rail (#0b0c0e) and ink buttons, pill controls (--r-control 9999px), 1rem cards, whisper shadows, teal reserved for focus/info/brand. 37 AA pairs × 13 themes. Nature REMAINS default pending the owner's call after comparing.
+
+## 2026-07-10 — Readability pass (owner: "simplicity + good row heights for analytics numbers")
+Theme-independent structural rhythm, applied in the shared components so every theme benefits: table rows now 60px min with 24px gutters (h-12 headers, align-middle), metric cards get a label→number→context rhythm with roomier gaps and body-sm context, card insets unified at 24px, page canvas padding up (py-10 / lg:px-12), page headers settle with pb-10. Verified on timesheets in Nature + Halo.
