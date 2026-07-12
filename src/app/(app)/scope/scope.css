@@ -598,3 +598,15 @@ tr.sc-drawer td { background: var(--bg-raised); padding: 16px 14px; text-align: 
   .sc-zones { grid-template-columns: 1fr; }
   .sc-hbar-row { grid-template-columns: 110px 1fr 88px; }
 }
+
+/* Compact header variant — stats sit in flow, no masthead overlap */
+.sc-stats.sc-stats-flat {
+  margin: 0;
+  z-index: auto;
+}
+.sc-stats-flat .sc-stat {
+  padding: 14px 16px;
+}
+.sc-stats-flat .sc-stat .sc-v {
+  font-size: 24px;
+}

@@ -879,24 +879,30 @@ export default function ScopePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="sc-mast">
-        <div className="mb-8 flex items-center justify-between gap-4">
-          <span className="sc-kicker">Scope · {seed.contract.building}</span>
-          {now && (
-            <span className="sc-gen">
-              GENERATED{" "}
-              {now
-                .toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" })
-                .toUpperCase()}
-            </span>
-          )}
+      {/* compact header — the data owns the fold, not the masthead */}
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="sc-eyebrow">
+            Scope · {seed.contract.building}
+            {now && (
+              <span>
+                {" "}· generated{" "}
+                {now.toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" })}
+              </span>
+            )}
+          </p>
+          <h1 className="mt-2 font-display text-title-1 text-fg">
+            What the cleaning contract actually asks for
+          </h1>
+          <details className="mt-1.5 max-w-3xl">
+            <summary className="cursor-pointer list-none text-body-sm text-fg-muted transition-colors hover:text-fg">
+              {seed.contract.title}, dated {seed.contract.dated} · <span className="underline underline-offset-2">about this agreement</span>
+            </summary>
+            <p className="mt-2 text-body-sm text-fg-secondary">{seed.contract.note}</p>
+          </details>
         </div>
-        <h1>What the cleaning contract actually asks for</h1>
-        <p>
-          {seed.contract.title}, dated {seed.contract.dated}. {seed.contract.note}
-        </p>
       </header>
-      <div className="sc-stats">
+      <div className="sc-stats sc-stats-flat">
         {stats.map((t) => (
           <div key={t.l} className="sc-stat">
             <div className="sc-lb">{t.l}</div>

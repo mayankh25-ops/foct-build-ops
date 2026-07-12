@@ -212,3 +212,8 @@ Owner shared DeGirum Cloud Platform screenshots asking for a cleaner portal look
 
 ## 2026-07-10 — Readability pass (owner: "simplicity + good row heights for analytics numbers")
 Theme-independent structural rhythm, applied in the shared components so every theme benefits: table rows now 60px min with 24px gutters (h-12 headers, align-middle), metric cards get a label→number→context rhythm with roomier gaps and body-sm context, card insets unified at 24px, page canvas padding up (py-10 / lg:px-12), page headers settle with pb-10. Verified on timesheets in Nature + Halo.
+
+## 2026-07-12 — Above-the-fold pass: compact Scope header + collapsible sidebar (owner: "less is more")
+- Scope masthead retired: slim eyebrow/title header with the agreement note behind a "about this agreement" disclosure; stats sit in flow (flatter tiles). "Where the hours go" moved from below the fold to y≈434 at 1440×900 — data owns the first screen.
+- Sidebar collapses to a 76px icon rail (PanelLeft toggle, tooltips on icons, state persists per device via localStorage `foct-sidebar-collapsed`).
+- The page-by-page density pass continues (dashboard/roster next); principle recorded: content above the fold, one accent per view, disclosures over paragraphs.
