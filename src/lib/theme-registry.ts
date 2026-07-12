@@ -27,6 +27,7 @@ export const BUILTIN_THEMES: BuiltinTheme[] = [
   { slug: "option-slate", name: "Slate", tagline: "Professional blue-grey, brick accents", kind: "permanent" },
   { slug: "option-sunset", name: "Sunset", tagline: "Cream, plum ink, burnt orange", kind: "permanent" },
   { slug: "subzero", name: "Subzero", tagline: "Red on black — the Scope explorer look", kind: "permanent", dark: true },
+  { slug: "option-halo", name: "Halo", tagline: "Gallery white, ink rail, pill controls — platform clean", kind: "permanent" },
 ];
 
 export const themeKindLabel: Record<BuiltinTheme["kind"], { label: string; tone: "accent" | "success" | "neutral" }> = {

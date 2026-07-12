@@ -206,3 +206,6 @@ All gates green (tokens, 37×12 contrast, tsc, build, Playwright e2e). Backend n
 
 ## 2026-07-10 — Ticketing import step 1: offline sync engine (owner approved "functionality theirs, skeleton+skin ours")
 Plan in docs/modules/TICKETING_IMPORT_PLAN.md approved verbatim. Step 1 shipped: `src/lib/sd-offline.ts` (IndexedDB outbox + ordered idempotent replay, auto-sync on online/60s/refocus + manual) now carries ALL live-mode SD mutations; SyncPill on desk + phone. Offline queue drains against the existing sd_* backend — no schema change yet. NEXT: 0004 migration (offline-ref renumber trigger, billing fields), PDF+email report port, billing lock screen, insights charts. Live-mode offline behaviour needs the owner's on-machine smoke test (env constraint unchanged).
+
+## 2026-07-10 — Halo theme (owner's DeGirum Cloud reference): "platform clean"
+Owner shared DeGirum Cloud Platform screenshots asking for a cleaner portal look. Delivered as the 13th built-in theme `option-halo` rather than mutating Nature: gallery-white canvas (#fbfbfc/#fff), hairline #ececee borders, near-black ink rail (#0b0c0e) and ink buttons, pill controls (--r-control 9999px), 1rem cards, whisper shadows, teal reserved for focus/info/brand. 37 AA pairs × 13 themes. Nature REMAINS default pending the owner's call after comparing.
