@@ -11,7 +11,7 @@
  *   time. The flag defaults OFF, is named to be un-mistakable in a prod env
  *   file, and logs a loud warning on every page load while enabled.
  */
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export type AuthzAction = "read" | "manage" | "admin";
 
@@ -41,7 +41,7 @@ if (DEMO_ALLOW_ALL) warnDemoMode();
  * (unless the explicit demo flag is on).
  */
 export async function can(action: AuthzAction, scope: CanScope = {}): Promise<boolean> {
-  if (!isSupabaseConfigured || !supabase) {
+  if (!isSupabaseConfigured) {
     if (DEMO_ALLOW_ALL) {
       warnDemoMode();
       return true;
@@ -49,6 +49,7 @@ export async function can(action: AuthzAction, scope: CanScope = {}): Promise<bo
     return false;
   }
   try {
+    const supabase = getSupabase();
     const { data: auth } = await supabase.auth.getUser();
     const userId = auth.user?.id;
     if (!userId) return false;
