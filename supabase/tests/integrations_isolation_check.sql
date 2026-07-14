@@ -35,6 +35,13 @@ begin
   raise exception 'ISOLATION FAIL (expected an error): %', label;
 end $$;
 
+-- Probe holders created UP FRONT by the applying role (postgres) — creating
+-- temp tables later, while running AS authenticated, is refused on hosted
+-- Supabase projects even though plain local Postgres allows it.
+create temp table probe  (cred_id uuid);
+create temp table probe2 (cred_id uuid);
+grant all on probe, probe2 to public;
+
 -- ---- catalogue ---------------------------------------------------------------
 set local role authenticated;
 select pg_temp.become('sandra@meridian.demo');
@@ -64,15 +71,14 @@ set local role authenticated;
 -- ---- save (org admin, secrets -> vault) --------------------------------------
 select pg_temp.become('sandra@meridian.demo');
 
-create temp table probe as
+insert into probe
 select public.integration_credential_save(
   p_provider => (select id from public.integration_providers where slug = 'resend'),
   p_org      => (select id from public.organisations where slug = 'meridian-strata'),
   p_label    => 'Meridian email',
   p_config   => '{"fromEmail":"ops@meridian.demo"}',
   p_secrets  => '{"apiKey":"re_PROBE_SECRET_1234"}'
-) as cred_id;
-grant select on probe to public;
+);
 
 select pg_temp.assert(
   (select count(*) from public.integration_credentials c join probe on c.id = probe.cred_id
@@ -124,7 +130,7 @@ select pg_temp.assert(
   'tested credential activates');
 
 -- ---- provider switch: old credential kept inactive ----------------------------
-create temp table probe2 as
+insert into probe2
 select public.integration_credential_save(
   p_provider => (select id from public.integration_providers where slug = 'postmark'),
   p_org      => (select id from public.organisations where slug = 'meridian-strata'),
@@ -132,8 +138,7 @@ select public.integration_credential_save(
   p_config   => '{"fromEmail":"ops@meridian.demo","messageStream":"outbound"}',
   p_secrets  => '{"serverToken":"pm-probe-token-9876"}',
   p_replaces => (select cred_id from probe)
-) as cred_id;
-grant select on probe2 to public;
+);
 
 set local role service_role;
 select public.integration_credential_record_test((select cred_id from probe2), true);
