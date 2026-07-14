@@ -1,0 +1,776 @@
+/*
+ * FOCT BuildingOps — design tokens ("FOCT Premium Operations UI").
+ * Semantic tokens only in components. Themes are token SETS applied via
+ * data-theme="<name>" on any element (app root, or a preview wrapper).
+ * Every value is documented with its reference + contrast in design/tokens.md.
+ * Verified by scripts/check-contrast.mjs — do not edit colours without re-running it.
+ */
+
+/* ---------------------------------------------------------------- */
+/* Theme-independent tokens: type scale, spacing, radius             */
+/* ---------------------------------------------------------------- */
+:root {
+  /* Typography (owner direction 2026-07-07, Power BI / Zendesk / Freshdesk
+     reference): UI text uses the NATIVE system stack — SF on Apple, Segoe UI
+     on Windows, Roboto on Android — exactly like Zendesk/Freshdesk; hierarchy
+     comes from weight. NUMBERS (metric values, clocks, callouts) use a
+     DIN-style face like Power BI's data labels: Barlow (free DIN-flavoured
+     grotesque; macOS's native "DIN Alternate" is next in the stack).
+     Roboto Mono stays for timestamps/IDs. Previous faces remain selectable
+     in the Theme Builder. */
+  --font-stack-display: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  --font-stack-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  --font-stack-numeric: var(--font-barlow), Barlow, "DIN Alternate", "Segoe UI", system-ui, sans-serif;
+  --font-stack-mono: var(--font-roboto-mono), "SF Mono", ui-monospace, "Roboto Mono", monospace;
+
+  /* Type scale (size / line-height / tracking) — documented in design/tokens.md */
+  --fs-hero: 4.5rem;         /* 72px — kiosk clock only */
+  --lh-hero: 1;
+  --ls-hero: -0.02em;
+  --fs-display: 2.25rem;     /* 36px — page titles, metric numbers */
+  --lh-display: 2.75rem;     /* 44px */
+  --ls-display: -0.02em;
+  --fs-title-1: 1.75rem;     /* 28px — section titles */
+  --lh-title-1: 2.25rem;     /* 36px */
+  --ls-title-1: -0.015em;
+  --fs-title-2: 1.375rem;    /* 22px — modal titles, sub-sections */
+  --lh-title-2: 1.875rem;    /* 30px */
+  --ls-title-2: -0.01em;
+  --fs-title-3: 1.0625rem;   /* 17px — card titles */
+  --lh-title-3: 1.5625rem;   /* 25px */
+  --ls-title-3: -0.005em;
+  --fs-body: 1rem;           /* 16px — default UI text */
+  --lh-body: 1.5rem;         /* 24px */
+  --fs-body-sm: 0.875rem;    /* 14px — tables, secondary copy (never smaller in tables) */
+  --lh-body-sm: 1.25rem;     /* 20px */
+  --fs-caption: 0.8125rem;   /* 13px — labels, hints, badges */
+  --lh-caption: 1.1875rem;   /* 19px — keeps caption inside the 1.4–1.6 band */
+  --ls-caption: 0.005em;
+
+  /* Radius — cards 16px, controls 12px */
+  --r-card: 1rem;        /* 16px */
+  --r-control: 0.75rem;  /* 12px */
+  --r-sm: 0.5rem;        /* 8px */
+  --r-pill: 9999px;
+
+  /* Structural theme hooks — defaults preserve the classic look; a theme can
+     override them to change tile anatomy (borderless cards, solid nav pill). */
+  --card-border: var(--border-subtle);
+  --sidebar-active-bg: var(--accent-subtle);
+  --sidebar-active-fg: var(--sidebar-active);
+
+  /* Data-viz palette — charts/donuts/graphs draw from these, NOT from the
+     status ramp, so every theme colours its data in its own voice.
+     Defaults derive from the theme's accent family; themes may override. */
+  --chart-1: var(--accent);    /* primary series / "complete" */
+  --chart-2: var(--warning);   /* secondary series / "in progress" */
+  --chart-3: var(--bg-hover);  /* track / "pending" */
+}
+
+/* ---------------------------------------------------------------- */
+/* 1. GRAPHITE (default) — cool light-grey canvas, near-black ink    */
+/*    text, vivid indigo-blue accent. TailAdmin/Untitled-UI-style    */
+/*    neutral ramp (owner reference, see DECISIONS.md 2026-07-03).   */
+/* ---------------------------------------------------------------- */
+:root,
+[data-theme="graphite"] {
+  color-scheme: light;
+
+  --bg-canvas: #f9fafb;        /* gray-50, TailAdmin canvas */
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #f2f4f7;         /* gray-100 */
+
+  --border-subtle: #e4e7ec;    /* gray-200 */
+  --border-strong: #85909f;    /* gray-400/500 blend — 3:1 vs surface+canvas */
+
+  --text-primary: #101828;     /* gray-900 */
+  --text-secondary: #344054;   /* gray-700 */
+  --text-muted: #5a6779;       /* gray-500/600 blend, kept ≥4.5:1 */
+  --text-disabled: #98a2b3;    /* gray-400 — non-AA by design, disabled only */
+  --text-on-accent: #ffffff;
+
+  --accent: #101828;           /* ink primary buttons (owner reference build) */
+  --accent-hover: #253041;
+  --accent-subtle: #e9eef0;    /* cool teal-tinted well: active nav, avatar chips */
+  --accent-text: #0e7569;      /* teal links + live signals (FOCT family) */
+
+  --brand: #00b4a6;
+
+  --success: #2e7d4f;          /* muted green, Radix Grass-family */
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;          /* amber, Radix Amber-family — non-text uses only */
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;         /* restrained red, Radix Red-family */
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+  --info: #3a6b9e;             /* slate blue, Radix Blue-family desaturated */
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
+
+  --focus-ring: #0e7569;
+
+  --overlay: rgb(16 24 40 / 0.45);   /* modal scrim */
+
+  /* Sidebar — light rail: white, hairline border, neutral active pill */
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #f2f4f7;
+  --sidebar-fg: #344054;
+  --sidebar-muted: #5a6779;
+  --sidebar-active: #101828;
+  --sidebar-border: #e4e7ec;
+
+  --elevation-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 2px 8px rgb(16 24 40 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(16 24 40 / 0.06), 0 12px 32px rgb(16 24 40 / 0.10);
+}
+
+/* ---------------------------------------------------------------- */
+/* 2. HARBOUR — light grey canvas, ink-navy text, deep teal accent.  */
+/*    Neutrals from Radix Slate. FOCT signal teal #00B4A6 reserved   */
+/*    for brand moments (--brand), desaturated for UI.               */
+/* ---------------------------------------------------------------- */
+[data-theme="harbour"] {
+  color-scheme: light;
+
+  --bg-canvas: #f9f9fb;        /* Radix Slate 2 */
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #f0f0f3;         /* Radix Slate 3 */
+
+  --border-subtle: #e8e8ec;    /* Radix Slate 4 */
+  --border-strong: #8b8d98;    /* Radix Slate 9 — 3:1 vs surface */
+
+  --text-primary: #1b2532;     /* ink-navy, tuned from Radix Slate 12 */
+  --text-secondary: #414d63;
+  --text-muted: #566276;
+  --text-disabled: #a5abb8;
+  --text-on-accent: #ffffff;
+
+  --accent: #0e7568;           /* FOCT teal desaturated/deepened for UI */
+  --accent-hover: #0b5f55;
+  --accent-subtle: #e4f2f0;
+  --accent-text: #0b6357;
+
+  --brand: #00b4a6;            /* full-strength FOCT teal — brand moments only, never text */
+
+  --success: #2e7d4f;
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+  --info: #3a6b9e;
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
+
+  --focus-ring: #0e7568;
+
+  --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
+
+  /* Sidebar — light rail, teal active state */
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #f0f0f3;
+  --sidebar-fg: #414d63;
+  --sidebar-muted: #566276;
+  --sidebar-active: #0b6357;
+  --sidebar-border: #e8e8ec;
+
+  --elevation-card: 0 1px 2px rgb(16 20 26 / 0.04), 0 2px 8px rgb(16 20 26 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(16 20 26 / 0.06), 0 12px 32px rgb(16 20 26 / 0.10);
+}
+
+/* ---------------------------------------------------------------- */
+/* 3. EUCALYPT — warm neutral canvas, muted green accent.            */
+/*    Neutrals from Radix Sage; accent low-chroma Grass-family.      */
+/* ---------------------------------------------------------------- */
+[data-theme="eucalypt"] {
+  color-scheme: light;
+
+  --bg-canvas: #f7f9f7;        /* Radix Sage 2 */
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #eef1ef;         /* Radix Sage 3 */
+
+  --border-subtle: #e6e9e7;    /* Radix Sage 4 */
+  --border-strong: #868e8b;    /* Radix Sage 9 — 3:1 vs surface */
+
+  --text-primary: #1a211e;     /* Radix Sage 12 */
+  --text-secondary: #4a544e;
+  --text-muted: #5f6563;       /* Radix Sage 11 */
+  --text-disabled: #a3aaa6;
+  --text-on-accent: #ffffff;
+
+  --accent: #3e7a52;           /* muted eucalyptus green, low-chroma Grass-family */
+  --accent-hover: #336545;
+  --accent-subtle: #e9f2ec;
+  --accent-text: #356947;
+
+  --brand: var(--accent);
+
+  --success: #2e7d4f;
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+  --info: #3a6b9e;
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
+
+  --focus-ring: #3e7a52;
+
+  --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
+
+  /* Sidebar — light rail, eucalypt active state */
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #eef1ef;
+  --sidebar-fg: #4a544e;
+  --sidebar-muted: #5f6563;
+  --sidebar-active: #356947;
+  --sidebar-border: #e6e9e7;
+
+  --elevation-card: 0 1px 2px rgb(18 22 19 / 0.04), 0 2px 8px rgb(18 22 19 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(18 22 19 / 0.06), 0 12px 32px rgb(18 22 19 / 0.10);
+}
+
+/* ---------------------------------------------------------------- */
+/* 4. SANDSTONE — warm stone canvas, restrained bronze accent.       */
+/*    Neutrals warm Sand/stone family; heritage/premium strata feel. */
+/* ---------------------------------------------------------------- */
+[data-theme="sandstone"] {
+  color-scheme: light;
+
+  --bg-canvas: #faf8f4;        /* warm stone, Radix Sand 2 warmed */
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #f2efe9;
+
+  --border-subtle: #eae6de;
+  --border-strong: #8f8a7f;    /* 3:1 vs surface */
+
+  --text-primary: #24211b;     /* Radix Sand 12 warmed */
+  --text-secondary: #565147;
+  --text-muted: #6a645a;
+  --text-disabled: #aca69b;
+  --text-on-accent: #ffffff;
+
+  --accent: #82653f;           /* restrained bronze, Radix Bronze/Gold-family */
+  --accent-hover: #6f5636;
+  --accent-subtle: #f3ede2;
+  --accent-text: #755a33;
+
+  --brand: var(--accent);
+
+  --success: #2e7d4f;
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+  --info: #3a6b9e;
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
+
+  --focus-ring: #82653f;
+
+  --overlay: rgb(23 25 28 / 0.45);   /* modal scrim */
+
+  /* Sidebar — light rail, bronze active state */
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #f2efe9;
+  --sidebar-fg: #565147;
+  --sidebar-muted: #6a645a;
+  --sidebar-active: #755a33;
+  --sidebar-border: #eae6de;
+
+  --elevation-card: 0 1px 2px rgb(24 21 15 / 0.04), 0 2px 8px rgb(24 21 15 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(24 21 15 / 0.06), 0 12px 32px rgb(24 21 15 / 0.10);
+}
+
+/* ---------------------------------------------------------------- */
+/* 5. INK — the one dark theme. Deep charcoal (never pure black),    */
+/*    soft off-white text, teal accent. Concierge night mode/kiosks. */
+/*    Neutrals from Radix Slate Dark.                                */
+/* ---------------------------------------------------------------- */
+[data-theme="ink"] {
+  color-scheme: dark;
+
+  --bg-canvas: #141517;        /* Radix Slate Dark 1-family */
+  --bg-surface: #1c1e21;       /* Radix Slate Dark 2-family */
+  --bg-raised: #24262a;        /* Radix Slate Dark 3-family */
+  --bg-hover: #2a2d31;
+
+  --border-subtle: #2e3136;
+  --border-strong: #626a74;    /* 3:1 vs surface */
+
+  --text-primary: #edeef0;     /* Radix Slate Dark 12 */
+  --text-secondary: #c6cad1;
+  --text-muted: #9ba1a9;       /* Radix Slate Dark 11-family */
+  --text-disabled: #6b7178;
+  --text-on-accent: #0c1211;   /* dark text on bright accent (dark-theme inversion) */
+
+  --accent: #3ecbbb;           /* teal, brightened for dark surfaces */
+  --accent-hover: #55d6c8;
+  --accent-subtle: #14332f;
+  --accent-text: #4ccfc0;
+
+  --brand: #00b4a6;
+
+  --success: #4caf74;
+  --success-subtle: #162b1f;
+  --success-text: #7bd3a0;
+  --warning: #e5a63b;
+  --warning-subtle: #33290f;
+  --warning-text: #e9b95c;
+  --critical: #e5605c;
+  --critical-hover: #ec7a77;
+  --critical-subtle: #3a1f1e;
+  --critical-text: #f08c88;
+  --info: #6fa9d8;
+  --info-subtle: #16293c;
+  --info-text: #8ec4ec;
+
+  --focus-ring: #3ecbbb;
+
+  --overlay: rgb(0 0 0 / 0.60);   /* modal scrim */
+
+  /* Sidebar — one step off the canvas, same family */
+  --sidebar-bg: #17191c;
+  --sidebar-hover: #24262a;
+  --sidebar-fg: #edeef0;
+  --sidebar-muted: #9ba1a9;
+  --sidebar-active: #4ccfc0;
+  --sidebar-border: #2b2e33;
+
+  --elevation-card: 0 1px 2px rgb(0 0 0 / 0.20), 0 2px 8px rgb(0 0 0 / 0.24);
+  --elevation-raised: 0 2px 4px rgb(0 0 0 / 0.28), 0 16px 40px rgb(0 0 0 / 0.42);
+}
+
+/* ================================================================ */
+/* KEPT VARIANTS (owner decision 2026-07-07): Analytics, Blush,     */
+/* Slate, Sunset stay as selectable built-ins; NATURE is the        */
+/* product default (applied via layout + theme-store, not :root).   */
+/* Violet/Nightfall/Garden/Cyber/Glass deleted per the same call.   */
+/* ================================================================ */
+
+/* A — ANALYTICS: cool blue-grey neutrals, charcoal buttons, green data accent */
+[data-theme="option-analytics"] {
+  color-scheme: light;
+
+  --bg-canvas: #f2f4f6;
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #e8ebee;
+
+  --border-subtle: #d8dee3;    /* #C6CED7 family */
+  --border-strong: #7f8a95;
+
+  --text-primary: #26292f;     /* #2F292B cooled */
+  --text-secondary: #494f58;   /* #42454B family */
+  --text-muted: #5d636c;
+  --text-disabled: #9aa1a8;    /* #989D9E family */
+  --text-on-accent: #ffffff;
+
+  --accent: #42454b;           /* smoking night blue — buttons */
+  --accent-hover: #33363c;
+  --accent-subtle: #e5f2ec;    /* green tint wells */
+  --accent-text: #14724d;      /* data green — links, live */
+
+  --brand: #00b4a6;
+
+  --success: #2e7d4f;
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+  --info: #3a6b9e;
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
+
+  --focus-ring: #14724d;
+
+  --overlay: rgb(38 41 47 / 0.45);
+
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #eceef0;
+  --sidebar-fg: #494f58;
+  --sidebar-muted: #5d636c;
+  --sidebar-active: #14724d;
+  --sidebar-border: #dfe3e6;
+
+  --elevation-card: 0 1px 2px rgb(38 41 47 / 0.04), 0 2px 8px rgb(38 41 47 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(38 41 47 / 0.06), 0 12px 32px rgb(38 41 47 / 0.10);
+}
+
+/* B — BLUSH: warm ivory canvas, refined green-ink buttons, soft pink wells */
+[data-theme="option-blush"] {
+  color-scheme: light;
+
+  --bg-canvas: #fbf5f1;        /* #FEF2EC softened */
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #f8ede7;
+
+  --border-subtle: #f0e2da;
+  --border-strong: #92857b;
+
+  --text-primary: #29332f;     /* #394541 deepened */
+  --text-secondary: #48544f;
+  --text-muted: #5d6a64;
+  --text-disabled: #a5aca8;    /* #ABB0AC family */
+  --text-on-accent: #ffffff;
+
+  --accent: #394541;           /* refined green ink — buttons */
+  --accent-hover: #2c3633;
+  --accent-subtle: #fde4e2;    /* sweet mallow pink wells */
+  --accent-text: #416a55;      /* garden green — links, live */
+
+  --brand: #00b4a6;
+
+  --success: #2e7d4f;
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+  --info: #3a6b9e;
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
+
+  --focus-ring: #416a55;
+
+  --overlay: rgb(41 51 47 / 0.45);
+
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #f8ede7;
+  --sidebar-fg: #48544f;
+  --sidebar-muted: #5d6a64;
+  --sidebar-active: #394541;
+  --sidebar-border: #f0e2da;
+
+  --elevation-card: 0 1px 2px rgb(57 69 65 / 0.05), 0 2px 8px rgb(57 69 65 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(57 69 65 / 0.07), 0 12px 32px rgb(57 69 65 / 0.10);
+}
+
+/* C — SLATE: blue-grey professional neutrals, muted brick accent */
+[data-theme="option-slate"] {
+  color-scheme: light;
+
+  --bg-canvas: #edeff3;        /* #E8EAEC family */
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #e1e4ea;
+
+  --border-subtle: #d2d6db;    /* #D2D6DB exact */
+  --border-strong: #7f8aa2;    /* #8892A9 deepened for 3:1 */
+
+  --text-primary: #20242e;
+  --text-secondary: #434b5c;
+  --text-muted: #5b6373;
+  --text-disabled: #9ba2b1;
+  --text-on-accent: #ffffff;
+
+  --accent: #2c3444;           /* deep slate-navy — buttons */
+  --accent-hover: #1f2531;
+  --accent-subtle: #f4eae8;    /* brick tint wells */
+  --accent-text: #845c58;      /* book-binder brick — links, live */
+
+  --brand: #00b4a6;
+
+  --success: #2e7d4f;
+  --success-subtle: #e7f3eb;
+  --success-text: #256b44;
+  --warning: #dc9a26;
+  --warning-subtle: #f9f0dc;
+  --warning-text: #8a6002;
+  --critical: #c24242;
+  --critical-hover: #a93636;
+  --critical-subtle: #faeceb;
+  --critical-text: #b03030;
+  --info: #3a6b9e;
+  --info-subtle: #e8eff7;
+  --info-text: #33608f;
+
+  --focus-ring: #845c58;
+
+  --overlay: rgb(32 36 46 / 0.45);
+
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #e8eaec;
+  --sidebar-fg: #434b5c;
+  --sidebar-muted: #5b6373;
+  --sidebar-active: #845c58;
+  --sidebar-border: #d9dce1;
+
+  --elevation-card: 0 1px 2px rgb(32 36 46 / 0.04), 0 2px 8px rgb(32 36 46 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(32 36 46 / 0.06), 0 12px 32px rgb(32 36 46 / 0.10);
+}
+
+/* D — SUNSET (Mangeo ref): warm cream, plum ink, burnt-orange accent */
+[data-theme="option-sunset"] {
+  color-scheme: light;
+  --bg-canvas: #fbf5ef;
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #f6ece2;
+  --border-subtle: #efe2d4;
+  --border-strong: #96887c;
+  --text-primary: #251c17;
+  --text-secondary: #52463f;
+  --text-muted: #675a52;
+  --text-disabled: #ab9d92;
+  --text-on-accent: #ffffff;
+  --accent: #c2410c;
+  --accent-hover: #9a3412;
+  --accent-subtle: #fdead9;
+  --accent-text: #9a3412;
+  --brand: #c2410c;
+  --success: #2e7d4f; --success-subtle: #e7f3eb; --success-text: #256b44;
+  --warning: #dc9a26; --warning-subtle: #f9f0dc; --warning-text: #8a6002;
+  --critical: #c24242; --critical-hover: #a93636; --critical-subtle: #faeceb; --critical-text: #b03030;
+  --info: #3a6b9e; --info-subtle: #e8eff7; --info-text: #33608f;
+  --focus-ring: #c2410c;
+  --overlay: rgb(37 28 23 / 0.45);
+  --sidebar-bg: #ffffff; --sidebar-hover: #f6ece2; --sidebar-fg: #52463f;
+  --sidebar-muted: #675a52; --sidebar-active: #9a3412; --sidebar-border: #efe2d4;
+  --elevation-card: 0 1px 2px rgb(37 28 23 / 0.05), 0 2px 8px rgb(37 28 23 / 0.04);
+  --elevation-raised: 0 2px 4px rgb(37 28 23 / 0.07), 0 12px 32px rgb(37 28 23 / 0.10);
+}
+
+/* I — NATURE (Stitch "Soft Nature" v2) — THE DEFAULT THEME (owner, 2026-07-07):
+   cream canvas, BORDERLESS white cards floating on a sage-tinted shadow,
+   pill-shaped controls/chips, solid sage active-nav pill, one rounded
+   friendly family (Onest) for display AND body — the source design uses
+   Quicksand everywhere; Onest is its approved-library equivalent. */
+[data-theme="option-nature"] {
+  color-scheme: light;
+  --r-card: 1.5rem;          /* design borderRadius.DEFAULT */
+  --r-control: 9999px;       /* every control/chip is a full pill */
+  --r-sm: 0.75rem;
+  --card-border: transparent;  /* cards have NO border — shadow only */
+  --bg-canvas: #f9f7f2;
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #f1ede4;
+  --border-subtle: #e7e1d5;
+  --border-strong: #8f887a;
+  --text-primary: #262a22;
+  --text-secondary: #4d5347;
+  --text-muted: #5d6656;
+  --text-disabled: #a8ac9e;
+  --text-on-accent: #ffffff;
+  --accent: #657a59;         /* design sage #7d9070 darkened to AA for white text */
+  --accent-hover: #55684b;
+  --accent-subtle: #eaf0e2;
+  --accent-text: #596b4f;
+  --brand: #7d9070;          /* full-strength design sage — graphics/dots only */
+  /* Status + info tuned to the palette: success IS the sage family,
+     info is a stone teal — no off-palette green/blue anywhere. */
+  --success: #657a59; --success-subtle: #eaf0e2; --success-text: #596b4f;
+  --warning: #dc9a26; --warning-subtle: #f9f0dc; --warning-text: #8a6002;
+  --critical: #b1502f; --critical-hover: #96431f; --critical-subtle: #f9e7de; --critical-text: #a44526;
+  --info: #4e7d74; --info-subtle: #e4efec; --info-text: #3e685f;
+  --chart-1: #657a59; --chart-2: #7d9070; --chart-3: #e5e1d3;   /* sage ramp donut, per the design */
+  --focus-ring: #55684b;
+  --overlay: rgb(38 42 34 / 0.45);
+  --sidebar-bg: #f9f7f2;     /* rail sits on the cream canvas, per the design */
+  --sidebar-hover: #efeadf; --sidebar-fg: #4d5347;
+  --sidebar-muted: #5d6656; --sidebar-active: #4c5f43;
+  --sidebar-active-bg: #657a59;   /* solid sage pill, white label */
+  --sidebar-active-fg: #ffffff;
+  --sidebar-border: #e7e1d5;
+  --elevation-card: 0 8px 30px rgb(125 144 112 / 0.08);   /* design-exact soft sage */
+  --elevation-raised: 0 12px 40px rgb(125 144 112 / 0.16);
+}
+
+/* SUPPORT (owner's Claude Design "Building Support Tickets" handoff,
+   2026-07-07): ink-on-white with signal-red accent, mono ticket refs.
+   Powers the Service Desk mobile surface (/support) and is selectable as
+   an app theme via the Theme Builder. Values AA-nudged where the source
+   fell short: muted text #6A737F→#59626d, success text #1F8A5B→#157a4e,
+   warning text #C07A00→#8a5800, border-strong #C2C9D1→#7a8492. */
+[data-theme="support"] {
+  color-scheme: light;
+  --bg-canvas: #eaedf1;
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #f4f6f8;
+  --border-subtle: #eaedf1;
+  --border-strong: #7a8492;
+  --text-primary: #0e0f11;
+  --text-secondary: #49515b;
+  --text-muted: #59626d;
+  --text-disabled: #98a1ac;
+  --text-on-accent: #ffffff;
+  --accent: #de192a;           /* the design's signal red — 4.91:1 with white */
+  --accent-hover: #c4111f;
+  --accent-subtle: #fff1f2;
+  --accent-text: #c4111f;
+  --brand: #de192a;
+  --success: #1f8a5b; --success-subtle: #e7f6ef; --success-text: #157a4e;
+  --warning: #c07a00; --warning-subtle: #fbf1de; --warning-text: #8a5800;
+  --critical: #c4111f; --critical-hover: #a30c18; --critical-subtle: #fff1f2; --critical-text: #a30c18;
+  --info: #2563a8; --info-subtle: #e8f0f9; --info-text: #2563a8;
+  --focus-ring: #de192a;
+  --overlay: rgb(14 15 17 / 0.5);
+  --sidebar-bg: #0e0f11; --sidebar-hover: #1c1f24; --sidebar-fg: #f4f6f8;
+  --sidebar-muted: #98a1ac; --sidebar-active: #ffffff;
+  --sidebar-active-bg: #23262c; --sidebar-active-fg: #ffffff;
+  --sidebar-border: #23262c;
+  --chart-1: #de192a; --chart-2: #c07a00; --chart-3: #eaedf1;
+  --elevation-card: 0 1px 2px rgb(14 15 17 / 0.04), 0 2px 8px rgb(14 15 17 / 0.04);
+  --elevation-raised: 0 10px 30px rgb(14 15 17 / 0.18);
+}
+
+/* SUBZERO — red on black (owner's "Aurora Scope Explorer" dark design,
+   2026-07-10). The dark sibling of `support`: near-black ground, graphite
+   surfaces, the same #de192a signal red. Ships as a selectable built-in;
+   Nature stays the product default. */
+[data-theme="subzero"] {
+  color-scheme: dark;
+
+  --bg-canvas: #0b0c0e;
+  --bg-surface: #16181c;
+  --bg-raised: #1b1e23;
+  --bg-hover: #22262c;
+
+  --border-subtle: #22262c;
+  --border-strong: #6a737f;
+
+  --text-primary: #f2f4f6;
+  --text-secondary: #b7bfc8;
+  --text-muted: #939da9;
+  --text-disabled: #6a737f;
+  --text-on-accent: #ffffff;
+
+  --accent: #de192a;           /* the design's signal red — 4.91:1 with white */
+  --accent-hover: #c4111f;
+  --accent-subtle: #33161a;
+  --accent-text: #f4737e;
+
+  --brand: #de192a;
+
+  --success: #3dbe85;
+  --success-subtle: #122c22;
+  --success-text: #7cd8ac;
+  --warning: #e0a33b;
+  --warning-subtle: #33270f;
+  --warning-text: #e9b95c;
+  --critical: #c4111f;
+  --critical-hover: #a30c18;
+  --critical-subtle: #3a161a;
+  --critical-text: #f58f98;
+  --info: #7fb1e8;
+  --info-subtle: #16283c;
+  --info-text: #9cc3ee;
+
+  --focus-ring: #f0525f;
+
+  --overlay: rgb(0 0 0 / 0.60);
+
+  --sidebar-bg: #101114;
+  --sidebar-hover: #1b1e23;
+  --sidebar-fg: #f2f4f6;
+  --sidebar-muted: #98a1ac;
+  --sidebar-active: #f4737e;
+  --sidebar-active-bg: #de192a;
+  --sidebar-active-fg: #ffffff;
+  --sidebar-border: #22262c;
+
+  --chart-1: #c6cad1;
+  --chart-2: #de192a;
+  --chart-3: #22262c;
+
+  --elevation-card: 0 1px 2px rgb(0 0 0 / 0.30), 0 2px 8px rgb(0 0 0 / 0.30);
+  --elevation-raised: 0 4px 12px rgb(0 0 0 / 0.40), 0 16px 40px rgb(0 0 0 / 0.50);
+}
+
+/* HALO — gallery-white "platform clean" (owner's DeGirum Cloud reference,
+   2026-07-10): white canvas, hairline borders, near-black ink rail and
+   buttons, pill controls, whisper-quiet shadows. Signal teal reserved for
+   focus/info moments only. */
+[data-theme="option-halo"] {
+  color-scheme: light;
+
+  --bg-canvas: #fbfbfc;
+  --bg-surface: #ffffff;
+  --bg-raised: #f6f7f8;
+  --bg-hover: #f1f2f4;
+
+  --border-subtle: #ececee;
+  --border-strong: #75797f;
+
+  --text-primary: #101114;
+  --text-secondary: #43464b;
+  --text-muted: #63676d;
+  --text-disabled: #9ba0a6;
+  --text-on-accent: #ffffff;
+
+  --accent: #17181b;
+  --accent-hover: #2c2e33;
+  --accent-subtle: #f1f2f4;
+  --accent-text: #17181b;
+
+  --brand: #00b4a6;
+
+  --success: #177d54;
+  --success-subtle: #e9f6f0;
+  --success-text: #136a47;
+  --warning: #a36a00;
+  --warning-subtle: #faf3e4;
+  --warning-text: #7d5200;
+  --critical: #b3261e;
+  --critical-hover: #8f1d17;
+  --critical-subtle: #fbeeed;
+  --critical-text: #a3231c;
+  --info: #2b6cb0;
+  --info-subtle: #eaf2fa;
+  --info-text: #255d99;
+
+  --focus-ring: #008579;
+
+  --overlay: rgb(16 17 20 / 0.45);
+
+  --sidebar-bg: #0b0c0e;
+  --sidebar-hover: #191b1e;
+  --sidebar-fg: #f4f5f6;
+  --sidebar-muted: #9ba0a6;
+  --sidebar-active: #ffffff;
+  --sidebar-active-bg: #23262b;
+  --sidebar-active-fg: #ffffff;
+  --sidebar-border: #1c1e22;
+
+  --chart-1: #17181b;
+  --chart-2: #008579;
+  --chart-3: #ececee;
+
+  --r-card: 1rem;
+  --r-control: 9999px;       /* DeGirum pill buttons + circular icon wells */
+
+  --elevation-card: 0 1px 2px rgb(16 17 20 / 0.03);
+  --elevation-raised: 0 8px 28px rgb(16 17 20 / 0.10);
+}
