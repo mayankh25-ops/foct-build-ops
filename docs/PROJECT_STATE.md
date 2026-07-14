@@ -3,7 +3,16 @@
 > Read this first, every session. Update it before ending any session.
 
 ## Current stage
+**Stage 4 Integrations framework: SHIPPED (2026-07-14, branch `claude/integrations-framework-plan-fhmyij`).** Dynamic, GUI-configured providers exactly per CLAUDE.md — nothing third-party hardcoded:
+- **DB (0005 + APPLY_STAGE4_INTEGRATIONS.sql, awaiting owner paste):** catalogue rows now carry per-brand JSON Schemas; `integration_credentials` is Vault-backed, replace-only (DB trigger), one-active-per-scope (partial unique index), fully audit-logged (trigger); new `notification_log`; SECURITY DEFINER RPCs save/activate/deactivate/record_test/reveal (reveal = service_role ONLY). Proven on the local PG16 mirror: full-chain replay, double-run idempotency, APPLY bundle on a live-state mirror, **23 + 15 + 19 isolation assertions green** (`tests/integrations_isolation_check.sql`).
+- **Adapters (`src/lib/integrations/`):** `EmailProvider` (Resend, Postmark, SendGrid, AWS SES v2 with dependency-free SigV4) + `SmsProvider` (Twilio, MessageMedia, ClickSend) — plain fetch, zero brand SDKs; API versions in DECISIONS.md (2026-07-14 table).
+- **`notify()` (`src/lib/server/notify.ts`):** single door for all app sends — resolves the active credential per org/building (building-scoped wins), reveals secrets server-side, dispatches via the registry, records the handling provider in notification_log. Server routes `/api/integrations/test` + `/send-test` are DB-authorised via `public.can`.
+- **GUI:** `/settings/integrations` (category tabs → brand cards → form auto-rendered from the JSON Schema → Test connection → save masked/replace-only → activate keeps old credential inactive → audit feed; Storage/Accounting/Push shown coming-soon) and `/settings/integrations/test` (real email/SMS through the active provider, provider + message id displayed, masked send log). Demo store persists ONLY masked values; live mode = `NEXT_PUBLIC_INTEGRATIONS_LIVE=1` + `SUPABASE_SECRET_KEY` (see supabase/README.md Stage 4). **Verified: 17/17 Playwright e2e** (schema render, secret masking, pattern rejection, test gate, switch flow, persistence) + all four gates green (tokens · 37×13 contrast · tsc · build, 21 routes).
+- **Owner action:** paste `APPLY_STAGE4_INTEGRATIONS.sql`, run `integrations_isolation_check.sql` (expect 19 ok), then add real provider keys via the GUI on your machine and use "Send a test".
+
+## Previous stage
 **Stage 1.5 Theme Builder: SHIPPED (2026-07-07).** Appearance settings (`/settings/appearance`): all 15 themes as live preview cards applyable per building; custom theme creator (8 hex tokens, rest derived + contrast-nudged, WCAG AA validation with warn-on-save via the SAME shared pair list as the build gate); typography slots + woff2 upload; persisted in `foct-theme-builder-v1` mirroring the authored-but-not-yet-run `supabase/migrations/0001_theme_engine.sql` (+pgTAP test). Variant status unchanged underneath: Nature & Glass finalists, other option-* frozen, final pick still open.
+## Previous stage detail
 **OWNER MODULE PRIORITY ORDER (recorded 2026-07-07, verbatim intent):**
 1. **Service Desk + Kiosk sign-in (Expo app or React, Android, QR sign-in) + Timesheets** — "most important is complete flow for ticket system and cleaners kiosk sign in and timesheet making automatic"
 2. Concierge Desk — for raising tickets
@@ -70,10 +79,10 @@ All consume semantic tokens only (`npm run check:tokens` enforces).
 Authored + locally verified, pending owner's dashboard apply: `0000_platform_foundation.sql`, `0001_theme_engine.sql`, `seed.sql` (see supabase/README.md).
 
 ## Exact next steps
-1. **Owner applies `supabase/APPLY_STAGE2.sql`** in the SQL editor + runs `tests/isolation_check.sql` (expect 23 ok-notices) — supabase/README.md. **Gate for anything that touches live data.**
-2. Stage 3 (Service Desk end-to-end): swap the Service Desk store internals to Supabase (screens unchanged), public QR intake route, Storage photos, Realtime, Resend email adapter, PDF job, concierge ticket surface.
-3. Stage 4: kiosk PWA (offline queue) + automatic timesheets + minimal roster CRUD + missed check-in alerts.
-4. Then the owner's order: Calendar → Tasks & incidents → Site audits → full Rosters → Contractors → Floor plans → Parcels → Automation.
+1. **Owner applies `supabase/APPLY_STAGE4_INTEGRATIONS.sql`** in the SQL editor + runs `tests/integrations_isolation_check.sql` (expect 19 ok-notices) — supabase/README.md Stage 4. Then add real provider keys via `/settings/integrations` on a machine with `.env.local` set (SUPABASE_SECRET_KEY + NEXT_PUBLIC_INTEGRATIONS_LIVE=1) and prove a real send on the test page.
+2. Wire existing queued sends through `notify()`: calendar email reminders (currently a visible outbox), Service Desk follower emails + missed check-in alerts (Inngest stage).
+3. Ticketing import step 2 (per TICKETING_IMPORT_PLAN): 0006 offline-ref renumber trigger + billing fields, PDF+email report port (email goes via notify()), billing lock screen, insights charts.
+4. Kiosk PWA offline queue polish + minimal roster CRUD; then the owner's order: Tasks & incidents → Site audits → full Rosters → Contractors → Floor plans → Parcels → Automation.
 
 ## HANDOVER (half-finished / risky)
 - **Service Desk is the ONLY functional module** (client-side store, `foct-sd-demo-v1` in localStorage — clears with browser data; notifications/PDF simulated). All other screens remain static demos.
@@ -84,3 +93,4 @@ Authored + locally verified, pending owner's dashboard apply: `0000_platform_fou
 - **No ESLint config, no CI** — `check:tokens` + `check:contrast` + `tsc` are the gates; wire into CI in Stage 2.
 - **Drawer/Modal animations are minimal** (no enter/exit keyframes; Tailwind v4 has no stock animate utilities). Add `tw-animate-css` or keyframes if transitions feel abrupt.
 - Design-preview's app-shell section still shows the old inline Sidebar usage (button items, no hrefs) — intentional for isolated preview, but it means the preview shell and the real `AppShell` are separate compositions.
+- **Integrations (Stage 4) caveats:** live sends are UNTESTED against real provider accounts (this env can't reach the internet beyond the proxy, nor *.supabase.co) — the adapters follow the documented APIs (DECISIONS 2026-07-14 table) but the first real key + "Send a test" run happens on the owner's machine. The GUI's org context in demo/live mode is pinned to the seed Meridian org (`DEMO_ORG_ID` in integrations-store) until real session-org plumbing lands. `integration_credential_save` records the PRE-SAVE test result as client-asserted (see DECISIONS); post-save tests are stamped server-side.

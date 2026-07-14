@@ -227,3 +227,25 @@ Theme-independent structural rhythm, applied in the shared components so every t
 
 ## 2026-07-13 — Live anon-hardening RESOLVED
 Root cause confirmed: the owner's original APPLY_STAGE3 paste aborted at the 42710 policy error BEFORE reaching the 0003 hardening section, so anon table grants survived on the live project (RLS still returned zero rows — no data exposure). Fixed with a self-contained revoke-all + default-privileges block pasted directly; live verification query now shows anon holding EXACTLY one grant (integration_providers SELECT, grantor postgres). Owner to re-run both isolation suites for the green confirmation (23 + 15).
+
+## 2026-07-14 — Stage 4: Integrations framework (dynamic, GUI-configured providers)
+Owner approved the six-part plan (interfaces + 7 adapters, catalogue JSON Schemas, admin GUI, notify(), switch flow, test page) built on the existing app.can()/RLS model. Key decisions:
+- **No brand SDKs anywhere.** Every adapter is plain `fetch()` against the provider's REST API (`src/lib/integrations/`), so "no feature code imports a brand SDK" holds in the strongest form — the dependency tree has zero provider packages. AWS SigV4 is a 60-line dependency-free signer (`email/sigv4.ts`, node:crypto).
+- **Secrets architecture.** Secret fields (flagged `x-secret` in each catalogue JSON Schema) go to Supabase Vault via the SECURITY DEFINER RPC `integration_credential_save`; non-secret fields live in `integration_credentials.config`. Reveal (`integration_secret_reveal`) is EXECUTE-granted to service_role ONLY — the client can never read a secret back; the GUI shows the masked string and offers replace-only. Replace-only is enforced in the DB too: a BEFORE UPDATE trigger rejects changes to org/building/provider/secret_ref.
+- **One active credential per org × building-scope × category** (partial unique index). `integration_credential_activate` requires a recorded passing test, deactivates-but-keeps the previous credential, and every save/activate/deactivate lands in audit_logs via trigger. `notification_log` records which provider handled every send (recipient stored masked); INSERT is service_role-only.
+- **Pre-save tests are transient.** "Test connection" posts form values to `/api/integrations/test`, which calls the adapter's `verifyCredentials` and never persists anything; the save RPC then records the client-asserted result. The DB cannot verify an external API itself, so the activation gate is a UX/process control, not a security boundary (the security boundary is org-admin + RLS). Post-save tests re-run server-side from Vault and are stamped by service_role.
+- **Vault on the local mirror.** Plain PG16 has no supabase_vault, so `tests/local_prelude.sql` ships a plaintext-locally shim of `vault.create_secret`/`vault.decrypted_secrets`; 0005 refuses to run if neither the extension nor the shim is present. Proven: full chain + double-run idempotency + APPLY bundle on a live-state mirror; 23/15/19 isolation assertions green.
+- **Demo mode mirrors the backend honestly**: the GUI's localStorage store keeps only masked values + non-secret config — typed secrets are used for the simulated test then dropped. Live mode (NEXT_PUBLIC_INTEGRATIONS_LIVE=1 + SUPABASE_SECRET_KEY) drives the RPCs and API routes. Added dev deps: `server-only` (build-time guard on secret-handling modules), `playwright` (e2e).
+
+### Provider API versions implemented (verified against official docs 2026-07-14)
+| Provider | API / version | Send endpoint | Auth | Verify (no send) |
+|---|---|---|---|---|
+| Resend | REST, unversioned | POST api.resend.com/emails | Bearer | GET /domains |
+| Postmark | REST, unversioned | POST api.postmarkapp.com/email | X-Postmark-Server-Token | GET /server |
+| SendGrid | v3 | POST api.sendgrid.com/v3/mail/send (202, id in X-Message-Id header) | Bearer | GET /v3/scopes (asserts mail.send) |
+| AWS SES | v2 (2019-09-27) | POST email.{region}.amazonaws.com/v2/email/outbound-emails | SigV4 (service "ses") | GET /v2/email/account (also flags sandbox) |
+| Twilio | 2010-04-01 | POST /Accounts/{sid}/Messages.json (form-encoded, 201) | Basic sid:token | GET /Accounts/{sid}.json |
+| MessageMedia | v1 | POST api.messagemedia.com/v1/messages (202, delivery_report:true) | Basic key:secret | GET /v1/delivery_reports |
+| ClickSend | v3 | POST rest.clicksend.com/v3/sms/send (always HTTP 200 — check data.messages[].status) | Basic user:apikey | GET /v3/account |
+
+AU note recorded for the owner: from 1 July 2026 ACMA's SMS Sender ID Register requires ALPHANUMERIC sender IDs to Australian numbers to be registered with the provider (Twilio/Sinch MessageMedia/ClickSend flows) or messages get labelled "Unverified" — dedicated numbers are the alternative and are required for two-way SMS.

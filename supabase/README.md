@@ -56,6 +56,24 @@ psql -f supabase/tests/isolation_check.sql   # expect 23 ok-notices
    (`/support/new`, QR form) lodges through the token RPC without a login.
    Until the flag is set, all screens keep the local demo store.
 
+## Stage 4 apply (Integrations framework)
+1. SQL Editor → paste **`supabase/APPLY_STAGE4_INTEGRATIONS.sql`** → Run
+   (idempotent; extends the Stage-2 integration stub — catalogue JSON Schemas,
+   Vault-backed replace-only credentials, notification_log, save/activate
+   RPCs). It requires the **supabase_vault** extension; on a standard project
+   it is pre-installed, otherwise enable it under Database → Extensions first.
+2. New query → paste **`supabase/tests/integrations_isolation_check.sql`** →
+   Run. Expect **19 `ok:` notices** (secrets never readable back, replace-only
+   enforced at the DB, one active credential per scope, rival org sees
+   nothing, notification_log write-locked to service_role). Rolls itself back.
+3. To go LIVE in the app: add `SUPABASE_SECRET_KEY` (server-side, Project
+   Settings → API) and `NEXT_PUBLIC_INTEGRATIONS_LIVE=1` to `.env.local`,
+   sign in as an org admin, then open `/settings/integrations`. Test
+   connection and test sends run through `/api/integrations/*` server routes —
+   the browser never touches provider APIs or decrypted secrets. Until the
+   flag is set, the GUI runs on the local demo store (masked-only, no secrets
+   persisted anywhere client-side).
+
 ## App wiring
 `.env.local` (gitignored) carries `NEXT_PUBLIC_SUPABASE_URL` +
 `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see `.env.example`); the browser client is
