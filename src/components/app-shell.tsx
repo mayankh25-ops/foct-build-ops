@@ -22,7 +22,7 @@ import {
   Timer,
   Waves,
 } from "lucide-react";
-import { Palette } from "lucide-react";
+import { Palette, Plug } from "lucide-react";
 import { Sidebar } from "@/components/ui/sidebar";
 import { ToastProvider } from "@/components/ui/toast";
 import { TopBar } from "@/components/ui/top-bar";
@@ -107,7 +107,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           },
           {
             title: "Settings",
-            items: [{ label: "Appearance", icon: Palette, href: "/settings/appearance" }],
+            items: [
+              { label: "Appearance", icon: Palette, href: "/settings/appearance" },
+              { label: "Integrations", icon: Plug, href: "/settings/integrations" },
+            ],
           },
         ]}
         footer={
