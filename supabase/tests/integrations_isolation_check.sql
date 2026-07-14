@@ -4,6 +4,13 @@
 -- AND in the Supabase SQL editor after APPLY_STAGE4_INTEGRATIONS.sql.
 -- Every assertion raises on violation; expect 19 ok-notices. Rolls back —
 -- no probe data persists.
+--
+-- Editor-compatibility notes (learned on the live project):
+--  * No temp TABLES — the hosted SQL editor's connection handling breaks
+--    them; probe state travels in transaction-local settings (set_config),
+--    the same proven mechanism become() uses. Temp FUNCTIONS are fine.
+--  * jwt claims are transaction-scoped: they are explicitly CLEARED before
+--    the anon probe, otherwise anon still carries the previous identity.
 -- =============================================================================
 begin;
 
@@ -35,12 +42,11 @@ begin
   raise exception 'ISOLATION FAIL (expected an error): %', label;
 end $$;
 
--- Probe holders created UP FRONT by the applying role (postgres) — creating
--- temp tables later, while running AS authenticated, is refused on hosted
--- Supabase projects even though plain local Postgres allows it.
-create temp table probe  (cred_id uuid);
-create temp table probe2 (cred_id uuid);
-grant all on probe, probe2 to public;
+-- probe credential ids, carried as transaction-local settings
+create or replace function pg_temp.cred1() returns uuid
+language sql stable as $$ select current_setting('probe.cred1', true)::uuid $$;
+create or replace function pg_temp.cred2() returns uuid
+language sql stable as $$ select current_setting('probe.cred2', true)::uuid $$;
 
 -- ---- catalogue ---------------------------------------------------------------
 set local role authenticated;
@@ -52,10 +58,9 @@ select pg_temp.assert(
   'catalogue: 7 active brands, each with a JSON Schema + mask field');
 
 -- anon must see nothing: either zero rows (RLS) or no table grant at all
--- (0003 hardening) — both are a pass. CRITICAL: clear the jwt claims left by
--- become() first — set_config is transaction-scoped, so without this the anon
--- probe still carries Sandra's identity and RLS (auth.uid() is not null)
--- correctly shows the catalogue, failing the assertion on live Supabase.
+-- (0003 hardening) — both are a pass. Clear the jwt claims first: without
+-- this the anon probe still carries Sandra's identity (claims are
+-- transaction-scoped) and RLS correctly shows the catalogue.
 create or replace function pg_temp.anon_visible_providers() returns int
 language plpgsql as $$
 declare n int;
@@ -75,18 +80,18 @@ set local role authenticated;
 -- ---- save (org admin, secrets -> vault) --------------------------------------
 select pg_temp.become('sandra@meridian.demo');
 
-insert into probe
-select public.integration_credential_save(
+select set_config('probe.cred1', public.integration_credential_save(
   p_provider => (select id from public.integration_providers where slug = 'resend'),
   p_org      => (select id from public.organisations where slug = 'meridian-strata'),
   p_label    => 'Meridian email',
   p_config   => '{"fromEmail":"ops@meridian.demo"}',
   p_secrets  => '{"apiKey":"re_PROBE_SECRET_1234"}'
-);
+)::text, true);
 
 select pg_temp.assert(
-  (select count(*) from public.integration_credentials c join probe on c.id = probe.cred_id
-    where c.active = false and c.masked = '•••• 1234' and c.category = 'email') = 1,
+  (select count(*) from public.integration_credentials c
+    where c.id = pg_temp.cred1()
+      and c.active = false and c.masked = '•••• 1234' and c.category = 'email') = 1,
   'org admin saves a credential: starts INACTIVE, masked to last 4');
 
 select pg_temp.assert(
@@ -96,15 +101,15 @@ select pg_temp.assert(
   'plaintext secret appears NOWHERE in integration_credentials');
 
 select pg_temp.assert_fails(
-  'select public.integration_credential_activate((select cred_id from probe))',
+  'select public.integration_credential_activate(pg_temp.cred1())',
   'activation is REFUSED before a passing connection test');
 
 select pg_temp.assert_fails(
-  'select public.integration_credential_record_test((select cred_id from probe), true)',
+  'select public.integration_credential_record_test(pg_temp.cred1(), true)',
   'authenticated users cannot stamp test results (service_role only)');
 
 select pg_temp.assert_fails(
-  'select public.integration_secret_reveal((select cred_id from probe))',
+  'select public.integration_secret_reveal(pg_temp.cred1())',
   'authenticated users can NEVER read secrets back');
 
 select pg_temp.assert_fails(
@@ -113,49 +118,47 @@ select pg_temp.assert_fails(
 
 select pg_temp.assert_fails(
   'update public.integration_credentials set secret_ref = gen_random_uuid()::text
-   where id = (select cred_id from probe)',
+   where id = pg_temp.cred1()',
   'credentials are replace-only: secret_ref is immutable');
 
 -- ---- server-side test stamp + activation --------------------------------------
 set local role service_role;
-select public.integration_credential_record_test((select cred_id from probe), true, 'probe: verified');
+select public.integration_credential_record_test(pg_temp.cred1(), true, 'probe: verified');
 select pg_temp.assert(
-  (select decrypted->>'apiKey' from (
-     select public.integration_secret_reveal((select cred_id from probe)) as decrypted) s
-  ) = 're_PROBE_SECRET_1234',
+  (select public.integration_secret_reveal(pg_temp.cred1()) ->> 'apiKey')
+    = 're_PROBE_SECRET_1234',
   'service_role (and ONLY service_role) can reveal the secret for sending');
 set local role authenticated;
 
 select pg_temp.become('sandra@meridian.demo');
-select public.integration_credential_activate((select cred_id from probe));
+select public.integration_credential_activate(pg_temp.cred1());
 select pg_temp.assert(
   (select active and activated_at is not null from public.integration_credentials
-   where id = (select cred_id from probe)),
+   where id = pg_temp.cred1()),
   'tested credential activates');
 
 -- ---- provider switch: old credential kept inactive ----------------------------
-insert into probe2
-select public.integration_credential_save(
+select set_config('probe.cred2', public.integration_credential_save(
   p_provider => (select id from public.integration_providers where slug = 'postmark'),
   p_org      => (select id from public.organisations where slug = 'meridian-strata'),
   p_label    => 'Meridian email (Postmark)',
   p_config   => '{"fromEmail":"ops@meridian.demo","messageStream":"outbound"}',
   p_secrets  => '{"serverToken":"pm-probe-token-9876"}',
-  p_replaces => (select cred_id from probe)
-);
+  p_replaces => pg_temp.cred1()
+)::text, true);
 
 set local role service_role;
-select public.integration_credential_record_test((select cred_id from probe2), true);
+select public.integration_credential_record_test(pg_temp.cred2(), true);
 set local role authenticated;
 select pg_temp.become('sandra@meridian.demo');
-select public.integration_credential_activate((select cred_id from probe2));
+select public.integration_credential_activate(pg_temp.cred2());
 
 select pg_temp.assert(
   (select count(*) filter (where active) from public.integration_credentials
    where org_id = (select id from public.organisations where slug = 'meridian-strata')
      and category = 'email') = 1
-  and (select active from public.integration_credentials where id = (select cred_id from probe)) = false
-  and exists (select 1 from public.integration_credentials where id = (select cred_id from probe)),
+  and (select active from public.integration_credentials where id = pg_temp.cred1()) = false
+  and exists (select 1 from public.integration_credentials where id = pg_temp.cred1()),
   'provider switch: exactly ONE active email credential; old one kept inactive');
 
 select pg_temp.assert(
@@ -181,7 +184,7 @@ select pg_temp.assert(
   'another org''s admin sees NONE of Meridian''s credentials');
 
 select pg_temp.assert_fails(
-  'select public.integration_credential_activate((select cred_id from probe))',
+  'select public.integration_credential_activate(pg_temp.cred1())',
   'another org''s admin cannot activate Meridian''s credential');
 
 -- ---- notification_log ----------------------------------------------------------
@@ -195,7 +198,7 @@ select pg_temp.assert_fails(
 set local role service_role;
 insert into public.notification_log (org_id, channel, provider_brand, credential_id, recipient, subject, status, is_test)
 values ((select id from public.organisations where slug = 'meridian-strata'),
-        'email', 'Postmark', (select cred_id from probe2), 's***@m***.demo', 'Test email', 'sent', true);
+        'email', 'Postmark', pg_temp.cred2(), 's***@m***.demo', 'Test email', 'sent', true);
 set local role authenticated;
 
 select pg_temp.become('sandra@meridian.demo');
