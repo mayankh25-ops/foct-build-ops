@@ -224,3 +224,6 @@ Theme-independent structural rhythm, applied in the shared components so every t
 - Condition 2: APPLY_STAGE2 regenerated with a "WHAT CHANGED" banner — everything above it byte-identical to the applied copy; only 0004 below.
 - Condition 3: authz.ts demo stub gated behind NEXT_PUBLIC_AUTHZ_DEMO_ALLOW_ALL=1 (default off, loud red console warning when on, fails closed otherwise).
 - docs/ARCHITECTURE.md added (mermaid ERD + permission-flow walkthrough).
+
+## 2026-07-13 — Live anon-hardening RESOLVED
+Root cause confirmed: the owner's original APPLY_STAGE3 paste aborted at the 42710 policy error BEFORE reaching the 0003 hardening section, so anon table grants survived on the live project (RLS still returned zero rows — no data exposure). Fixed with a self-contained revoke-all + default-privileges block pasted directly; live verification query now shows anon holding EXACTLY one grant (integration_providers SELECT, grantor postgres). Owner to re-run both isolation suites for the green confirmation (23 + 15).
