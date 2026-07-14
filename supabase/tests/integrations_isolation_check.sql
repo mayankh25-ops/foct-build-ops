@@ -52,7 +52,10 @@ select pg_temp.assert(
   'catalogue: 7 active brands, each with a JSON Schema + mask field');
 
 -- anon must see nothing: either zero rows (RLS) or no table grant at all
--- (0003 hardening) — both are a pass.
+-- (0003 hardening) — both are a pass. CRITICAL: clear the jwt claims left by
+-- become() first — set_config is transaction-scoped, so without this the anon
+-- probe still carries Sandra's identity and RLS (auth.uid() is not null)
+-- correctly shows the catalogue, failing the assertion on live Supabase.
 create or replace function pg_temp.anon_visible_providers() returns int
 language plpgsql as $$
 declare n int;
@@ -63,6 +66,7 @@ begin
   end;
   return n;
 end $$;
+select set_config('request.jwt.claims', '{}', true); -- no identity
 set local role anon;
 select pg_temp.assert(pg_temp.anon_visible_providers() = 0,
   'anon sees an EMPTY integrations catalogue');
