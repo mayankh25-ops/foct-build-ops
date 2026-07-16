@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckCheck, ClipboardCheck, Download } from "lucide-react";
+import { CheckCheck, ClipboardCheck, Download, PencilLine } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,16 @@ import { FilterBar, SegmentedControl } from "@/components/ui/filter-bar";
 import { MetricCard } from "@/components/ui/metric-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { SearchInput } from "@/components/ui/search-input";
+import { Input } from "@/components/ui/input";
+import {
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/modal";
 import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -46,21 +56,177 @@ function reviewNote(r: TimesheetWeekRow): string | null {
   return null;
 }
 
+/* ---------------------------------------------------------------- */
+/* Review & approve — the manager's payroll decision, not a rubber   */
+/* stamp: adjust the hours, leave a remark, then approve.            */
+/* ---------------------------------------------------------------- */
+
+function ReviewApproveModal({
+  row,
+  now,
+  onClose,
+  onApprove,
+}: {
+  row: TimesheetWeekRow | null;
+  now: Date;
+  onClose: () => void;
+  onApprove: (opts: { note?: string; approvedHours?: number }) => void;
+}) {
+  const [hours, setHours] = React.useState("");
+  const [note, setNote] = React.useState("");
+
+  React.useEffect(() => {
+    if (row) {
+      setHours(row.actual.toFixed(2));
+      setNote("");
+    }
+  }, [row]);
+
+  if (!row) return null;
+
+  const parsed = Number.parseFloat(hours);
+  const validHours = Number.isFinite(parsed) && parsed >= 0 && parsed <= 24 * 7;
+  const adjusted = validHours && Math.abs(parsed - row.actual) > 0.01;
+  const reviewReason = reviewNote(row);
+
+  return (
+    <Modal open onOpenChange={(o) => !o && onClose()}>
+      <ModalContent size="lg">
+        <ModalHeader>
+          <ModalTitle>Review {row.staff.name.split(" ")[0]}&apos;s week</ModalTitle>
+          <ModalDescription>
+            Week of{" "}
+            {new Date(now.getTime() - ((now.getDay() + 6) % 7) * 86400000).toLocaleDateString(
+              "en-AU",
+              { day: "numeric", month: "long" }
+            )}{" "}
+            · every number below derives from kiosk check-ins vs the roster.
+          </ModalDescription>
+        </ModalHeader>
+        <ModalBody className="flex flex-col gap-5">
+          {reviewReason && (
+            <div className="rounded-card border border-edge bg-warning-subtle px-4 py-3 text-body-sm text-warning-text">
+              {reviewReason}
+            </div>
+          )}
+
+          <Table>
+            <THead>
+              <Tr>
+                <Th>Day</Th>
+                <Th numeric>Rostered</Th>
+                <Th numeric>Check in</Th>
+                <Th numeric>Check out</Th>
+                <Th numeric>Actual</Th>
+                <Th>Status</Th>
+              </Tr>
+            </THead>
+            <TBody>
+              {row.entries.map((e) => {
+                const meta = shiftStatusMeta[e.status];
+                const day = new Date(`${e.shift.date}T12:00:00`);
+                return (
+                  <Tr key={e.shift.id}>
+                    <Td className="font-medium">
+                      {day.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" })}
+                    </Td>
+                    <Td numeric>
+                      {fmtTime(e.shift.start)}–{fmtTime(e.shift.end)}
+                    </Td>
+                    <Td numeric>{fmtClock(e.checkIn)}</Td>
+                    <Td numeric>{e.inProgress ? "on site" : fmtClock(e.checkOut)}</Td>
+                    <Td numeric>{e.actual.toFixed(2)} h</Td>
+                    <Td>
+                      <StatusPill tone={meta.tone}>{meta.label}</StatusPill>
+                    </Td>
+                  </Tr>
+                );
+              })}
+            </TBody>
+          </Table>
+
+          <div className="grid gap-4 sm:grid-cols-[14rem_1fr]">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="ts-hours" className="text-body-sm font-medium text-fg">
+                Hours to payroll
+              </label>
+              <Input
+                id="ts-hours"
+                inputMode="decimal"
+                value={hours}
+                onChange={(e) => setHours(e.target.value)}
+                error={validHours ? undefined : "Enter hours, e.g. 36.5"}
+              />
+              <span className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setHours(row.actual.toFixed(2))}
+                  className="text-caption font-medium text-accent-text hover:opacity-80"
+                >
+                  Use actual ({row.actual.toFixed(2)})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHours(row.rostered.toFixed(2))}
+                  className="text-caption font-medium text-accent-text hover:opacity-80"
+                >
+                  Use rostered ({row.rostered.toFixed(2)})
+                </button>
+              </span>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="ts-note" className="text-body-sm font-medium text-fg">
+                Remarks (payroll note, optional)
+              </label>
+              <textarea
+                id="ts-note"
+                rows={3}
+                placeholder="e.g. Reduced 0.5 h — long break Wednesday; variation approved for L14 spill."
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                className="w-full rounded-card border border-edge-strong bg-surface px-3.5 py-2.5 text-body text-fg placeholder:text-fg-disabled"
+              />
+            </div>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            disabled={!validHours}
+            onClick={() =>
+              onApprove({
+                note: note.trim() || undefined,
+                approvedHours: adjusted ? Math.round(parsed * 100) / 100 : undefined,
+              })
+            }
+          >
+            {adjusted ? `Approve at ${parsed.toFixed(2)} h` : "Approve week"}
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+}
+
 export default function TimesheetsPage() {
   const now = useAttendanceReady();
   const shifts = useAttendanceStore((s) => s.shifts);
   const events = useAttendanceStore((s) => s.events);
   const approvals = useAttendanceStore((s) => s.approvals);
+  const approvalMeta = useAttendanceStore((s) => s.approvalMeta);
   const approveWeek = useAttendanceStore((s) => s.approveWeek);
   const approveAllReady = useAttendanceStore((s) => s.approveAllReady);
 
   const [filter, setFilter] = React.useState("all");
   const [query, setQuery] = React.useState("");
+  const [reviewId, setReviewId] = React.useState<string | null>(null);
   const { toast } = useToast();
 
   if (!now) return null; // one paint: store seeds + clock arrives post-mount
 
-  const rows = deriveTimesheets(shifts, events, approvals, now);
+  const rows = deriveTimesheets(shifts, events, approvals, now, approvalMeta);
   const todayViews = shifts
     .filter((s) => s.date === dateKey(now))
     .map((s) => deriveShift(s, events, now))
@@ -86,14 +252,16 @@ export default function TimesheetsPage() {
 
   const exportCsv = () => {
     const lines = [
-      "cleaner,week_rostered_h,week_actual_h,variance_h,status",
+      "cleaner,week_rostered_h,week_actual_h,variance_h,approved_h,status,remarks",
       ...rows.map((r) =>
         [
           r.staff.name,
           r.rostered.toFixed(2),
           r.actual.toFixed(2),
           r.variance.toFixed(2),
+          r.approved ? (r.approval?.approvedHours ?? r.actual).toFixed(2) : "",
           r.approved ? "approved" : r.needsReview ? "needs-review" : "ready",
+          JSON.stringify(r.approval?.note ?? ""),
         ].join(",")
       ),
     ];
@@ -248,7 +416,19 @@ export default function TimesheetsPage() {
                     </Td>
                     <Td>
                       {r.approved ? (
-                        <StatusPill tone="success">Approved</StatusPill>
+                        <span className="flex flex-col items-start gap-1">
+                          <StatusPill tone="success">
+                            {r.approval?.approvedHours !== undefined &&
+                            Math.abs(r.approval.approvedHours - r.actual) > 0.01
+                              ? "Approved · adjusted"
+                              : "Approved"}
+                          </StatusPill>
+                          {r.approval?.note && (
+                            <span className="max-w-52 truncate text-caption text-fg-muted" title={r.approval.note}>
+                              “{r.approval.note}”
+                            </span>
+                          )}
+                        </span>
                       ) : r.needsReview ? (
                         <StatusPill tone="warning">Needs review</StatusPill>
                       ) : (
@@ -256,21 +436,15 @@ export default function TimesheetsPage() {
                       )}
                     </Td>
                     <Td className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={r.approved}
-                        onClick={() => {
-                          approveWeek(r.staff.id, now);
-                          toast({
-                            tone: "success",
-                            title: `${r.staff.name.split(" ")[0]}'s week approved`,
-                            description: `${r.actual.toFixed(1)} h to payroll`,
-                          });
-                        }}
-                      >
-                        {r.approved ? "Approved" : "Approve"}
-                      </Button>
+                      {r.approved ? (
+                        <span className="font-numeric text-body-sm text-fg-secondary tabular-nums">
+                          {(r.approval?.approvedHours ?? r.actual).toFixed(1)} h to payroll
+                        </span>
+                      ) : (
+                        <Button variant="ghost" size="sm" onClick={() => setReviewId(r.staff.id)}>
+                          <PencilLine aria-hidden /> Review &amp; approve
+                        </Button>
+                      )}
                     </Td>
                   </Tr>
                 );
@@ -327,6 +501,23 @@ export default function TimesheetsPage() {
           </Table>
         </CardBody>
       </Card>
+
+      <ReviewApproveModal
+        row={rows.find((r) => r.staff.id === reviewId) ?? null}
+        now={now}
+        onClose={() => setReviewId(null)}
+        onApprove={(opts) => {
+          const row = rows.find((r) => r.staff.id === reviewId);
+          if (!row) return;
+          approveWeek(row.staff.id, now, opts);
+          setReviewId(null);
+          toast({
+            tone: "success",
+            title: `${row.staff.name.split(" ")[0]}'s week approved`,
+            description: `${(opts.approvedHours ?? row.actual).toFixed(1)} h to payroll${opts.note ? " · remark saved" : ""}`,
+          });
+        }}
+      />
 
       {notes.length > 0 && (
         <Card className="mt-8">
