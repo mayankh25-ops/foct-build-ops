@@ -9,17 +9,27 @@ export const Modal = DialogPrimitive.Root;
 export const ModalTrigger = DialogPrimitive.Trigger;
 export const ModalClose = DialogPrimitive.Close;
 
+export interface ModalContentProps
+  extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
+  /** "lg" = big centred form dialog (roomy two-column layouts, scrolls inside). */
+  size?: "md" | "lg";
+}
+
 export function ModalContent({
   className,
   children,
+  size = "md",
   ...props
-}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>) {
+}: ModalContentProps) {
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay" />
       <DialogPrimitive.Content
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 w-[min(32rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2",
+          "fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
+          size === "lg"
+            ? "flex max-h-[min(92vh,52rem)] w-[min(46rem,calc(100vw-2rem))] flex-col"
+            : "w-[min(32rem,calc(100vw-2rem))]",
           "rounded-card border border-edge bg-raised shadow-raised",
           className
         )}
@@ -64,7 +74,7 @@ export function ModalDescription({
 }
 
 export function ModalBody({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("px-6 py-5", className)} {...props} />;
+  return <div className={cn("min-h-0 flex-1 overflow-y-auto px-6 py-5", className)} {...props} />;
 }
 
 export function ModalFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

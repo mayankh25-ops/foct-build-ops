@@ -31,7 +31,17 @@ import {
 import { FilterBar } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
 import { MetricCard } from "@/components/ui/metric-card";
+import {
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalDescription,
+  ModalHeader,
+  ModalTitle,
+  ModalTrigger,
+} from "@/components/ui/modal";
 import { PageHeader } from "@/components/ui/page-header";
+import { RaiseTicketForm } from "@/components/service-desk/raise-ticket-form";
 import { Select } from "@/components/ui/select";
 import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
@@ -489,6 +499,7 @@ export default function ServiceDeskPage() {
   const [view, setView] = React.useState("All open");
   const [status, setStatus] = React.useState("all");
   const [selectedRef, setSelectedRef] = React.useState<string | null>(null);
+  const [raiseOpen, setRaiseOpen] = React.useState(false);
   const { toast } = useToast();
 
   const counts = {
@@ -544,12 +555,24 @@ export default function ServiceDeskPage() {
             >
               <Link2 aria-hidden /> Copy intake link
             </Button>
-            <Link
-              href="/service-desk/new"
-              className="inline-flex h-11 items-center gap-2 rounded-control bg-accent px-5 font-medium text-on-accent transition-colors hover:bg-accent-hover [&_svg]:size-4"
-            >
-              <Plus aria-hidden /> Raise ticket
-            </Link>
+            <Modal open={raiseOpen} onOpenChange={setRaiseOpen}>
+              <ModalTrigger asChild>
+                <Button>
+                  <Plus aria-hidden /> Raise ticket
+                </Button>
+              </ModalTrigger>
+              <ModalContent size="lg">
+                <ModalHeader>
+                  <ModalTitle>Raise a ticket</ModalTitle>
+                  <ModalDescription>
+                    Pick, snap, submit — the cleaning team is notified instantly.
+                  </ModalDescription>
+                </ModalHeader>
+                <ModalBody>
+                  <RaiseTicketForm onDone={() => setRaiseOpen(false)} />
+                </ModalBody>
+              </ModalContent>
+            </Modal>
           </>
         }
       />

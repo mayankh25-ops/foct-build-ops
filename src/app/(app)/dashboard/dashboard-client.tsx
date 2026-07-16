@@ -89,6 +89,7 @@ export function DashboardClient() {
   useHandoverReady();
   useSdRehydrate();
   const manualEvents = useCalendarStore((s) => s.manualEvents);
+  const calendarSeries = useCalendarStore((s) => s.series);
   const notes = useHandoverStore((s) => s.notes);
   const addNote = useHandoverStore((s) => s.addNote);
   const tickets = useSdStore((s) => s.tickets);
@@ -99,7 +100,7 @@ export function DashboardClient() {
   // calendar: due today + the coming week
   const weekEnd = new Date(now);
   weekEnd.setDate(now.getDate() + 6);
-  const dueWeek = eventsForRange(now, weekEnd, manualEvents);
+  const dueWeek = eventsForRange(now, weekEnd, manualEvents, calendarSeries);
   const todayIso = dateKey(now);
   const dueToday = dueWeek.filter((e) => e.date === todayIso);
   const dueLater = dueWeek.filter((e) => e.date !== todayIso);

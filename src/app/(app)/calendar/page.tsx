@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight, Lock, Phone, Repeat } from "lucide-react";
 import { Badge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
@@ -10,37 +10,67 @@ import {
   DrawerBody,
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
+import {
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+  ModalTrigger,
+} from "@/components/ui/modal";
 import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import {
+  CAL_ROLES,
   calCategoryMeta,
+  calRoleLabel,
+  canModify,
   monthKey,
+  REPEAT_LABELS,
   scopeEventsForMonth,
   seededEventsForMonth,
+  seriesEventsForMonth,
   useCalendarReady,
   useCalendarStore,
+  visibleTo,
   type CalCategory,
   type CalEvent,
+  type CalRepeat,
+  type CalRole,
+  type CalVisibility,
 } from "@/lib/calendar-store";
 import { cn } from "@/lib/cn";
 
 /**
- * Building calendar — periodic works auto-populate from the Scope agreement
- * (same cadence rules as the periodic planner), alongside contractor visits,
- * bookings, waste pickups and manual jobs. One calendar, every party.
+ * Building calendar — periodic works auto-populate from the Scope agreement,
+ * alongside contractor visits, bookings, waste pickups, and (2026-07-15)
+ * RECURRING events with role-scoped visibility and admin-locked schedules.
+ * One calendar, every party — each sees exactly what they're meant to.
  */
 
 const fmtT = (t?: number) =>
   t === undefined
     ? "all day"
     : `${String(Math.floor(t)).padStart(2, "0")}:${String(Math.round((t % 1) * 60)).padStart(2, "0")}`;
+
+const fmtRange = (e: Pick<CalEvent, "time" | "endTime">) =>
+  e.time === undefined ? "all day" : e.endTime !== undefined ? `${fmtT(e.time)} – ${fmtT(e.endTime)}` : fmtT(e.time);
+
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+const parseTime = (value: string): number | undefined => {
+  if (!value) return undefined;
+  const [h, m] = value.split(":").map(Number);
+  return (h ?? 0) + (m ?? 0) / 60;
+};
 
 function EventChip({ e, compact }: { e: CalEvent; compact?: boolean }) {
   const meta = calCategoryMeta[e.category];
@@ -57,22 +87,34 @@ function EventChip({ e, compact }: { e: CalEvent; compact?: boolean }) {
       )}
       title={e.title}
     >
+      {e.seriesId && <Repeat aria-label="Repeats" className="size-3 shrink-0" />}
+      {e.locked && <Lock aria-label="Locked by admin" className="size-3 shrink-0" />}
       <span className="truncate">{e.title}</span>
       {!compact && e.billable && <span className="shrink-0 font-mono text-caption">$</span>}
     </span>
   );
 }
 
+function VisibilityBadge({ visibility }: { visibility?: CalVisibility }) {
+  if (!visibility || visibility === "everyone") return null;
+  return (
+    <Badge tone="info">Only: {visibility.map((r) => calRoleLabel(r)).join(" · ")}</Badge>
+  );
+}
+
 function DayDrawer({
   date,
   events,
+  viewRole,
   children,
 }: {
   date: Date;
   events: CalEvent[];
+  viewRole: CalRole;
   children: React.ReactNode;
 }) {
   const removeJob = useCalendarStore((s) => s.removeJob);
+  const removeSeries = useCalendarStore((s) => s.removeSeries);
   const { toast } = useToast();
   return (
     <Drawer>
@@ -88,7 +130,7 @@ function DayDrawer({
         </DrawerHeader>
         <DrawerBody className="flex flex-col gap-4">
           {events.length === 0 && (
-            <p className="text-body-sm text-fg-muted">Nothing scheduled — use Add job to book work in.</p>
+            <p className="text-body-sm text-fg-muted">Nothing scheduled — use Add event to book work in.</p>
           )}
           {events
             .sort((a, b) => (a.time ?? 24) - (b.time ?? 24))
@@ -100,29 +142,61 @@ function DayDrawer({
                     <p className="text-body-sm font-medium text-fg">{e.title}</p>
                     <StatusPill tone={meta.tone}>{meta.label}</StatusPill>
                   </div>
-                  <p className="mt-1.5 font-mono text-caption text-fg-muted">{fmtT(e.time)}</p>
+                  <p className="mt-1.5 font-mono text-caption text-fg-muted">{fmtRange(e)}</p>
                   {e.detail && <p className="mt-1.5 text-body-sm text-fg-secondary">{e.detail}</p>}
+                  {(e.contactName || e.contactPhone) && (
+                    <p className="mt-1.5 flex items-center gap-1.5 text-body-sm text-fg-secondary">
+                      <Phone aria-hidden className="size-3.5 text-fg-muted" />
+                      {e.contactName}
+                      {e.contactPhone && (
+                        <a href={`tel:${e.contactPhone.replace(/\s/g, "")}`} className="font-mono text-accent-text hover:underline">
+                          {e.contactPhone}
+                        </a>
+                      )}
+                    </p>
+                  )}
                   {e.reminder && (
                     <p className="mt-1.5 text-caption text-fg-muted">
                       ✉ Reminder to <span className="font-mono">{e.reminder.email}</span>{" "}
                       {e.reminder.daysBefore === 0 ? "on the day" : `${e.reminder.daysBefore} day${e.reminder.daysBefore === 1 ? "" : "s"} before`}
                     </p>
                   )}
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {e.repeat && e.repeat !== "none" && (
+                      <Badge tone="accent">
+                        <Repeat aria-hidden className="mr-1 inline size-3" />
+                        {REPEAT_LABELS[e.repeat]}
+                      </Badge>
+                    )}
+                    <VisibilityBadge visibility={e.visibility} />
+                    {e.locked && (
+                      <Badge tone="neutral">
+                        <Lock aria-hidden className="mr-1 inline size-3" />
+                        Set by building admin
+                      </Badge>
+                    )}
                     {e.billable && <Badge tone="warning">Billable extra — quote first</Badge>}
                     {e.source === "scope" && <Badge tone="neutral">From the agreement</Badge>}
-                    {e.source === "manual" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          removeJob(e.id);
-                          toast({ tone: "neutral", title: "Job removed", description: e.title });
-                        }}
-                      >
-                        Remove
-                      </Button>
-                    )}
+                    {e.source === "manual" &&
+                      (canModify(e, viewRole) ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (e.seriesId) {
+                              removeSeries(e.seriesId);
+                              toast({ tone: "neutral", title: "Recurring event removed", description: `${e.title} — the whole series` });
+                            } else {
+                              removeJob(e.id);
+                              toast({ tone: "neutral", title: "Event removed", description: e.title });
+                            }
+                          }}
+                        >
+                          {e.seriesId ? "Remove series" : "Remove"}
+                        </Button>
+                      ) : (
+                        <span className="text-caption text-fg-muted">Only the building admin can change this</span>
+                      ))}
                   </div>
                 </div>
               );
@@ -133,79 +207,278 @@ function DayDrawer({
   );
 }
 
-function AddJobDrawer({ defaultDate }: { defaultDate: string }) {
+/* ---------------------------------------------------------------- */
+/* Add event — BIG centred modal, task-reminder-app style            */
+/* ---------------------------------------------------------------- */
+
+function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRole: CalRole }) {
   const addJob = useCalendarStore((s) => s.addJob);
+  const addSeries = useCalendarStore((s) => s.addSeries);
   const { toast } = useToast();
   const [open, setOpen] = React.useState(false);
+
   const [title, setTitle] = React.useState("");
   const [date, setDate] = React.useState(defaultDate);
-  const [time, setTime] = React.useState("09:00");
+  const [start, setStart] = React.useState("09:00");
+  const [finish, setFinish] = React.useState("");
   const [allDay, setAllDay] = React.useState(false);
   const [category, setCategory] = React.useState<CalCategory>("contractor");
   const [detail, setDetail] = React.useState("");
+  const [repeat, setRepeat] = React.useState<CalRepeat>("none");
+  const [weekdays, setWeekdays] = React.useState<number[]>([]);
+  const [until, setUntil] = React.useState("");
+  const [visibility, setVisibility] = React.useState<"everyone" | CalRole[]>("everyone");
+  const [locked, setLocked] = React.useState(false);
+  const [contactName, setContactName] = React.useState("");
+  const [contactPhone, setContactPhone] = React.useState("");
   const [remindEmail, setRemindEmail] = React.useState("");
   const [remindDays, setRemindDays] = React.useState("1");
 
+  const reset = () => {
+    setTitle("");
+    setDetail("");
+    setRepeat("none");
+    setWeekdays([]);
+    setUntil("");
+    setVisibility("everyone");
+    setLocked(false);
+    setContactName("");
+    setContactPhone("");
+    setRemindEmail("");
+  };
+
+  const toggleRole = (role: CalRole) => {
+    setVisibility((v) => {
+      const list = v === "everyone" ? [] : [...v];
+      const next = list.includes(role) ? list.filter((r) => r !== role) : [...list, role];
+      return next.length === 0 ? "everyone" : next;
+    });
+  };
+
+  const submit = () => {
+    const reminder = remindEmail.trim()
+      ? { email: remindEmail.trim(), daysBefore: Number(remindDays) }
+      : undefined;
+    const shared = {
+      title: title.trim(),
+      time: allDay ? undefined : parseTime(start),
+      endTime: allDay ? undefined : parseTime(finish),
+      category,
+      detail: detail.trim() || undefined,
+      reminder,
+      visibility,
+      locked: viewRole === "admin" ? locked : false,
+      createdBy: viewRole,
+      contactName: contactName.trim() || undefined,
+      contactPhone: contactPhone.trim() || undefined,
+    };
+    if (repeat === "none") {
+      addJob({ ...shared, date });
+    } else {
+      addSeries({
+        ...shared,
+        startDate: date,
+        until: until || undefined,
+        repeat,
+        weekdays: weekdays.length ? weekdays : undefined,
+        visibility,
+        createdBy: viewRole,
+      });
+    }
+    setOpen(false);
+    reset();
+    toast({
+      tone: "success",
+      title: repeat === "none" ? "Event added to the calendar" : `Recurring event added — ${REPEAT_LABELS[repeat].toLowerCase()}`,
+      description: reminder ? `${title.trim()} · reminder to ${reminder.email} queued` : title.trim(),
+    });
+  };
+
+  const label = "flex flex-col gap-1.5 text-body-sm font-medium text-fg";
+
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerTrigger asChild>
+    <Modal open={open} onOpenChange={setOpen}>
+      <ModalTrigger asChild>
         <Button>
-          <CalendarPlus aria-hidden /> Add job
+          <CalendarPlus aria-hidden /> Add event
         </Button>
-      </DrawerTrigger>
-      <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle>Add a calendar job</DrawerTitle>
-          <DrawerDescription>Visible to every party on the building calendar.</DrawerDescription>
-        </DrawerHeader>
-        <DrawerBody className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5 text-body-sm font-medium text-fg">
+      </ModalTrigger>
+      <ModalContent size="lg">
+        <ModalHeader>
+          <ModalTitle>Add a calendar event</ModalTitle>
+          <ModalDescription>
+            One-off or recurring. Creating as <strong>{calRoleLabel(viewRole)}</strong> — choose who
+            can see it below.
+          </ModalDescription>
+        </ModalHeader>
+        <ModalBody className="flex flex-col gap-5">
+          <label className={label}>
             Title
             <Input
-              placeholder="e.g. Carpet extraction — L14 corridor"
+              placeholder="e.g. Floor maintenance — L14 corridor (night shift)"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
           </label>
-          <label className="flex flex-col gap-1.5 text-body-sm font-medium text-fg">
-            Category
-            <Select
-              options={Object.entries(calCategoryMeta).map(([value, m]) => ({ value, label: m.label }))}
-              value={category}
-              onValueChange={(v) => setCategory(v as CalCategory)}
-            />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1.5 text-body-sm font-medium text-fg">
-              Date
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className={label}>
+              Category
+              <Select
+                options={Object.entries(calCategoryMeta)
+                  .filter(([value]) => value !== "periodic")
+                  .map(([value, m]) => ({ value, label: m.label }))}
+                value={category}
+                onValueChange={(v) => setCategory(v as CalCategory)}
+              />
+            </label>
+            <label className={label}>
+              {repeat === "none" ? "Date" : "First occurrence"}
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </label>
-            <label className="flex flex-col gap-1.5 text-body-sm font-medium text-fg">
-              Time
-              <Input type="time" value={time} disabled={allDay} onChange={(e) => setTime(e.target.value)} />
+          </div>
+
+          <div className="grid items-end gap-4 sm:grid-cols-[1fr_1fr_auto]">
+            <label className={label}>
+              Start time
+              <Input type="time" value={start} disabled={allDay} onChange={(e) => setStart(e.target.value)} />
+            </label>
+            <label className={label}>
+              Finish time
+              <Input type="time" value={finish} disabled={allDay} onChange={(e) => setFinish(e.target.value)} />
+            </label>
+            <label className="flex h-11 items-center gap-2 text-body-sm text-fg">
+              <input
+                type="checkbox"
+                checked={allDay}
+                onChange={(e) => setAllDay(e.target.checked)}
+                className="size-4 accent-[var(--accent)]"
+              />
+              All-day
             </label>
           </div>
-          <label className="flex items-center gap-2 text-body-sm text-fg">
-            <input
-              type="checkbox"
-              checked={allDay}
-              onChange={(e) => setAllDay(e.target.checked)}
-              className="size-4 accent-[var(--accent)]"
-            />
-            All-day
-          </label>
-          <label className="flex flex-col gap-1.5 text-body-sm font-medium text-fg">
+
+          <div className="rounded-card border border-edge bg-canvas p-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className={label}>
+                Repeats
+                <Select
+                  options={Object.entries(REPEAT_LABELS).map(([value, l]) => ({ value, label: l }))}
+                  value={repeat}
+                  onValueChange={(v) => setRepeat(v as CalRepeat)}
+                />
+              </label>
+              {repeat !== "none" && (
+                <label className={label}>
+                  Until (optional)
+                  <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} />
+                </label>
+              )}
+            </div>
+            {(repeat === "weekly" || repeat === "fortnightly") && (
+              <div className="mt-3">
+                <p className="text-body-sm font-medium text-fg">On days</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {WEEKDAYS.map((d, i) => (
+                    <button
+                      key={d}
+                      type="button"
+                      aria-pressed={weekdays.includes(i)}
+                      onClick={() =>
+                        setWeekdays((w) => (w.includes(i) ? w.filter((x) => x !== i) : [...w, i]))
+                      }
+                      className={cn(
+                        "rounded-pill border px-3 py-1 text-body-sm font-medium transition-colors",
+                        weekdays.includes(i)
+                          ? "border-edge-strong bg-accent-subtle text-accent-text"
+                          : "border-edge text-fg-secondary hover:text-fg"
+                      )}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-caption text-fg-muted">
+                  None picked = repeats on the first occurrence&apos;s weekday.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <label className={label}>
             Notes
             <Input
-              placeholder="Access, inductions, who to notify…"
+              placeholder="Access, areas booked, inductions, who to notify…"
               value={detail}
               onChange={(e) => setDetail(e.target.value)}
             />
           </label>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className={label}>
+              Contact name (optional)
+              <Input placeholder="e.g. Dave — StoneShine Floors" value={contactName} onChange={(e) => setContactName(e.target.value)} />
+            </label>
+            <label className={label}>
+              Contact phone (optional)
+              <Input type="tel" placeholder="+61 4xx xxx xxx" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+            </label>
+          </div>
+
+          <div className="rounded-card border border-edge bg-canvas p-4">
+            <p className="text-body-sm font-medium text-fg">Who can see this event</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                aria-pressed={visibility === "everyone"}
+                onClick={() => setVisibility("everyone")}
+                className={cn(
+                  "rounded-pill border px-3 py-1 text-body-sm font-medium transition-colors",
+                  visibility === "everyone"
+                    ? "border-edge-strong bg-accent-subtle text-accent-text"
+                    : "border-edge text-fg-secondary hover:text-fg"
+                )}
+              >
+                Everyone
+              </button>
+              {CAL_ROLES.map((r) => {
+                const active = visibility !== "everyone" && visibility.includes(r.value);
+                return (
+                  <button
+                    key={r.value}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => toggleRole(r.value)}
+                    className={cn(
+                      "rounded-pill border px-3 py-1 text-body-sm font-medium transition-colors",
+                      active
+                        ? "border-edge-strong bg-accent-subtle text-accent-text"
+                        : "border-edge text-fg-secondary hover:text-fg"
+                    )}
+                  >
+                    {r.label}
+                  </button>
+                );
+              })}
+            </div>
+            {viewRole === "admin" && (
+              <label className="mt-3 flex items-center gap-2 text-body-sm text-fg">
+                <input
+                  type="checkbox"
+                  checked={locked}
+                  onChange={(e) => setLocked(e.target.checked)}
+                  className="size-4 accent-[var(--accent)]"
+                />
+                <Lock aria-hidden className="size-3.5 text-fg-muted" />
+                Lock this event — only the building admin can change or remove it
+              </label>
+            )}
+          </div>
+
           <div className="rounded-card border border-edge bg-canvas p-4">
             <p className="text-body-sm font-medium text-fg">Email reminder (optional)</p>
             <p className="mt-0.5 text-caption text-fg-muted">
-              Any address — contractor, BM, committee member. Sends via the org’s email provider.
+              Any address — contractor, BM, committee member. Sends via the org&apos;s email provider.
             </p>
             <div className="mt-3 grid grid-cols-[1fr_8rem] gap-2">
               <Input
@@ -226,50 +499,30 @@ function AddJobDrawer({ defaultDate }: { defaultDate: string }) {
               />
             </div>
           </div>
-        </DrawerBody>
-        <DrawerFooter>
+        </ModalBody>
+        <ModalFooter>
           <Button variant="secondary" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button
-            disabled={!title.trim() || !date}
-            onClick={() => {
-              const [h, m] = time.split(":").map(Number);
-              const reminder = remindEmail.trim()
-                ? { email: remindEmail.trim(), daysBefore: Number(remindDays) }
-                : undefined;
-              addJob({
-                title: title.trim(),
-                date,
-                time: allDay ? undefined : (h ?? 0) + (m ?? 0) / 60,
-                category,
-                detail: detail.trim() || undefined,
-                reminder,
-              });
-              setOpen(false);
-              setTitle("");
-              setDetail("");
-              setRemindEmail("");
-              toast({
-                tone: "success",
-                title: "Job added to the calendar",
-                description: reminder
-                  ? `${title.trim()} · reminder to ${reminder.email} queued`
-                  : title.trim(),
-              });
-            }}
-          >
-            Add job
+          <Button disabled={!title.trim() || !date} onClick={submit}>
+            {repeat === "none" ? "Add event" : "Add recurring event"}
           </Button>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 }
+
+/* ---------------------------------------------------------------- */
+/* Page                                                              */
+/* ---------------------------------------------------------------- */
 
 export default function CalendarPage() {
   const ready = useCalendarReady();
   const manualEvents = useCalendarStore((s) => s.manualEvents);
+  const series = useCalendarStore((s) => s.series);
+  const viewRole = useCalendarStore((s) => s.viewRole);
+  const setViewRole = useCalendarStore((s) => s.setViewRole);
   const [cursor, setCursor] = React.useState<Date | null>(null);
   const [filter, setFilter] = React.useState<CalCategory | "all">("all");
 
@@ -286,8 +539,11 @@ export default function CalendarPage() {
   const monthEvents = [
     ...scopeEventsForMonth(year, month),
     ...seededEventsForMonth(year, month),
+    ...seriesEventsForMonth(series, year, month),
     ...manualEvents,
-  ].filter((e) => e.date.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`));
+  ]
+    .filter((e) => e.date.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`))
+    .filter((e) => visibleTo(e, viewRole));
 
   const shown = monthEvents.filter((e) => filter === "all" || e.category === filter);
   const byDate = new Map<string, CalEvent[]>();
@@ -303,14 +559,29 @@ export default function CalendarPage() {
   while (cells.length % 7) cells.push(null);
 
   const periodicCount = monthEvents.filter((e) => e.category === "periodic").length;
+  const queuedReminders = [
+    ...manualEvents.filter((e) => e.reminder),
+    ...series.filter((s) => s.reminder),
+  ];
 
   return (
     <>
       <PageHeader
         eyebrow="Building · Shared calendar"
         title="Calendar"
-        description={`Periodic works land here straight from the cleaning agreement — ${periodicCount} scope items due this month — alongside contractor visits, bookings and waste pickups.`}
-        actions={<AddJobDrawer defaultDate={monthKey(year, month, Math.min(15, daysInMonth))} />}
+        description={`Periodic works land here straight from the cleaning agreement — ${periodicCount} scope items due this month — alongside contractor visits, bookings, maintenance and recurring schedules.`}
+        actions={
+          <div className="flex flex-wrap items-center gap-3">
+            <Select
+              label={undefined}
+              className="w-44"
+              options={CAL_ROLES.map((r) => ({ value: r.value, label: `Viewing as ${r.label}` }))}
+              value={viewRole}
+              onValueChange={(v) => setViewRole(v as CalRole)}
+            />
+            <AddEventModal defaultDate={monthKey(year, month, Math.min(15, daysInMonth))} viewRole={viewRole} />
+          </div>
+        }
       />
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
@@ -362,7 +633,7 @@ export default function CalendarPage() {
       <Card>
         <CardBody className="p-0">
           <div className="grid grid-cols-7 border-b border-edge">
-            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+            {WEEKDAYS.map((d) => (
               <p key={d} className="px-3 py-2.5 text-caption font-medium tracking-[0.06em] text-fg-muted uppercase">
                 {d}
               </p>
@@ -376,7 +647,7 @@ export default function CalendarPage() {
               const dayEvents = (byDate.get(key) ?? []).sort((a, b) => (a.time ?? 24) - (b.time ?? 24));
               const isToday = key === todayKey;
               return (
-                <DayDrawer key={i} date={d} events={dayEvents}>
+                <DayDrawer key={i} date={d} events={dayEvents} viewRole={viewRole}>
                   <button
                     type="button"
                     className={cn(
@@ -406,7 +677,7 @@ export default function CalendarPage() {
         </CardBody>
       </Card>
 
-      {manualEvents.some((e) => e.reminder) && (
+      {queuedReminders.length > 0 && (
         <Card className="mt-6">
           <CardBody>
             <p className="text-body-sm font-medium text-fg">Queued email reminders</p>
@@ -424,10 +695,19 @@ export default function CalendarPage() {
                     </p>
                   );
                 })}
+              {series
+                .filter((s) => s.reminder)
+                .map((s) => (
+                  <p key={s.id} className="text-body-sm text-fg-secondary">
+                    <span className="font-mono">{s.reminder!.email}</span> — “{s.title}” · before each{" "}
+                    {REPEAT_LABELS[s.repeat].toLowerCase()} occurrence
+                  </p>
+                ))}
             </div>
             <p className="mt-3 text-caption text-fg-muted">
-              Delivery runs through the org’s configured email provider (Resend by default) once the
-              calendar backend stage is live — reminders queue now so nothing set today is lost.
+              Delivery runs through the org&apos;s configured email provider (see Settings →
+              Integrations) once the calendar backend stage is live — reminders queue now so nothing
+              set today is lost.
             </p>
           </CardBody>
         </Card>
@@ -435,8 +715,9 @@ export default function CalendarPage() {
 
       <p className="mt-4 text-body-sm text-fg-muted">
         Periodic chips come straight from the FOCT Cleaning service agreement — the same dataset as
-        the Scope module’s periodic planner. Billable extras are marked <span className="font-mono">$</span> and
-        must be quoted before scheduling.
+        the Scope module&apos;s periodic planner. Billable extras are marked <span className="font-mono">$</span> and
+        must be quoted before scheduling. Role visibility and admin locks apply exactly as they will
+        under RLS at the backend stage.
       </p>
     </>
   );
