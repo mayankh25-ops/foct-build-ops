@@ -18,8 +18,9 @@
      grotesque; macOS's native "DIN Alternate" is next in the stack).
      Roboto Mono stays for timestamps/IDs. Previous faces remain selectable
      in the Theme Builder. */
-  --font-stack-display: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
-  --font-stack-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  /* Lato — the product face (owner direction 2026-07-17); system stack trails as fallback */
+  --font-stack-display: var(--font-lato), Lato, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  --font-stack-body: var(--font-lato), Lato, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
   --font-stack-numeric: var(--font-barlow), Barlow, "DIN Alternate", "Segoe UI", system-ui, sans-serif;
   --font-stack-mono: var(--font-roboto-mono), "SF Mono", ui-monospace, "Roboto Mono", monospace;
 
@@ -30,11 +31,11 @@
   --fs-display: 2.25rem;     /* 36px — page titles, metric numbers */
   --lh-display: 2.75rem;     /* 44px */
   --ls-display: -0.02em;
-  --fs-title-1: 1.75rem;     /* 28px — section titles */
-  --lh-title-1: 2.25rem;     /* 36px */
+  --fs-title-1: 1.5rem;      /* 24px — page + section titles (calmed 2026-07-17, FOTA/Zendesk reference) */
+  --lh-title-1: 2rem;        /* 32px */
   --ls-title-1: -0.015em;
-  --fs-title-2: 1.375rem;    /* 22px — modal titles, sub-sections */
-  --lh-title-2: 1.875rem;    /* 30px */
+  --fs-title-2: 1.25rem;     /* 20px — modal titles, sub-sections */
+  --lh-title-2: 1.75rem;     /* 28px */
   --ls-title-2: -0.01em;
   --fs-title-3: 1.0625rem;   /* 17px — card titles */
   --lh-title-3: 1.5625rem;   /* 25px */

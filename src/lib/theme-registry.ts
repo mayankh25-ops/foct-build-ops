@@ -51,6 +51,18 @@ export interface FontOption {
 
 export const FONT_OPTIONS: FontOption[] = [
   {
+    id: "lato",
+    name: "Lato",
+    stack: "var(--font-lato), Lato, ui-sans-serif, system-ui, sans-serif",
+    slots: ["display", "body"],
+  },
+  {
+    id: "hubot-sans",
+    name: "Hubot Sans",
+    stack: 'var(--font-hubot), "Hubot Sans", ui-sans-serif, system-ui, sans-serif',
+    slots: ["display", "body"],
+  },
+  {
     id: "system-ui",
     name: "System UI (SF / Segoe)",
     stack: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif',
@@ -106,4 +118,4 @@ export const FONT_OPTIONS: FontOption[] = [
   },
 ];
 
-export const DEFAULT_SLOTS = { display: "system-ui", body: "system-ui", mono: "roboto-mono" } as const;
+export const DEFAULT_SLOTS = { display: "lato", body: "lato", mono: "roboto-mono" } as const;
