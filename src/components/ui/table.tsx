@@ -29,7 +29,7 @@ export function Th({
   return (
     <th
       className={cn(
-        "h-12 px-6 py-3.5 text-left align-middle text-caption font-medium tracking-[0.06em] text-fg-muted uppercase",
+        "h-11 px-6 py-3 text-left align-middle text-caption font-semibold tracking-[0.05em] text-fg-secondary uppercase",
         numeric && "text-right",
         className
       )}
@@ -46,8 +46,8 @@ export function Td({
   return (
     <td
       className={cn(
-        "h-[3.75rem] px-6 py-4 align-middle text-body-sm text-fg",
-        numeric && "text-right font-mono",
+        "h-14 px-6 py-3.5 align-middle text-body-sm text-fg",
+        numeric && "text-right font-numeric tabular-nums",
         className
       )}
       {...props}

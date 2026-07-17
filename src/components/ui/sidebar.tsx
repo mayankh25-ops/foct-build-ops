@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { Lock, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export interface SidebarItem {
@@ -75,7 +75,7 @@ export function Sidebar({
       className={cn(
         "flex h-full shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-fg",
         "transition-[width] duration-200",
-        collapsed ? "w-[76px]" : "w-[264px]",
+        collapsed ? "w-[76px]" : "w-[240px]",
         className
       )}
       {...props}
@@ -132,13 +132,22 @@ export function Sidebar({
                 const isActive = item.active ?? (item.href ? pathname === item.href : false);
                 const inner = (
                   <>
-                    <item.icon aria-hidden className="size-[18px] shrink-0" />
+                    {/* 3px indicator on the active item (audit §7) */}
+                    {isActive && !collapsed && (
+                      <span
+                        aria-hidden
+                        className="absolute top-1.5 bottom-1.5 left-0 w-[3px] rounded-pill bg-accent"
+                      />
+                    )}
+                    <item.icon
+                      aria-hidden
+                      className={cn("size-4 shrink-0", !isActive && "opacity-70")}
+                    />
                     {!collapsed && (
                       <>
                         <span className="flex-1 truncate text-left">{item.label}</span>
                         {item.disabled && (
-                          <span className="flex items-center gap-1.5 text-caption text-sidebar-muted">
-                            <Lock aria-hidden className="size-3" />
+                          <span className="rounded-pill border border-sidebar-border px-1.5 py-px text-[0.6875rem] leading-4 text-sidebar-muted">
                             {item.disabledLabel ?? "Soon"}
                           </span>
                         )}
@@ -147,14 +156,14 @@ export function Sidebar({
                   </>
                 );
                 const itemClass = cn(
-                  "relative flex w-full items-center gap-3 rounded-control text-body-sm",
-                  collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2.5",
+                  "relative flex w-full items-center gap-3 rounded-control text-body",
+                  collapsed ? "justify-center px-0 py-2" : "px-3 py-2",
                   "transition-colors duration-150",
                   isActive
                     ? "bg-sidebar-active-bg font-medium text-sidebar-active-fg"
                     : item.disabled
-                      ? "cursor-default text-sidebar-muted opacity-70"
-                      : "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg"
+                      ? "cursor-default text-sidebar-muted opacity-60"
+                      : "text-sidebar-fg hover:bg-sidebar-hover"
                 );
                 const title = collapsed
                   ? item.disabled

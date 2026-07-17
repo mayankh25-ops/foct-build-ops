@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckCheck, ClipboardCheck, Download, Minus, PencilLine, Plus } from "lucide-react";
+import { CheckCheck, ClipboardCheck, Download, Minus, Plus } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ import {
   useAttendanceStore,
   type TimesheetWeekRow,
 } from "@/lib/attendance-store";
-import { fmtTime, shiftStatusMeta } from "@/lib/demo-data";
+import { fmtDeltaHM, fmtHM, fmtTime, shiftStatusMeta } from "@/lib/demo-data";
 import { cn } from "@/lib/cn";
 
 /**
@@ -52,7 +52,7 @@ function reviewNote(r: TimesheetWeekRow): string | null {
       .map((e) => e.shift.date.slice(5))
       .join(", ")}) — confirm cover before approving.`;
   if (Math.abs(r.variance) > 0.5)
-    return `${r.variance > 0 ? "+" : ""}${r.variance.toFixed(2)} h against roster this week — check the shift detail before approving.`;
+    return `${fmtDeltaHM(r.variance)} against roster this week — check the shift detail before approving.`;
   return null;
 }
 
@@ -124,11 +124,11 @@ function DayEntryCard({
         <div className="min-w-28">
           <p className="text-caption font-medium text-fg-muted">Actual</p>
           <p className="mt-0.5 font-numeric text-body font-semibold text-fg tabular-nums">
-            {e.actual.toFixed(2)} h
+            {fmtHM(e.actual)}
           </p>
           {e.correction && (
             <p className="font-numeric text-caption font-medium text-warning-text tabular-nums">
-              → pays {e.paid.toFixed(2)} h
+              → pays {fmtHM(e.paid)}
             </p>
           )}
         </div>
@@ -258,8 +258,8 @@ function ReviewApproveModal({
           {correctedCount > 0 && (
             <p className="-mt-2 text-body-sm text-fg-secondary">
               {correctedCount} shift{correctedCount === 1 ? "" : "s"} corrected — payable total{" "}
-              <span className="font-numeric font-semibold">{row.corrected.toFixed(2)} h</span> (raw{" "}
-              <span className="font-numeric">{row.actual.toFixed(2)} h</span>).
+              <span className="font-numeric font-semibold">{fmtHM(row.corrected)}</span> (raw{" "}
+              <span className="font-numeric">{fmtHM(row.actual)}</span>).
             </p>
           )}
 
@@ -288,7 +288,7 @@ function ReviewApproveModal({
                   }}
                   className="text-caption font-medium text-accent-text hover:opacity-80"
                 >
-                  Use corrected ({row.corrected.toFixed(2)})
+                  Use corrected ({fmtHM(row.corrected)})
                 </button>
                 <button
                   type="button"
@@ -298,7 +298,7 @@ function ReviewApproveModal({
                   }}
                   className="text-caption font-medium text-accent-text hover:opacity-80"
                 >
-                  Use rostered ({row.rostered.toFixed(2)})
+                  Use rostered ({fmtHM(row.rostered)})
                 </button>
               </span>
             </div>
@@ -330,7 +330,7 @@ function ReviewApproveModal({
               })
             }
           >
-            {adjusted ? `Approve at ${parsed.toFixed(2)} h` : "Approve week"}
+            {adjusted ? `Approve ${fmtHM(parsed)}` : "Approve week"}
           </Button>
         </ModalFooter>
       </ModalContent>
@@ -433,10 +433,10 @@ export default function TimesheetsPage() {
       />
 
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-        <MetricCard label="Rostered this week" value={rosteredTotal.toFixed(1)} context={`${rows.length} cleaners`} />
+        <MetricCard label="Rostered this week" value={fmtHM(rosteredTotal)} context={`${rows.length} cleaners`} />
         <MetricCard
           label="Actual from kiosk"
-          value={actualTotal.toFixed(1)}
+          value={fmtHM(actualTotal)}
           context={`${events.length} check events`}
           tone="success"
         />
@@ -516,7 +516,7 @@ export default function TimesheetsPage() {
                       </span>
                     </Td>
                     <Td numeric>{r.entries.length}</Td>
-                    <Td numeric>{r.rostered.toFixed(1)}h</Td>
+                    <Td numeric>{fmtHM(r.rostered)}</Td>
                     <Td>
                       <span className="flex items-center gap-3">
                         <span className="h-1.5 w-24 overflow-hidden rounded-pill bg-hover">
@@ -529,7 +529,7 @@ export default function TimesheetsPage() {
                           />
                         </span>
                         <span className="font-numeric text-caption text-fg-secondary tabular-nums">
-                          {r.actual.toFixed(1)}/{r.rostered.toFixed(1)}h
+                          {fmtHM(r.actual)} / {fmtHM(r.rostered)}
                         </span>
                       </span>
                     </Td>
@@ -537,10 +537,8 @@ export default function TimesheetsPage() {
                       {Math.abs(r.variance) < 0.05 ? (
                         <Badge tone="success">On roster</Badge>
                       ) : (
-                        <Badge tone={Math.abs(r.variance) > 0.5 ? "warning" : "neutral"}>
-                          <span className="font-mono">
-                            {r.variance > 0 ? `+${r.variance.toFixed(2)}` : r.variance.toFixed(2)} h
-                          </span>
+                        <Badge tone={Math.abs(r.variance) > 0.5 ? "warning" : "neutral"} className="whitespace-nowrap">
+                          <span className="font-numeric tabular-nums">{fmtDeltaHM(r.variance)}</span>
                         </Badge>
                       )}
                     </Td>
@@ -568,12 +566,32 @@ export default function TimesheetsPage() {
                     <Td className="text-right">
                       {r.approved ? (
                         <span className="font-numeric text-body-sm text-fg-secondary tabular-nums">
-                          {(r.approval?.approvedHours ?? r.actual).toFixed(1)} h to payroll
+                          {fmtHM(r.approval?.approvedHours ?? r.actual)} to payroll
                         </span>
-                      ) : (
-                        <Button variant="ghost" size="sm" onClick={() => setReviewId(r.staff.id)}>
-                          <PencilLine aria-hidden /> Review &amp; approve
+                      ) : r.needsReview ? (
+                        <Button variant="secondary" size="sm" onClick={() => setReviewId(r.staff.id)}>
+                          Review
                         </Button>
+                      ) : (
+                        <span className="inline-flex gap-1.5">
+                          <Button variant="ghost" size="sm" onClick={() => setReviewId(r.staff.id)}>
+                            Review
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              approveWeek(r.staff.id, now, {});
+                              toast({
+                                tone: "success",
+                                title: `${r.staff.name.split(" ")[0]}'s week approved`,
+                                description: `${fmtHM(r.corrected)} to payroll`,
+                              });
+                            }}
+                          >
+                            Approve
+                          </Button>
+                        </span>
                       )}
                     </Td>
                   </Tr>
@@ -645,7 +663,7 @@ export default function TimesheetsPage() {
           toast({
             tone: "success",
             title: `${row.staff.name.split(" ")[0]}'s week approved`,
-            description: `${(opts.approvedHours ?? row.actual).toFixed(1)} h to payroll${opts.note ? " · remark saved" : ""}`,
+            description: `${fmtHM(opts.approvedHours ?? row.actual)} to payroll${opts.note ? " · remark saved" : ""}`,
           });
         }}
       />

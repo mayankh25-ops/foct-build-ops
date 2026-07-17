@@ -118,4 +118,4 @@ export const FONT_OPTIONS: FontOption[] = [
   },
 ];
 
-export const DEFAULT_SLOTS = { display: "lato", body: "lato", mono: "roboto-mono" } as const;
+export const DEFAULT_SLOTS = { display: "inter", body: "inter", mono: "roboto-mono" } as const;

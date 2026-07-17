@@ -47,11 +47,9 @@ const robotoMono = localFont({
   display: "swap",
 });
 
-/* Lato — THE product face (owner direction 2026-07-17: "Replace font
-   overall — lato, rosario, hubot sans"). Full family from lato-font 3.0
-   (SIL OFL) so the 500/600 weights the hierarchy leans on are REAL, not
-   synthesised. Hubot Sans was trialled first but its barred zeros
-   (2Ø26-Ø7-17) fought the same brief's "clean and easy to read". */
+/* Lato — Theme Builder alternate (full family, lato-font 3.0, OFL). Was
+   briefly the product face on 2026-07-17 before the senior design audit
+   standardised on Inter the same day. */
 const lato = localFont({
   src: [
     { path: "../fonts/lato/lato-normal.woff2", weight: "400", style: "normal" },
@@ -62,6 +60,7 @@ const lato = localFont({
   ],
   variable: "--font-lato",
   display: "swap",
+  preload: false,
 });
 
 /* Hubot Sans — Theme Builder alternate (approved library). */
@@ -106,11 +105,13 @@ const dmSans = localFont({
   preload: false,
 });
 
+/* Inter — THE product face (owner's senior design audit 2026-07-17:
+   "Use Inter throughout the web application"; supersedes the same-day
+   Lato pick, which stays vendored as a Theme Builder alternate). */
 const inter = localFont({
   src: [{ path: "../fonts/inter/inter-latin-opsz-normal.woff2", weight: "100 900", style: "normal" }],
   variable: "--font-inter",
   display: "swap",
-  preload: false,
 });
 
 const roboto = localFont({

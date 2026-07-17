@@ -29,6 +29,26 @@ export const todaysShifts: Shift[] = [
   { cleaner: "Grace Liu", zone: "L20 store + restock", scheduled: [10, 13], status: "rostered" },
 ];
 
+/** Duration in hours → "18h 18m" (audit rule: never decimal hours in UI). */
+export function fmtHM(hours: number): string {
+  const neg = hours < 0;
+  const total = Math.round(Math.abs(hours) * 60);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  const core = h === 0 ? `${m}m` : m === 0 ? `${h}h` : `${h}h ${String(m).padStart(2, "0")}m`;
+  return neg ? `−${core}` : core;
+}
+
+/** Signed variance in hours → "+16 min" / "−2h 50m" / "0m". */
+export function fmtDeltaHM(hours: number): string {
+  const total = Math.round(Math.abs(hours) * 60);
+  if (total === 0) return "0m";
+  const sign = hours > 0 ? "+" : "−";
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return sign + (h === 0 ? `${m} min` : m === 0 ? `${h}h` : `${h}h ${String(m).padStart(2, "0")}m`);
+}
+
 export function fmtTime(h?: number | null): string {
   if (h === undefined || h === null) return "—";
   const hh = Math.floor(h);

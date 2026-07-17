@@ -28,7 +28,7 @@ export function PageHeader({
             {eyebrow}
           </p>
         )}
-        <h1 className="text-title-1 font-semibold text-fg">{title}</h1>
+        <h1 className="text-title-1 text-fg">{title}</h1>
         {description && <p className="mt-1.5 text-body text-fg-secondary">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 items-center gap-3">{actions}</div>}

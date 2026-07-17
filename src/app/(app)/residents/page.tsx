@@ -857,7 +857,7 @@ export default function ResidentsPage() {
                     </Td>
                     <Td className="text-right">
                       <Button variant="ghost" size="sm" onClick={() => setOpenId(r.id)} aria-label={`Open ${r.name}`}>
-                        Open
+                        Open resident
                       </Button>
                     </Td>
                   </Tr>

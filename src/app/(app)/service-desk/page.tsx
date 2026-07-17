@@ -646,8 +646,8 @@ export default function ServiceDeskPage() {
                 onClick={() => setSelectedRef(t.ref)}
               >
                 <Td>
-                  <p className="font-mono text-body-sm text-fg">{t.ref}</p>
-                  <p className="mt-0.5 text-body-sm font-medium text-fg">{t.category}</p>
+                  <p className="text-body-sm font-semibold text-fg">{t.category}</p>
+                  <p className="mt-0.5 font-mono text-caption whitespace-nowrap text-fg-muted">{t.ref}</p>
                 </Td>
                 <Td>
                   {t.locations.map((l) => (
