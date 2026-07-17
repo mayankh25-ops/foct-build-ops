@@ -22,6 +22,8 @@ export interface CatalogueItem {
   unit: string;
   /** on the building's allowed list (admin-managed) */
   allowed: boolean;
+  /** admin-uploaded product thumbnail (compressed data URL) */
+  imageDataUrl?: string;
 }
 
 export interface OrderLine {
@@ -97,6 +99,7 @@ interface ConsumablesState {
   createOrder: (input: { requestedBy: string; items: OrderLine[]; note?: string }) => string;
   setOrderStatus: (id: string, status: ConsumableOrderRow["status"]) => void;
   toggleAllowed: (id: string) => void;
+  setItemImage: (id: string, imageDataUrl: string | undefined) => void;
   addCatalogueItem: (input: { name: string; category: ConsumableCategory; unit: string }) => void;
   resetDemo: () => void;
 }
@@ -168,6 +171,11 @@ export const useConsumablesStore = create<ConsumablesState>()(
       toggleAllowed: (id) =>
         set((s) => ({
           catalogue: s.catalogue.map((c) => (c.id === id ? { ...c, allowed: !c.allowed } : c)),
+        })),
+
+      setItemImage: (id, imageDataUrl) =>
+        set((s) => ({
+          catalogue: s.catalogue.map((c) => (c.id === id ? { ...c, imageDataUrl } : c)),
         })),
 
       addCatalogueItem: (input) =>

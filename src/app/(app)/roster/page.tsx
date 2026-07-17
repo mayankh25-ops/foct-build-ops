@@ -114,6 +114,7 @@ function ShiftDrawer({ view, dayLabel }: { view: ShiftView; dayLabel: string }) 
 
 function AddShiftModal({ now }: { now: Date }) {
   const addShift = useAttendanceStore((s) => s.addShift);
+  const addShiftPattern = useAttendanceStore((s) => s.addShiftPattern);
   const addStaff = useAttendanceStore((s) => s.addStaff);
   const customStaff = useAttendanceStore((s) => s.customStaff);
   const { toast } = useToast();
@@ -123,7 +124,10 @@ function AddShiftModal({ now }: { now: Date }) {
   const [newName, setNewName] = React.useState("");
   const [newPin, setNewPin] = React.useState("");
   const [staffError, setStaffError] = React.useState<string | null>(null);
+  const [duration, setDuration] = React.useState<"one-off" | "ongoing" | "temporary">("one-off");
   const [date, setDate] = React.useState(dateKey(now));
+  const [endDate, setEndDate] = React.useState("");
+  const [weekdays, setWeekdays] = React.useState<number[]>([0, 1, 2, 3, 4]); // Mon–Fri
   const [start, setStart] = React.useState("06:00");
   const [end, setEnd] = React.useState("10:00");
   const [zone, setZone] = React.useState("");
@@ -142,7 +146,9 @@ function AddShiftModal({ now }: { now: Date }) {
   const valid =
     zone.trim().length > 0 &&
     toDec(end) > toDec(start) &&
-    (!newCleaner || (newName.trim().length >= 2 && /^\d{4}$/.test(newPin)));
+    (!newCleaner || (newName.trim().length >= 2 && /^\d{4}$/.test(newPin))) &&
+    (duration === "one-off" || weekdays.length > 0) &&
+    (duration !== "temporary" || (!!endDate && endDate >= date));
 
   const label = "flex flex-col gap-1.5 text-body-sm font-medium text-fg";
 
@@ -158,7 +164,20 @@ function AddShiftModal({ now }: { now: Date }) {
       id = res.staff.id;
       cleanerName = res.staff.name;
     }
-    addShift({ staffId: id, date, start: toDec(start), end: toDec(end), zone: zone.trim() });
+    if (duration === "one-off") {
+      addShift({ staffId: id, date, start: toDec(start), end: toDec(end), zone: zone.trim() });
+    } else {
+      addShiftPattern({
+        staffId: id,
+        zone: zone.trim(),
+        start: toDec(start),
+        end: toDec(end),
+        kind: duration,
+        startDate: date,
+        endDate: duration === "temporary" ? endDate : undefined,
+        weekdays,
+      });
+    }
     setOpen(false);
     setZone("");
     setNewCleaner(false);
@@ -167,8 +186,14 @@ function AddShiftModal({ now }: { now: Date }) {
     setStaffError(null);
     toast({
       tone: "success",
-      title: newCleaner ? `${cleanerName} added — shift rostered` : "Shift added to the roster",
-      description: `${cleanerName} · ${date} ${start}–${end}${newCleaner ? ` · kiosk PIN ${newPin}` : ""}`,
+      title: newCleaner
+        ? `${cleanerName} added — shift rostered`
+        : duration === "one-off"
+          ? "Shift added to the roster"
+          : duration === "ongoing"
+            ? "Ongoing shift set — every rostered week from now"
+            : `Temporary shift set — ${date} to ${endDate}`,
+      description: `${cleanerName} · ${start}–${end}${newCleaner ? ` · kiosk PIN ${newPin}` : ""}`,
     });
   };
 
@@ -236,20 +261,72 @@ function AddShiftModal({ now }: { now: Date }) {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="flex flex-col gap-1.5">
+            <p className="text-body-sm font-medium text-fg">Duration</p>
+            <SegmentedControl
+              label="Shift duration"
+              options={[
+                { value: "one-off", label: "One-off" },
+                { value: "ongoing", label: "Ongoing (permanent)" },
+                { value: "temporary", label: "Temporary" },
+              ]}
+              value={duration}
+              onValueChange={(v) => setDuration(v as typeof duration)}
+            />
+            <p className="text-caption text-fg-muted">
+              {duration === "one-off"
+                ? "A single shift on one date."
+                : duration === "ongoing"
+                  ? "A standing arrangement — repeats on the chosen days every week until you end it."
+                  : "Ad-hoc cover for a fixed period, e.g. 1–2 months — repeats on the chosen days until the end date."}
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-4">
             <label className={label}>
-              Date
+              {duration === "one-off" ? "Date" : "Start date"}
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </label>
+            {duration === "temporary" && (
+              <label className={label}>
+                End date
+                <Input type="date" value={endDate} min={date} onChange={(e) => setEndDate(e.target.value)} />
+              </label>
+            )}
             <label className={label}>
-              Start
+              Start time
               <Input type="time" value={start} onChange={(e) => setStart(e.target.value)} />
             </label>
             <label className={label}>
-              End
+              Finish time
               <Input type="time" value={end} onChange={(e) => setEnd(e.target.value)} />
             </label>
           </div>
+
+          {duration !== "one-off" && (
+            <div className="flex flex-col gap-1.5">
+              <p className="text-body-sm font-medium text-fg">On days</p>
+              <div className="flex flex-wrap gap-1.5">
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d, i) => (
+                  <button
+                    key={d}
+                    type="button"
+                    aria-pressed={weekdays.includes(i)}
+                    onClick={() =>
+                      setWeekdays((w) => (w.includes(i) ? w.filter((x) => x !== i) : [...w, i]))
+                    }
+                    className={
+                      weekdays.includes(i)
+                        ? "rounded-pill border border-edge-strong bg-accent-subtle px-3 py-1 text-body-sm font-medium text-accent-text"
+                        : "rounded-pill border border-edge px-3 py-1 text-body-sm font-medium text-fg-secondary hover:text-fg"
+                    }
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <label className={label}>
             Zone
@@ -261,7 +338,13 @@ function AddShiftModal({ now }: { now: Date }) {
             Cancel
           </Button>
           <Button disabled={!valid} onClick={submit}>
-            {newCleaner ? "Add cleaner & shift" : "Add shift"}
+            {newCleaner
+              ? "Add cleaner & shift"
+              : duration === "one-off"
+                ? "Add shift"
+                : duration === "ongoing"
+                  ? "Set ongoing shift"
+                  : "Set temporary shift"}
           </Button>
         </ModalFooter>
       </ModalContent>
@@ -273,6 +356,8 @@ export default function RosterPage() {
   const now = useAttendanceReady();
   const shifts = useAttendanceStore((s) => s.shifts);
   const events = useAttendanceStore((s) => s.events);
+  const shiftPatterns = useAttendanceStore((s) => s.shiftPatterns);
+  const patternKind = (id: string) => shiftPatterns.find((pt) => pt.id === id)?.kind;
 
   const [view, setView] = React.useState("day");
   const [status, setStatus] = React.useState("all");
@@ -487,7 +572,16 @@ export default function RosterPage() {
               const meta = shiftStatusMeta[v.status];
               return (
                 <Tr key={v.shift.id}>
-                  <Td className="font-medium">{v.staff.name}</Td>
+                  <Td className="font-medium">
+                    {v.staff.name}
+                    {v.shift.patternId && (
+                      <span className="ml-2 align-middle">
+                        <StatusPill tone={patternKind(v.shift.patternId) === "ongoing" ? "accent" : "info"}>
+                          {patternKind(v.shift.patternId) === "ongoing" ? "Ongoing" : "Temp"}
+                        </StatusPill>
+                      </span>
+                    )}
+                  </Td>
                   <Td className="text-fg-secondary">{v.shift.zone}</Td>
                   <Td numeric>
                     {fmtTime(v.shift.start)}–{fmtTime(v.shift.end)}

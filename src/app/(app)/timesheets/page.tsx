@@ -64,29 +64,40 @@ function reviewNote(r: TimesheetWeekRow): string | null {
 function ReviewApproveModal({
   row,
   now,
+  onSetCorrection,
   onClose,
   onApprove,
 }: {
   row: TimesheetWeekRow | null;
   now: Date;
+  onSetCorrection: (shiftId: string, c: { delta: number; note: string } | null) => void;
   onClose: () => void;
   onApprove: (opts: { note?: string; approvedHours?: number }) => void;
 }) {
   const [hours, setHours] = React.useState("");
   const [note, setNote] = React.useState("");
+  const [hoursTouched, setHoursTouched] = React.useState(false);
 
   React.useEffect(() => {
     if (row) {
-      setHours(row.actual.toFixed(2));
+      setHours(row.corrected.toFixed(2));
       setNote("");
+      setHoursTouched(false);
     }
-  }, [row]);
+  }, [row?.staff.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // per-shift corrections change the payable total — follow it until the
+  // manager types their own figure
+  React.useEffect(() => {
+    if (row && !hoursTouched) setHours(row.corrected.toFixed(2));
+  }, [row, hoursTouched]);
 
   if (!row) return null;
 
   const parsed = Number.parseFloat(hours);
   const validHours = Number.isFinite(parsed) && parsed >= 0 && parsed <= 24 * 7;
   const adjusted = validHours && Math.abs(parsed - row.actual) > 0.01;
+  const correctedCount = row.entries.filter((e) => e.correction).length;
   const reviewReason = reviewNote(row);
 
   return (
@@ -115,10 +126,10 @@ function ReviewApproveModal({
               <Tr>
                 <Th>Day</Th>
                 <Th numeric>Rostered</Th>
-                <Th numeric>Check in</Th>
-                <Th numeric>Check out</Th>
+                <Th numeric>Kiosk in–out</Th>
                 <Th numeric>Actual</Th>
-                <Th>Status</Th>
+                <Th className="w-24">± Hours</Th>
+                <Th>Correction remark</Th>
               </Tr>
             </THead>
             <TBody>
@@ -128,22 +139,71 @@ function ReviewApproveModal({
                 return (
                   <Tr key={e.shift.id}>
                     <Td className="font-medium">
-                      {day.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" })}
+                      <span className="flex flex-col">
+                        {day.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" })}
+                        <StatusPill tone={meta.tone} className="mt-1 w-fit">{meta.label}</StatusPill>
+                      </span>
                     </Td>
                     <Td numeric>
                       {fmtTime(e.shift.start)}–{fmtTime(e.shift.end)}
                     </Td>
-                    <Td numeric>{fmtClock(e.checkIn)}</Td>
-                    <Td numeric>{e.inProgress ? "on site" : fmtClock(e.checkOut)}</Td>
-                    <Td numeric>{e.actual.toFixed(2)} h</Td>
+                    <Td numeric>
+                      {fmtClock(e.checkIn)} – {e.inProgress ? "on site" : fmtClock(e.checkOut)}
+                    </Td>
+                    <Td numeric>
+                      {e.actual.toFixed(2)} h
+                      {e.correction && (
+                        <span className="block text-caption text-warning-text">
+                          → pays {e.paid.toFixed(2)} h
+                        </span>
+                      )}
+                    </Td>
                     <Td>
-                      <StatusPill tone={meta.tone}>{meta.label}</StatusPill>
+                      <Input
+                        aria-label={`Correction hours for ${day.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" })}`}
+                        inputMode="decimal"
+                        placeholder="+/−"
+                        className="h-9 w-20 px-2 text-body-sm"
+                        defaultValue={e.correction ? String(e.correction.delta) : ""}
+                        onBlur={(ev) => {
+                          const delta = Number.parseFloat(ev.target.value);
+                          if (!Number.isFinite(delta) || Math.abs(delta) < 0.001) {
+                            onSetCorrection(e.shift.id, null);
+                          } else {
+                            onSetCorrection(e.shift.id, {
+                              delta: Math.round(delta * 100) / 100,
+                              note: e.correction?.note ?? "",
+                            });
+                          }
+                        }}
+                      />
+                    </Td>
+                    <Td>
+                      <Input
+                        aria-label={`Correction remark for ${day.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" })}`}
+                        placeholder="Why — e.g. forgot to clock out"
+                        className="h-9 px-2 text-body-sm"
+                        defaultValue={e.correction?.note ?? ""}
+                        onBlur={(ev) => {
+                          if (e.correction) {
+                            onSetCorrection(e.shift.id, { delta: e.correction.delta, note: ev.target.value.trim() });
+                          }
+                        }}
+                        disabled={!e.correction}
+                      />
                     </Td>
                   </Tr>
                 );
               })}
             </TBody>
           </Table>
+          {correctedCount > 0 && (
+            <p className="-mt-2 text-caption text-fg-muted">
+              {correctedCount} shift{correctedCount === 1 ? "" : "s"} corrected — payable total{" "}
+              <span className="font-numeric">{row.corrected.toFixed(2)} h</span> (raw{" "}
+              <span className="font-numeric">{row.actual.toFixed(2)} h</span>).
+            </p>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-[14rem_1fr]">
             <div className="flex flex-col gap-1.5">
@@ -154,20 +214,29 @@ function ReviewApproveModal({
                 id="ts-hours"
                 inputMode="decimal"
                 value={hours}
-                onChange={(e) => setHours(e.target.value)}
+                onChange={(e) => {
+                  setHours(e.target.value);
+                  setHoursTouched(true);
+                }}
                 error={validHours ? undefined : "Enter hours, e.g. 36.5"}
               />
               <span className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setHours(row.actual.toFixed(2))}
+                  onClick={() => {
+                    setHours(row.corrected.toFixed(2));
+                    setHoursTouched(false);
+                  }}
                   className="text-caption font-medium text-accent-text hover:opacity-80"
                 >
-                  Use actual ({row.actual.toFixed(2)})
+                  Use corrected ({row.corrected.toFixed(2)})
                 </button>
                 <button
                   type="button"
-                  onClick={() => setHours(row.rostered.toFixed(2))}
+                  onClick={() => {
+                    setHours(row.rostered.toFixed(2));
+                    setHoursTouched(true);
+                  }}
                   className="text-caption font-medium text-accent-text hover:opacity-80"
                 >
                   Use rostered ({row.rostered.toFixed(2)})
@@ -216,6 +285,8 @@ export default function TimesheetsPage() {
   const events = useAttendanceStore((s) => s.events);
   const approvals = useAttendanceStore((s) => s.approvals);
   const approvalMeta = useAttendanceStore((s) => s.approvalMeta);
+  const corrections = useAttendanceStore((s) => s.corrections);
+  const setCorrection = useAttendanceStore((s) => s.setCorrection);
   const approveWeek = useAttendanceStore((s) => s.approveWeek);
   const approveAllReady = useAttendanceStore((s) => s.approveAllReady);
 
@@ -226,7 +297,7 @@ export default function TimesheetsPage() {
 
   if (!now) return null; // one paint: store seeds + clock arrives post-mount
 
-  const rows = deriveTimesheets(shifts, events, approvals, now, approvalMeta);
+  const rows = deriveTimesheets(shifts, events, approvals, now, approvalMeta, corrections);
   const todayViews = shifts
     .filter((s) => s.date === dateKey(now))
     .map((s) => deriveShift(s, events, now))
@@ -505,6 +576,7 @@ export default function TimesheetsPage() {
       <ReviewApproveModal
         row={rows.find((r) => r.staff.id === reviewId) ?? null}
         now={now}
+        onSetCorrection={setCorrection}
         onClose={() => setReviewId(null)}
         onApprove={(opts) => {
           const row = rows.find((r) => r.staff.id === reviewId);

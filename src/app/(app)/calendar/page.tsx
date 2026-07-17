@@ -12,7 +12,6 @@ import {
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,6 +32,7 @@ import {
   calCategoryMeta,
   calRoleLabel,
   canModify,
+  manualEventsForMonth,
   monthKey,
   REPEAT_LABELS,
   scopeEventsForMonth,
@@ -106,23 +106,24 @@ function DayDrawer({
   date,
   events,
   viewRole,
-  children,
+  onClose,
 }: {
-  date: Date;
+  date: Date | null;
   events: CalEvent[];
   viewRole: CalRole;
-  children: React.ReactNode;
+  onClose: () => void;
 }) {
   const removeJob = useCalendarStore((s) => s.removeJob);
   const removeSeries = useCalendarStore((s) => s.removeSeries);
   const { toast } = useToast();
+  // the Root stays mounted and is driven by `open` — unmounting an open Radix
+  // dialog mid-close leaks body pointer-events and strands the page
   return (
-    <Drawer>
-      <DrawerTrigger asChild>{children}</DrawerTrigger>
+    <Drawer open={!!date} onOpenChange={(o) => !o && onClose()}>
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle>
-            {date.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" })}
+            {date?.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" })}
           </DrawerTitle>
           <DrawerDescription>
             {events.length} scheduled item{events.length === 1 ? "" : "s"} at Aurora on Collins
@@ -168,6 +169,9 @@ function DayDrawer({
                         {REPEAT_LABELS[e.repeat]}
                       </Badge>
                     )}
+                    {e.endDate && e.endDate > (e.spanId ? "" : e.date) && e.spanId && (
+                      <Badge tone="info">Multi-day · until {e.endDate.slice(5)}</Badge>
+                    )}
                     <VisibilityBadge visibility={e.visibility} />
                     {e.locked && (
                       <Badge tone="neutral">
@@ -187,8 +191,8 @@ function DayDrawer({
                               removeSeries(e.seriesId);
                               toast({ tone: "neutral", title: "Recurring event removed", description: `${e.title} — the whole series` });
                             } else {
-                              removeJob(e.id);
-                              toast({ tone: "neutral", title: "Event removed", description: e.title });
+                              removeJob(e.spanId ?? e.id);
+                              toast({ tone: "neutral", title: e.spanId ? "Multi-day event removed" : "Event removed", description: e.title });
                             }
                           }}
                         >
@@ -226,7 +230,7 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
   const [detail, setDetail] = React.useState("");
   const [repeat, setRepeat] = React.useState<CalRepeat>("none");
   const [weekdays, setWeekdays] = React.useState<number[]>([]);
-  const [until, setUntil] = React.useState("");
+  const [endDate, setEndDate] = React.useState("");
   const [visibility, setVisibility] = React.useState<"everyone" | CalRole[]>("everyone");
   const [locked, setLocked] = React.useState(false);
   const [contactName, setContactName] = React.useState("");
@@ -239,7 +243,7 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
     setDetail("");
     setRepeat("none");
     setWeekdays([]);
-    setUntil("");
+    setEndDate("");
     setVisibility("everyone");
     setLocked(false);
     setContactName("");
@@ -273,12 +277,12 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
       contactPhone: contactPhone.trim() || undefined,
     };
     if (repeat === "none") {
-      addJob({ ...shared, date });
+      addJob({ ...shared, date, endDate: endDate && endDate > date ? endDate : undefined });
     } else {
       addSeries({
         ...shared,
         startDate: date,
-        until: until || undefined,
+        until: endDate || undefined,
         repeat,
         weekdays: weekdays.length ? weekdays : undefined,
         visibility,
@@ -321,7 +325,7 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
             />
           </label>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <label className={label}>
               Category
               <Select
@@ -333,10 +337,19 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
               />
             </label>
             <label className={label}>
-              {repeat === "none" ? "Date" : "First occurrence"}
+              Start date
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </label>
+            <label className={label}>
+              Finish date (optional)
+              <Input type="date" value={endDate} min={date} onChange={(e) => setEndDate(e.target.value)} />
+            </label>
           </div>
+          <p className="-mt-3 text-caption text-fg-muted">
+            {repeat === "none"
+              ? "A finish date makes it a multi-day event — it shows on every day in between."
+              : `Repeats ${REPEAT_LABELS[repeat].toLowerCase()} from the start date${endDate ? ` until ${endDate}` : " with no end"}.`}
+          </p>
 
           <div className="grid items-end gap-4 sm:grid-cols-[1fr_1fr_auto]">
             <label className={label}>
@@ -368,12 +381,6 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
                   onValueChange={(v) => setRepeat(v as CalRepeat)}
                 />
               </label>
-              {repeat !== "none" && (
-                <label className={label}>
-                  Until (optional)
-                  <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} />
-                </label>
-              )}
             </div>
             {(repeat === "weekly" || repeat === "fortnightly") && (
               <div className="mt-3">
@@ -504,7 +511,7 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
           <Button variant="secondary" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button disabled={!title.trim() || !date} onClick={submit}>
+          <Button disabled={!title.trim() || !date || (!!endDate && endDate < date)} onClick={submit}>
             {repeat === "none" ? "Add event" : "Add recurring event"}
           </Button>
         </ModalFooter>
@@ -525,6 +532,7 @@ export default function CalendarPage() {
   const setViewRole = useCalendarStore((s) => s.setViewRole);
   const [cursor, setCursor] = React.useState<Date | null>(null);
   const [filter, setFilter] = React.useState<CalCategory | "all">("all");
+  const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setCursor((c) => c ?? new Date());
@@ -540,7 +548,7 @@ export default function CalendarPage() {
     ...scopeEventsForMonth(year, month),
     ...seededEventsForMonth(year, month),
     ...seriesEventsForMonth(series, year, month),
-    ...manualEvents,
+    ...manualEventsForMonth(manualEvents, year, month),
   ]
     .filter((e) => e.date.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`))
     .filter((e) => visibleTo(e, viewRole));
@@ -647,9 +655,11 @@ export default function CalendarPage() {
               const dayEvents = (byDate.get(key) ?? []).sort((a, b) => (a.time ?? 24) - (b.time ?? 24));
               const isToday = key === todayKey;
               return (
-                <DayDrawer key={i} date={d} events={dayEvents} viewRole={viewRole}>
                   <button
+                    key={i}
                     type="button"
+                    aria-label={`Open ${d.toLocaleDateString("en-AU", { day: "numeric", month: "long" })}`}
+                    onClick={() => setSelectedKey(key)}
                     className={cn(
                       "flex min-h-28 flex-col items-stretch gap-1 border-b border-edge p-2 text-left transition-colors hover:bg-hover",
                       (i + 1) % 7 !== 0 && "border-r"
@@ -670,12 +680,18 @@ export default function CalendarPage() {
                       <span className="px-1 text-caption text-fg-muted">+{dayEvents.length - 3} more</span>
                     )}
                   </button>
-                </DayDrawer>
               );
             })}
           </div>
         </CardBody>
       </Card>
+
+      <DayDrawer
+        date={selectedKey ? new Date(`${selectedKey}T12:00:00`) : null}
+        events={selectedKey ? (byDate.get(selectedKey) ?? []) : []}
+        viewRole={viewRole}
+        onClose={() => setSelectedKey(null)}
+      />
 
       {queuedReminders.length > 0 && (
         <Card className="mt-6">

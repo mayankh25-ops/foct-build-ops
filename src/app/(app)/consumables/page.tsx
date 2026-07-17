@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   AlertTriangle,
   Brush,
+  Camera,
   Cog,
   FlaskConical,
   Hand,
@@ -33,10 +34,12 @@ import {
   ModalTrigger,
 } from "@/components/ui/modal";
 import { PageHeader } from "@/components/ui/page-header";
+import { SearchInput } from "@/components/ui/search-input";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Select } from "@/components/ui/select";
 import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
+import { compressImage } from "@/lib/compress-image";
 import { staffDirectory } from "@/lib/attendance-store";
 import {
   useConsumablesReady,
@@ -69,6 +72,16 @@ const categoryIcon: Record<ConsumableCategory, React.ComponentType<{ className?:
 
 function ItemTile({ item }: { item: CatalogueItem }) {
   const Icon = categoryIcon[item.category];
+  if (item.imageDataUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={item.imageDataUrl}
+        alt=""
+        className="size-12 shrink-0 rounded-card border border-edge object-cover"
+      />
+    );
+  }
   return (
     <span className="flex size-12 shrink-0 items-center justify-center rounded-card bg-accent-subtle">
       <Icon aria-hidden className="size-6 text-accent-text" />
@@ -95,13 +108,20 @@ function NewOrderModal() {
   const createOrder = useConsumablesStore((s) => s.createOrder);
   const { toast } = useToast();
   const [open, setOpen] = React.useState(false);
+  const openChange = (o: boolean) => {
+    setOpen(o);
+    if (o) setSearch("");
+  };
   const [qty, setQty] = React.useState<Record<string, number>>({});
   const [requestedBy, setRequestedBy] = React.useState(staffDirectory[0]!.name);
   const [otherName, setOtherName] = React.useState("");
   const [otherQty, setOtherQty] = React.useState(1);
   const [others, setOthers] = React.useState<OrderLine[]>([]);
+  const [search, setSearch] = React.useState("");
 
-  const allowed = catalogue.filter((c) => c.allowed);
+  const allowed = catalogue.filter(
+    (c) => c.allowed && c.name.toLowerCase().includes(search.trim().toLowerCase())
+  );
   const lines: OrderLine[] = [
     ...allowed
       .filter((c) => (qty[c.id] ?? 0) > 0)
@@ -133,7 +153,7 @@ function NewOrderModal() {
   };
 
   return (
-    <Modal open={open} onOpenChange={setOpen}>
+    <Modal open={open} onOpenChange={openChange}>
       <ModalTrigger asChild>
         <Button>
           <Plus aria-hidden /> New order
@@ -148,14 +168,28 @@ function NewOrderModal() {
           </ModalDescription>
         </ModalHeader>
         <ModalBody className="flex flex-col gap-5">
-          <label className="flex w-64 flex-col gap-1.5 text-body-sm font-medium text-fg">
-            Requested by
-            <Select
-              options={staffDirectory.map((s) => ({ value: s.name, label: s.name }))}
-              value={requestedBy}
-              onValueChange={setRequestedBy}
+          <div className="flex flex-wrap items-end gap-4">
+            <label className="flex w-64 flex-col gap-1.5 text-body-sm font-medium text-fg">
+              Requested by
+              <Select
+                options={staffDirectory.map((s) => ({ value: s.name, label: s.name }))}
+                value={requestedBy}
+                onValueChange={setRequestedBy}
+              />
+            </label>
+            <SearchInput
+              className="w-64"
+              placeholder="Search items…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
-          </label>
+          </div>
+
+          {allowed.length === 0 && (
+            <p className="text-body-sm text-fg-muted">
+              Nothing on the allowed list matches “{search}”. Use “Other” below for anything unusual.
+            </p>
+          )}
 
           <div className="grid gap-3 sm:grid-cols-2">
             {allowed.map((item) => {
@@ -267,13 +301,47 @@ function NewOrderModal() {
 function ManageListModal() {
   const catalogue = useConsumablesStore((s) => s.catalogue);
   const toggleAllowed = useConsumablesStore((s) => s.toggleAllowed);
+  const setItemImage = useConsumablesStore((s) => s.setItemImage);
   const addCatalogueItem = useConsumablesStore((s) => s.addCatalogueItem);
+  const { toast } = useToast();
   const [name, setName] = React.useState("");
   const [unit, setUnit] = React.useState("");
   const [category, setCategory] = React.useState<ConsumableCategory>("Chemicals");
+  const [search, setSearch] = React.useState("");
+  const [open, setOpen] = React.useState(false);
+  const openChange = (o: boolean) => {
+    setOpen(o);
+    if (o) setSearch("");
+  };
+  const fileRef = React.useRef<HTMLInputElement>(null);
+  const uploadTarget = React.useRef<string | null>(null);
+
+  const shown = catalogue.filter((c) =>
+    c.name.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  const pickImage = (id: string) => {
+    uploadTarget.current = id;
+    fileRef.current?.click();
+  };
+
+  const onImageFile = async (files: FileList | null) => {
+    const file = files?.[0];
+    const id = uploadTarget.current;
+    if (!file || !id) return;
+    try {
+      const dataUrl = await compressImage(file, 320, 0.75);
+      setItemImage(id, dataUrl);
+      toast({ tone: "success", title: "Product photo saved" });
+    } catch {
+      toast({ tone: "critical", title: "Couldn't read that image" });
+    }
+    if (fileRef.current) fileRef.current.value = "";
+    uploadTarget.current = null;
+  };
 
   return (
-    <Modal>
+    <Modal open={open} onOpenChange={openChange}>
       <ModalTrigger asChild>
         <Button variant="secondary">
           <Settings2 aria-hidden /> Allowed list
@@ -287,30 +355,52 @@ function ManageListModal() {
           </ModalDescription>
         </ModalHeader>
         <ModalBody className="flex flex-col gap-5">
+          <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => void onImageFile(e.target.files)} />
+          <SearchInput
+            className="w-72"
+            placeholder="Search the catalogue…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
           <div className="grid gap-2 sm:grid-cols-2">
-            {catalogue.map((item) => (
-              <label
+            {shown.map((item) => (
+              <div
                 key={item.id}
                 className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-card border p-3 transition-colors",
+                  "flex items-center gap-3 rounded-card border p-3 transition-colors",
                   item.allowed ? "border-edge bg-surface" : "border-edge bg-canvas opacity-60"
                 )}
               >
                 <input
                   type="checkbox"
+                  aria-label={`${item.name} allowed`}
                   checked={item.allowed}
                   onChange={() => toggleAllowed(item.id)}
                   className="size-4 shrink-0 accent-[var(--accent)]"
                 />
                 <ItemTile item={item} />
-                <span className="min-w-0">
+                <span className="min-w-0 flex-1">
                   <span className="block truncate text-body-sm font-medium text-fg">{item.name}</span>
                   <span className="block truncate text-caption text-fg-muted">
                     {item.category} · {item.unit}
                   </span>
                 </span>
-              </label>
+                <button
+                  type="button"
+                  aria-label={`${item.imageDataUrl ? "Replace" : "Add"} photo for ${item.name}`}
+                  title={item.imageDataUrl ? "Replace product photo" : "Add product photo"}
+                  onClick={() => pickImage(item.id)}
+                  className="flex size-9 shrink-0 items-center justify-center rounded-control border border-edge text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+                >
+                  <Camera aria-hidden className="size-4" />
+                </button>
+              </div>
             ))}
+            {shown.length === 0 && (
+              <p className="text-body-sm text-fg-muted sm:col-span-2">
+                No catalogue items match “{search}” — add it below.
+              </p>
+            )}
           </div>
 
           <div className="rounded-card border border-edge bg-canvas p-4">
@@ -351,12 +441,17 @@ export default function ConsumablesPage() {
   const ordersLive = useConsumablesStore((s) => s.orders);
   const setOrderStatus = useConsumablesStore((s) => s.setOrderStatus);
   const [category, setCategory] = React.useState<(typeof categories)[number]>("All");
+  const [stockSearch, setStockSearch] = React.useState("");
   const { toast } = useToast();
 
   if (!ready) return null;
 
   const lowStock = stock.filter((s) => s.level <= 0.25);
-  const visibleStock = stock.filter((s) => category === "All" || s.category === category);
+  const visibleStock = stock.filter(
+    (s) =>
+      (category === "All" || s.category === category) &&
+      s.name.toLowerCase().includes(stockSearch.trim().toLowerCase())
+  );
   const queue = ordersLive.filter((o) => o.status === "awaiting-approval");
   const recent = ordersLive.filter((o) => o.status !== "awaiting-approval").slice(0, 4);
 
@@ -492,6 +587,12 @@ export default function ConsumablesPage() {
           description="Counted at the level 20 store · reorder points set per item."
         />
         <FilterBar>
+          <SearchInput
+            className="w-64"
+            placeholder="Search stock…"
+            value={stockSearch}
+            onChange={(e) => setStockSearch(e.target.value)}
+          />
           {categories.map((c) => (
             <button
               key={c}

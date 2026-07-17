@@ -35,7 +35,14 @@ export const CAL_ROLES: Array<{ value: CalRole; label: string }> = [
 
 export const calRoleLabel = (r: CalRole) => CAL_ROLES.find((x) => x.value === r)?.label ?? r;
 
-export type CalRepeat = "none" | "daily" | "weekly" | "fortnightly" | "monthly";
+export type CalRepeat =
+  | "none"
+  | "daily"
+  | "weekly"
+  | "fortnightly"
+  | "monthly"
+  | "quarterly"
+  | "yearly";
 
 export const REPEAT_LABELS: Record<CalRepeat, string> = {
   none: "Does not repeat",
@@ -43,6 +50,8 @@ export const REPEAT_LABELS: Record<CalRepeat, string> = {
   weekly: "Weekly",
   fortnightly: "Fortnightly",
   monthly: "Monthly",
+  quarterly: "Quarterly",
+  yearly: "Yearly",
 };
 
 /** "everyone" or an explicit list of roles that may SEE the event. */
@@ -51,8 +60,10 @@ export type CalVisibility = "everyone" | CalRole[];
 export interface CalEvent {
   id: string;
   title: string;
-  /** yyyy-mm-dd */
+  /** yyyy-mm-dd — start date */
   date: string;
+  /** yyyy-mm-dd — finish date for MULTI-DAY events (shows on every day) */
+  endDate?: string;
   /** decimal hours; undefined = all-day */
   time?: number;
   /** decimal hours — finish time for timed events */
@@ -75,6 +86,8 @@ export interface CalEvent {
   /** set on occurrences expanded from a recurring series */
   seriesId?: string;
   repeat?: CalRepeat;
+  /** set on day-occurrences expanded from a multi-day event (= original id) */
+  spanId?: string;
 }
 
 /** A recurring definition — expanded into CalEvents per displayed range. */
@@ -200,6 +213,14 @@ function occursOn(s: CalSeries, d: Date): boolean {
     }
     case "monthly":
       return d.getDate() === start.getDate();
+    case "quarterly": {
+      if (d.getDate() !== start.getDate()) return false;
+      const months =
+        (d.getFullYear() - start.getFullYear()) * 12 + (d.getMonth() - start.getMonth());
+      return months % 3 === 0;
+    }
+    case "yearly":
+      return d.getDate() === start.getDate() && d.getMonth() === start.getMonth();
   }
 }
 
@@ -237,6 +258,27 @@ export function seriesEventsForMonth(series: CalSeries[], year: number, month: n
   return out;
 }
 
+/** Manual events for one month — multi-day events (finish date set) expand
+ *  into one occurrence per day so they show across the whole span. */
+export function manualEventsForMonth(manual: CalEvent[], year: number, month: number): CalEvent[] {
+  const prefix = `${year}-${pad(month + 1)}`;
+  const out: CalEvent[] = [];
+  for (const e of manual) {
+    if (!e.endDate || e.endDate <= e.date) {
+      if (e.date.startsWith(prefix)) out.push(e);
+      continue;
+    }
+    const start = new Date(`${e.date}T00:00:00`);
+    const end = new Date(`${e.endDate}T00:00:00`);
+    // safety cap: a span never expands past 92 days, whatever the input says
+    for (let i = 0, d = new Date(start); d <= end && i < 92; i++, d.setDate(d.getDate() + 1)) {
+      const key = dateKey(d);
+      if (key.startsWith(prefix)) out.push({ ...e, id: `${e.id}-${key}`, date: key, spanId: e.id });
+    }
+  }
+  return out;
+}
+
 /* ---------------------------------------------------------------------------
  * Visibility + permission rules (mirror of the future RLS policies)
  * ------------------------------------------------------------------------- */
@@ -262,6 +304,8 @@ export function canModify(e: Pick<CalEvent, "source" | "locked">, role: CalRole)
 export interface AddEventInput {
   title: string;
   date: string;
+  /** finish date — makes it a multi-day event */
+  endDate?: string;
   time?: number;
   endTime?: number;
   category: CalCategory;
@@ -381,11 +425,11 @@ export function eventsForRange(
     out.push(
       ...scopeEventsForMonth(cursor.getFullYear(), cursor.getMonth()),
       ...seededEventsForMonth(cursor.getFullYear(), cursor.getMonth()),
-      ...seriesEventsForMonth(series, cursor.getFullYear(), cursor.getMonth())
+      ...seriesEventsForMonth(series, cursor.getFullYear(), cursor.getMonth()),
+      ...manualEventsForMonth(manual, cursor.getFullYear(), cursor.getMonth())
     );
     cursor.setMonth(cursor.getMonth() + 1);
   }
-  out.push(...manual);
   return out
     .filter((e) => e.date >= startKey && e.date <= endKey)
     .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? 24) - (b.time ?? 24));
