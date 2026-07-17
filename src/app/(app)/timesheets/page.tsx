@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckCheck, ClipboardCheck, Download, PencilLine } from "lucide-react";
+import { CheckCheck, ClipboardCheck, Download, Minus, PencilLine, Plus } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,135 @@ function reviewNote(r: TimesheetWeekRow): string | null {
 /* stamp: adjust the hours, leave a remark, then approve.            */
 /* ---------------------------------------------------------------- */
 
+function Fact({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="min-w-28">
+      <p className="text-caption font-medium text-fg-muted">{label}</p>
+      <p className="mt-0.5 font-numeric text-body text-fg tabular-nums">{value}</p>
+    </div>
+  );
+}
+
+function DayEntryCard({
+  entry: e,
+  onSetCorrection,
+}: {
+  entry: TimesheetWeekRow["entries"][number];
+  onSetCorrection: (shiftId: string, c: { delta: number; note: string } | null) => void;
+}) {
+  const meta = shiftStatusMeta[e.status];
+  const day = new Date(`${e.shift.date}T12:00:00`);
+  const dayLabel = day.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" });
+  const delta = e.correction?.delta ?? 0;
+
+  // typing stays local until blur; stepper clicks write straight through
+  const [deltaStr, setDeltaStr] = React.useState(delta ? String(delta) : "");
+  const [noteStr, setNoteStr] = React.useState(e.correction?.note ?? "");
+  React.useEffect(() => setDeltaStr(delta ? String(delta) : ""), [delta]);
+  React.useEffect(() => setNoteStr(e.correction?.note ?? ""), [e.correction?.note]);
+
+  const commit = (d: number, note?: string) => {
+    const rounded = Math.round(d * 100) / 100;
+    if (!Number.isFinite(rounded) || Math.abs(rounded) < 0.001) {
+      onSetCorrection(e.shift.id, null);
+    } else {
+      onSetCorrection(e.shift.id, { delta: rounded, note: note ?? e.correction?.note ?? "" });
+    }
+  };
+  const step = (dir: 1 | -1) => commit(delta + dir * 0.25);
+
+  const stepBtn =
+    "flex size-11 shrink-0 items-center justify-center rounded-control border border-edge-strong bg-surface text-fg-secondary transition-colors hover:bg-hover hover:text-fg";
+
+  return (
+    <div
+      className={cn(
+        "rounded-card border p-4 transition-colors",
+        delta ? "border-edge-strong bg-warning-subtle/40" : "border-edge bg-canvas"
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+        <div className="w-24 shrink-0">
+          <p className="text-body font-semibold text-fg">{dayLabel}</p>
+          <StatusPill tone={meta.tone} className="mt-1.5">
+            {meta.label}
+          </StatusPill>
+        </div>
+
+        <Fact label="Rostered" value={`${fmtTime(e.shift.start)}–${fmtTime(e.shift.end)}`} />
+        <Fact
+          label="Kiosk in–out"
+          value={`${fmtClock(e.checkIn)} – ${e.inProgress ? "on site" : fmtClock(e.checkOut)}`}
+        />
+        <div className="min-w-28">
+          <p className="text-caption font-medium text-fg-muted">Actual</p>
+          <p className="mt-0.5 font-numeric text-body font-semibold text-fg tabular-nums">
+            {e.actual.toFixed(2)} h
+          </p>
+          {e.correction && (
+            <p className="font-numeric text-caption font-medium text-warning-text tabular-nums">
+              → pays {e.paid.toFixed(2)} h
+            </p>
+          )}
+        </div>
+
+        <div className="ml-auto">
+          <p className="text-caption font-medium text-fg-muted">± Hours</p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <button
+              type="button"
+              aria-label={`Take 15 minutes off ${dayLabel}`}
+              title="−15 min"
+              onClick={() => step(-1)}
+              className={stepBtn}
+            >
+              <Minus aria-hidden className="size-4" />
+            </button>
+            <Input
+              aria-label={`Correction hours for ${dayLabel}`}
+              inputMode="decimal"
+              placeholder="0"
+              value={deltaStr}
+              onChange={(ev) => setDeltaStr(ev.target.value)}
+              onBlur={(ev) => {
+                const d = Number.parseFloat(ev.target.value);
+                commit(Number.isFinite(d) ? d : 0);
+              }}
+              className="h-11 w-24 text-center font-numeric text-body font-semibold tabular-nums"
+            />
+            <button
+              type="button"
+              aria-label={`Add 15 minutes to ${dayLabel}`}
+              title="+15 min"
+              onClick={() => step(1)}
+              className={stepBtn}
+            >
+              <Plus aria-hidden className="size-4" />
+            </button>
+          </div>
+          <p className="mt-1 text-center text-caption text-fg-muted">15-min steps</p>
+        </div>
+      </div>
+
+      <Input
+        aria-label={`Correction remark for ${dayLabel}`}
+        placeholder={
+          e.correction
+            ? "Why — e.g. forgot to clock out, CCTV confirms the earlier finish"
+            : "Use − / + to set a correction, then note why here"
+        }
+        value={noteStr}
+        onChange={(ev) => setNoteStr(ev.target.value)}
+        onBlur={(ev) => {
+          if (e.correction) commit(e.correction.delta, ev.target.value.trim());
+        }}
+        disabled={!e.correction}
+        className="mt-4 h-11 w-full"
+      />
+    </div>
+  );
+}
+
 function ReviewApproveModal({
   row,
   now,
@@ -102,7 +231,7 @@ function ReviewApproveModal({
 
   return (
     <Modal open onOpenChange={(o) => !o && onClose()}>
-      <ModalContent size="lg">
+      <ModalContent size="xl">
         <ModalHeader>
           <ModalTitle>Review {row.staff.name.split(" ")[0]}&apos;s week</ModalTitle>
           <ModalDescription>
@@ -121,91 +250,20 @@ function ReviewApproveModal({
             </div>
           )}
 
-          <Table>
-            <THead>
-              <Tr>
-                <Th>Day</Th>
-                <Th numeric>Rostered</Th>
-                <Th numeric>Kiosk in–out</Th>
-                <Th numeric>Actual</Th>
-                <Th className="w-24">± Hours</Th>
-                <Th>Correction remark</Th>
-              </Tr>
-            </THead>
-            <TBody>
-              {row.entries.map((e) => {
-                const meta = shiftStatusMeta[e.status];
-                const day = new Date(`${e.shift.date}T12:00:00`);
-                return (
-                  <Tr key={e.shift.id}>
-                    <Td className="font-medium">
-                      <span className="flex flex-col">
-                        {day.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" })}
-                        <StatusPill tone={meta.tone} className="mt-1 w-fit">{meta.label}</StatusPill>
-                      </span>
-                    </Td>
-                    <Td numeric>
-                      {fmtTime(e.shift.start)}–{fmtTime(e.shift.end)}
-                    </Td>
-                    <Td numeric>
-                      {fmtClock(e.checkIn)} – {e.inProgress ? "on site" : fmtClock(e.checkOut)}
-                    </Td>
-                    <Td numeric>
-                      {e.actual.toFixed(2)} h
-                      {e.correction && (
-                        <span className="block text-caption text-warning-text">
-                          → pays {e.paid.toFixed(2)} h
-                        </span>
-                      )}
-                    </Td>
-                    <Td>
-                      <Input
-                        aria-label={`Correction hours for ${day.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" })}`}
-                        inputMode="decimal"
-                        placeholder="+/−"
-                        className="h-9 w-20 px-2 text-body-sm"
-                        defaultValue={e.correction ? String(e.correction.delta) : ""}
-                        onBlur={(ev) => {
-                          const delta = Number.parseFloat(ev.target.value);
-                          if (!Number.isFinite(delta) || Math.abs(delta) < 0.001) {
-                            onSetCorrection(e.shift.id, null);
-                          } else {
-                            onSetCorrection(e.shift.id, {
-                              delta: Math.round(delta * 100) / 100,
-                              note: e.correction?.note ?? "",
-                            });
-                          }
-                        }}
-                      />
-                    </Td>
-                    <Td>
-                      <Input
-                        aria-label={`Correction remark for ${day.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" })}`}
-                        placeholder="Why — e.g. forgot to clock out"
-                        className="h-9 px-2 text-body-sm"
-                        defaultValue={e.correction?.note ?? ""}
-                        onBlur={(ev) => {
-                          if (e.correction) {
-                            onSetCorrection(e.shift.id, { delta: e.correction.delta, note: ev.target.value.trim() });
-                          }
-                        }}
-                        disabled={!e.correction}
-                      />
-                    </Td>
-                  </Tr>
-                );
-              })}
-            </TBody>
-          </Table>
+          <div className="flex flex-col gap-3">
+            {row.entries.map((e) => (
+              <DayEntryCard key={e.shift.id} entry={e} onSetCorrection={onSetCorrection} />
+            ))}
+          </div>
           {correctedCount > 0 && (
-            <p className="-mt-2 text-caption text-fg-muted">
+            <p className="-mt-2 text-body-sm text-fg-secondary">
               {correctedCount} shift{correctedCount === 1 ? "" : "s"} corrected — payable total{" "}
-              <span className="font-numeric">{row.corrected.toFixed(2)} h</span> (raw{" "}
+              <span className="font-numeric font-semibold">{row.corrected.toFixed(2)} h</span> (raw{" "}
               <span className="font-numeric">{row.actual.toFixed(2)} h</span>).
             </p>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-[14rem_1fr]">
+          <div className="grid gap-5 border-t border-edge pt-5 sm:grid-cols-[16rem_1fr]">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="ts-hours" className="text-body-sm font-medium text-fg">
                 Hours to payroll
@@ -218,6 +276,7 @@ function ReviewApproveModal({
                   setHours(e.target.value);
                   setHoursTouched(true);
                 }}
+                className="h-12 font-numeric text-title-3 font-semibold tabular-nums"
                 error={validHours ? undefined : "Enter hours, e.g. 36.5"}
               />
               <span className="flex gap-2">
@@ -249,11 +308,11 @@ function ReviewApproveModal({
               </label>
               <textarea
                 id="ts-note"
-                rows={3}
+                rows={4}
                 placeholder="e.g. Reduced 0.5 h — long break Wednesday; variation approved for L14 spill."
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                className="w-full rounded-card border border-edge-strong bg-surface px-3.5 py-2.5 text-body text-fg placeholder:text-fg-disabled"
+                className="w-full flex-1 rounded-card border border-edge-strong bg-surface px-3.5 py-2.5 text-body text-fg placeholder:text-fg-disabled"
               />
             </div>
           </div>

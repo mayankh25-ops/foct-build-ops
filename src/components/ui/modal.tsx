@@ -11,8 +11,8 @@ export const ModalClose = DialogPrimitive.Close;
 
 export interface ModalContentProps
   extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
-  /** "lg" = big centred form dialog (roomy two-column layouts, scrolls inside). */
-  size?: "md" | "lg";
+  /** "lg" = big centred form dialog; "xl" = full review surfaces (both scroll inside). */
+  size?: "md" | "lg" | "xl";
 }
 
 export function ModalContent({
@@ -27,9 +27,11 @@ export function ModalContent({
       <DialogPrimitive.Content
         className={cn(
           "fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
-          size === "lg"
-            ? "flex max-h-[min(92vh,52rem)] w-[min(46rem,calc(100vw-2rem))] flex-col"
-            : "w-[min(32rem,calc(100vw-2rem))]",
+          size === "xl"
+            ? "flex max-h-[min(92vh,56rem)] w-[min(62rem,calc(100vw-2rem))] flex-col"
+            : size === "lg"
+              ? "flex max-h-[min(92vh,52rem)] w-[min(46rem,calc(100vw-2rem))] flex-col"
+              : "w-[min(32rem,calc(100vw-2rem))]",
           "rounded-card border border-edge bg-raised shadow-raised",
           className
         )}
