@@ -34,14 +34,42 @@ export interface OrderLine {
   custom?: boolean;
 }
 
+export type OrderUrgency = "standard" | "urgent";
+export type OrderFrequency = "weekly" | "fortnightly" | "monthly" | "quarterly";
+
 export interface ConsumableOrderRow {
   id: string;
   requestedBy: string;
   /** ISO timestamp */
   at: string;
   items: OrderLine[];
-  status: "awaiting-approval" | "approved" | "declined" | "ordered";
+  status: "awaiting-approval" | "approved" | "declined" | "ordered" | "draft";
   note?: string;
+  urgency?: OrderUrgency;
+  /** set = this order repeats on that frequency */
+  recurrence?: OrderFrequency;
+  /** drafts only: when the next copy auto-raises for approval (ISO date) */
+  nextRun?: string;
+  /** emails this order goes to once approved (permanent recipients + per-order extras) */
+  sendTo?: string[];
+}
+
+/** Next occurrence date for a recurring draft. */
+export function advanceRun(from: Date, freq: OrderFrequency): Date {
+  const d = new Date(from);
+  if (freq === "weekly") d.setDate(d.getDate() + 7);
+  else if (freq === "fortnightly") d.setDate(d.getDate() + 14);
+  else if (freq === "monthly") d.setMonth(d.getMonth() + 1);
+  else d.setMonth(d.getMonth() + 3);
+  return d;
+}
+
+/** The order number the NEXT request will get — shown on the form before submit. */
+export function peekNextOrderId(orders: ConsumableOrderRow[]): string {
+  const nums = orders
+    .map((o) => Number.parseInt(o.id.replace("CO-", ""), 10))
+    .filter(Number.isFinite);
+  return `CO-${String(Math.max(1000, ...nums) + 1).padStart(4, "0")}`;
 }
 
 /** The building's allowed list — seeded to match the level-20 store stock. */
@@ -91,13 +119,29 @@ const SEED_ORDERS: ConsumableOrderRow[] = [
   },
 ];
 
+/** Where approved orders are emailed — the building's standing list. */
+const SEED_RECIPIENTS = ["orders@foctcleaning.com.au", "buildingmanager@auroraoncollins.com.au"];
+
 interface ConsumablesState {
   catalogue: CatalogueItem[];
   orders: ConsumableOrderRow[];
+  recipients: string[];
   seeded: boolean;
   ensureSeed: () => void;
-  createOrder: (input: { requestedBy: string; items: OrderLine[]; note?: string }) => string;
+  createOrder: (input: {
+    requestedBy: string;
+    items: OrderLine[];
+    note?: string;
+    urgency?: OrderUrgency;
+    recurrence?: OrderFrequency;
+    asDraft?: boolean;
+    extraEmails?: string[];
+  }) => string;
   setOrderStatus: (id: string, status: ConsumableOrderRow["status"]) => void;
+  submitDraft: (id: string) => void;
+  deleteOrder: (id: string) => void;
+  addRecipient: (email: string) => void;
+  removeRecipient: (email: string) => void;
   toggleAllowed: (id: string) => void;
   setItemImage: (id: string, imageDataUrl: string | undefined) => void;
   addCatalogueItem: (input: { name: string; category: ConsumableCategory; unit: string }) => void;
@@ -135,27 +179,60 @@ export const useConsumablesStore = create<ConsumablesState>()(
     (set, get) => ({
       catalogue: [],
       orders: [],
+      recipients: SEED_RECIPIENTS,
       seeded: false,
 
       ensureSeed: () => {
-        if (get().seeded && get().catalogue.length) return;
-        set({ catalogue: SEED_CATALOGUE, orders: SEED_ORDERS, seeded: true });
+        if (!get().seeded || !get().catalogue.length) {
+          set({ catalogue: SEED_CATALOGUE, orders: SEED_ORDERS, seeded: true });
+        }
+        // recurring drafts whose cycle has come raise a copy for approval
+        const now = new Date();
+        const due = get().orders.filter(
+          (o) => o.status === "draft" && o.recurrence && o.nextRun && new Date(o.nextRun) <= now
+        );
+        if (!due.length) return;
+        set((s) => {
+          let orders = s.orders;
+          for (const d of due) {
+            const id = peekNextOrderId(orders);
+            orders = [
+              {
+                ...d,
+                id,
+                at: now.toISOString(),
+                status: "awaiting-approval" as const,
+                nextRun: undefined,
+                note: `Auto-raised from recurring draft ${d.id}`,
+              },
+              ...orders.map((o) =>
+                o.id === d.id
+                  ? { ...o, nextRun: advanceRun(new Date(d.nextRun!), d.recurrence!).toISOString() }
+                  : o
+              ),
+            ];
+          }
+          return { orders };
+        });
       },
 
       createOrder: (input) => {
-        const nums = get()
-          .orders.map((o) => Number.parseInt(o.id.replace("CO-", ""), 10))
-          .filter(Number.isFinite);
-        const id = `CO-${String(Math.max(1000, ...nums) + 1 + seq++).padStart(4, "0")}`;
+        const id = peekNextOrderId(get().orders);
+        const asDraft = !!input.asDraft && !!input.recurrence;
+        const now = new Date();
         set((s) => ({
           orders: [
             {
               id,
               requestedBy: input.requestedBy,
-              at: new Date().toISOString(),
+              at: now.toISOString(),
               items: input.items,
-              status: "awaiting-approval" as const,
+              status: asDraft ? ("draft" as const) : ("awaiting-approval" as const),
               note: input.note,
+              urgency: input.urgency ?? "standard",
+              recurrence: input.recurrence,
+              nextRun: asDraft ? advanceRun(now, input.recurrence!).toISOString() : undefined,
+              sendTo: [...s.recipients, ...(input.extraEmails ?? [])],
             },
             ...s.orders,
           ],
@@ -167,6 +244,42 @@ export const useConsumablesStore = create<ConsumablesState>()(
         set((s) => ({
           orders: s.orders.map((o) => (o.id === id ? { ...o, status } : o)),
         })),
+
+      submitDraft: (id) =>
+        set((s) => {
+          const draft = s.orders.find((o) => o.id === id && o.status === "draft");
+          if (!draft) return s;
+          const copyId = peekNextOrderId(s.orders);
+          const now = new Date();
+          return {
+            orders: [
+              {
+                ...draft,
+                id: copyId,
+                at: now.toISOString(),
+                status: "awaiting-approval" as const,
+                nextRun: undefined,
+                note: `Raised from recurring draft ${draft.id}`,
+              },
+              ...s.orders.map((o) =>
+                o.id === id && o.recurrence
+                  ? { ...o, nextRun: advanceRun(now, o.recurrence).toISOString() }
+                  : o
+              ),
+            ],
+          };
+        }),
+
+      deleteOrder: (id) => set((s) => ({ orders: s.orders.filter((o) => o.id !== id) })),
+
+      addRecipient: (email) =>
+        set((s) => {
+          const e = email.trim().toLowerCase();
+          return s.recipients.includes(e) ? s : { recipients: [...s.recipients, e] };
+        }),
+
+      removeRecipient: (email) =>
+        set((s) => ({ recipients: s.recipients.filter((r) => r !== email) })),
 
       toggleAllowed: (id) =>
         set((s) => ({
@@ -192,7 +305,8 @@ export const useConsumablesStore = create<ConsumablesState>()(
           ],
         })),
 
-      resetDemo: () => set({ catalogue: SEED_CATALOGUE, orders: SEED_ORDERS, seeded: true }),
+      resetDemo: () =>
+        set({ catalogue: SEED_CATALOGUE, orders: SEED_ORDERS, recipients: SEED_RECIPIENTS, seeded: true }),
     }),
     {
       name: "foct-consumables-v1",
