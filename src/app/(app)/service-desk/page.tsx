@@ -53,6 +53,7 @@ import {
   type SdTicket,
 } from "@/lib/service-desk-data";
 import { SyncPill } from "@/components/ui/sync-pill";
+import { DevMenu } from "@/components/ui/dev-menu";
 import { useSdRehydrate, useSdStore, type SdTicketLive } from "@/lib/service-desk-store";
 import { cn } from "@/lib/cn";
 
@@ -528,17 +529,19 @@ export default function ServiceDeskPage() {
         description="Concierge-reported cleaning & facilities issues — attended and closed with photo proof."
         actions={
           <>
-            <SyncPill />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                resetDemo();
-                toast({ tone: "neutral", title: "Demo data reset" });
-              }}
-            >
-              <RotateCcw aria-hidden /> Reset demo
-            </Button>
+            <DevMenu>
+              <SyncPill />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  resetDemo();
+                  toast({ tone: "neutral", title: "Demo data reset" });
+                }}
+              >
+                <RotateCcw aria-hidden /> Reset demo
+              </Button>
+            </DevMenu>
             <Link
               href="/support"
               className="inline-flex h-11 items-center gap-2 rounded-control border border-edge bg-surface px-4 text-body-sm font-medium text-fg transition-colors hover:bg-hover [&_svg]:size-4"
@@ -626,7 +629,33 @@ export default function ServiceDeskPage() {
           </div>
         </FilterBar>
 
-        <Table>
+        {/* mobile: record cards (audit §23) */}
+        <div className="flex flex-col gap-3 md:hidden">
+          {visible.map((t: SdTicketLive) => (
+            <button
+              key={t.ref}
+              type="button"
+              onClick={() => setSelectedRef(t.ref)}
+              className="rounded-card border border-edge bg-surface p-4 text-left shadow-card transition-colors hover:bg-hover"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-body-sm font-semibold text-fg">{t.category}</p>
+                <StatusPill tone={sdStatusMeta[t.status].tone}>{sdStatusMeta[t.status].label}</StatusPill>
+              </div>
+              <p className="mt-0.5 font-mono text-caption text-fg-muted">{t.ref}</p>
+              <p className="mt-2 text-body-sm text-fg-secondary">
+                {t.locations.map((l) => `${l.level}${l.area ? ` · ${l.area}` : ""}`).join(" + ")} · {t.lodgedBy}
+              </p>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <StatusPill tone={sdPriorityMeta[t.priority].tone}>{sdPriorityMeta[t.priority].label}</StatusPill>
+                <SlaChip sla={t.sla} />
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div className="hidden md:block">
+        <Table sticky>
           <THead>
             <Tr>
               <Th>Ticket</Th>
@@ -693,6 +722,7 @@ export default function ServiceDeskPage() {
             ))}
           </TBody>
         </Table>
+        </div>
       </div>
 
       <TicketDrawer ticketRef={selectedRef} onClose={() => setSelectedRef(null)} />

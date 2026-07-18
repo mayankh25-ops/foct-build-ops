@@ -467,9 +467,9 @@ export default function TimesheetsPage() {
             value={filter}
             onValueChange={setFilter}
             options={[
-              { value: "all", label: "All" },
-              { value: "review", label: "Needs review" },
-              { value: "approved", label: "Approved" },
+              { value: "all", label: `All ${rows.length}` },
+              { value: "review", label: `Needs review ${flagged}` },
+              { value: "approved", label: `Approved ${rows.filter((r) => r.approved).length}` },
             ]}
           />
         </FilterBar>
@@ -486,7 +486,66 @@ export default function TimesheetsPage() {
             }
           />
         ) : (
-          <Table>
+          <>
+          {/* mobile: record cards instead of a squeezed table (audit §23) */}
+          <div className="flex flex-col gap-3 md:hidden">
+            {visible.map((r) => (
+              <div key={r.staff.id} className="rounded-card border border-edge bg-surface p-4 shadow-card">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="flex min-w-0 items-center gap-3">
+                    <Avatar name={r.staff.name} size="sm" />
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">{r.staff.name}</span>
+                      <span className="block truncate text-caption text-fg-muted">
+                        {r.entries.length} shifts · week of {r.entries[0]?.shift.date.slice(5) ?? "—"}
+                      </span>
+                    </span>
+                  </span>
+                  {r.approved ? (
+                    <StatusPill tone="success">Approved</StatusPill>
+                  ) : r.needsReview ? (
+                    <StatusPill tone="warning">Needs review</StatusPill>
+                  ) : (
+                    <StatusPill tone="accent">Ready</StatusPill>
+                  )}
+                </div>
+                <p className="mt-3 font-numeric text-body-sm text-fg-secondary tabular-nums">
+                  {fmtHM(r.actual)} of {fmtHM(r.rostered)} rostered · {fmtDeltaHM(r.variance)}
+                </p>
+                <div className="mt-3 flex justify-end gap-2">
+                  {r.approved ? (
+                    <span className="font-numeric text-body-sm text-fg-secondary tabular-nums">
+                      {fmtHM(r.approval?.approvedHours ?? r.actual)} to payroll
+                    </span>
+                  ) : (
+                    <>
+                      <Button variant="ghost" size="sm" onClick={() => setReviewId(r.staff.id)}>
+                        Review
+                      </Button>
+                      {!r.needsReview && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            approveWeek(r.staff.id, now, {});
+                            toast({
+                              tone: "success",
+                              title: `${r.staff.name.split(" ")[0]}'s week approved`,
+                              description: `${fmtHM(r.corrected)} to payroll`,
+                            });
+                          }}
+                        >
+                          Approve
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden md:block">
+          <Table sticky>
             <THead>
               <Tr>
                 <Th>Cleaner</Th>
@@ -599,6 +658,8 @@ export default function TimesheetsPage() {
               })}
             </TBody>
           </Table>
+          </div>
+          </>
         )}
       </div>
 

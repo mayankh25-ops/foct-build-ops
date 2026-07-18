@@ -900,11 +900,11 @@ export default function ConsumablesPage() {
                   : "border-edge bg-surface text-fg-secondary hover:bg-hover"
               )}
             >
-              {c}
+              {c} {c === "All" ? stock.length : stock.filter((s) => s.category === c).length}
             </button>
           ))}
         </FilterBar>
-        <Table>
+        <Table sticky>
           <THead>
             <Tr>
               <Th>Item</Th>

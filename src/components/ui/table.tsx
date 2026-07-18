@@ -1,10 +1,29 @@
 import * as React from "react";
 import { cn } from "@/lib/cn";
 
-export function Table({ className, ...props }: React.TableHTMLAttributes<HTMLTableElement>) {
+export function Table({
+  className,
+  sticky,
+  ...props
+}: React.TableHTMLAttributes<HTMLTableElement> & {
+  /** Long tables: cap height and keep the header row pinned while scrolling. */
+  sticky?: boolean;
+}) {
   return (
-    <div className="w-full overflow-x-auto rounded-card border border-edge bg-surface shadow-card">
-      <table className={cn("w-full caption-bottom text-body-sm", className)} {...props} />
+    <div
+      className={cn(
+        "w-full overflow-x-auto rounded-card border border-edge bg-surface shadow-card",
+        sticky && "max-h-[65vh] overflow-y-auto"
+      )}
+    >
+      <table
+        className={cn(
+          "w-full caption-bottom text-body-sm",
+          sticky && "[&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead]:bg-surface",
+          className
+        )}
+        {...props}
+      />
     </div>
   );
 }

@@ -778,9 +778,9 @@ export default function ResidentsPage() {
             value={typeFilter}
             onValueChange={setTypeFilter}
             options={[
-              { value: "all", label: "All" },
-              { value: "owner-occupier", label: "Owner-occupiers" },
-              { value: "tenant", label: "Tenants" },
+              { value: "all", label: `All ${residents.length}` },
+              { value: "owner-occupier", label: `Owner-occupiers ${residents.filter((r) => r.type === "owner-occupier").length}` },
+              { value: "tenant", label: `Tenants ${residents.filter((r) => r.type === "tenant").length}` },
             ]}
           />
         </FilterBar>
@@ -792,7 +792,41 @@ export default function ResidentsPage() {
             description="Clear the search or enrol the resident — enrolment takes under a minute."
           />
         ) : (
-          <Table>
+          <>
+          {/* mobile: record cards (audit §23) */}
+          <div className="flex flex-col gap-3 md:hidden">
+            {visible.map((r) => {
+              const warnings = r.history.filter((h) => h.kind === "warning").length;
+              return (
+                <div key={r.id} className="rounded-card border border-edge bg-surface p-4 shadow-card">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex min-w-0 items-center gap-3">
+                      <Avatar name={r.name} size="sm" />
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">{r.name}</span>
+                        <span className="block truncate text-caption text-fg-muted">
+                          Apt {r.apartment} · level {r.floor}
+                        </span>
+                      </span>
+                    </span>
+                    {warnings > 0 ? (
+                      <StatusPill tone="critical">{warnings} warning{warnings === 1 ? "" : "s"}</StatusPill>
+                    ) : (
+                      <Badge tone="neutral">{r.type === "tenant" ? "Tenant" : "Owner-occupier"}</Badge>
+                    )}
+                  </div>
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <span className="font-mono text-body-sm text-fg-secondary">{r.phone}</span>
+                    <Button variant="ghost" size="sm" onClick={() => setOpenId(r.id)}>
+                      Open resident
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="hidden md:block">
+          <Table sticky>
             <THead>
               <Tr>
                 <Th>Resident</Th>
@@ -865,6 +899,8 @@ export default function ResidentsPage() {
               })}
             </TBody>
           </Table>
+          </div>
+          </>
         )}
       </div>
 

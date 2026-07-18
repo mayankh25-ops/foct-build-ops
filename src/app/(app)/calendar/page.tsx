@@ -25,6 +25,7 @@ import {
   ModalTrigger,
 } from "@/components/ui/modal";
 import { PageHeader } from "@/components/ui/page-header";
+import { SegmentedControl } from "@/components/ui/filter-bar";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -532,6 +533,7 @@ export default function CalendarPage() {
   const setViewRole = useCalendarStore((s) => s.setViewRole);
   const [cursor, setCursor] = React.useState<Date | null>(null);
   const [filter, setFilter] = React.useState<CalCategory | "all">("all");
+  const [view, setView] = React.useState<"month" | "list">("month");
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -606,6 +608,15 @@ export default function CalendarPage() {
           <Button variant="ghost" size="sm" onClick={() => setCursor(new Date())}>
             Today
           </Button>
+          <SegmentedControl
+            label="Calendar view"
+            value={view}
+            onValueChange={(v) => setView(v as "month" | "list")}
+            options={[
+              { value: "month", label: "Month" },
+              { value: "list", label: "List" },
+            ]}
+          />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -638,6 +649,7 @@ export default function CalendarPage() {
         </div>
       </div>
 
+      {view === "month" ? (
       <Card>
         <CardBody className="p-0">
           <div className="grid grid-cols-7 border-b border-edge">
@@ -685,6 +697,49 @@ export default function CalendarPage() {
           </div>
         </CardBody>
       </Card>
+      ) : (
+      <Card>
+        <CardBody className="p-0">
+          {[...byDate.entries()].sort(([a], [b]) => a.localeCompare(b)).length === 0 ? (
+            <p className="p-6 text-body-sm text-fg-muted">
+              Nothing on the calendar this month for this filter.
+            </p>
+          ) : (
+            [...byDate.entries()]
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([key, evs]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setSelectedKey(key)}
+                  className="flex w-full flex-col gap-2 border-b border-edge p-4 text-left transition-colors last:border-b-0 hover:bg-hover"
+                >
+                  <p
+                    className={cn(
+                      "text-body-sm font-semibold",
+                      key === todayKey ? "text-accent-text" : "text-fg"
+                    )}
+                  >
+                    {new Date(`${key}T12:00:00`).toLocaleDateString("en-AU", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                    })}
+                    {key === todayKey ? " · Today" : ""}
+                  </p>
+                  <div className="flex flex-col gap-1.5">
+                    {[...evs]
+                      .sort((a, b) => (a.time ?? 24) - (b.time ?? 24))
+                      .map((e) => (
+                        <EventChip key={e.id} e={e} />
+                      ))}
+                  </div>
+                </button>
+              ))
+          )}
+        </CardBody>
+      </Card>
+      )}
 
       <DayDrawer
         date={selectedKey ? new Date(`${selectedKey}T12:00:00`) : null}

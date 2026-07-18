@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ChevronDown, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export interface SidebarItem {
@@ -33,6 +33,7 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 const COLLAPSE_KEY = "foct-sidebar-collapsed";
+const GROUPS_KEY = "foct-sidebar-groups";
 
 /**
  * Deep-toned navigation rail (FOCT Premium Operations UI). Uses the
@@ -49,14 +50,28 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = React.useState(false);
+  const [closedGroups, setClosedGroups] = React.useState<Record<string, boolean>>({});
 
   React.useEffect(() => {
     try {
       setCollapsed(window.localStorage.getItem(COLLAPSE_KEY) === "1");
+      const raw = window.localStorage.getItem(GROUPS_KEY);
+      if (raw) setClosedGroups(JSON.parse(raw) as Record<string, boolean>);
     } catch {
       /* default expanded */
     }
   }, []);
+
+  const toggleGroup = (title: string) =>
+    setClosedGroups((g) => {
+      const next = { ...g, [title]: !g[title] };
+      try {
+        window.localStorage.setItem(GROUPS_KEY, JSON.stringify(next));
+      } catch {
+        /* best-effort */
+      }
+      return next;
+    });
 
   const toggle = () => {
     setCollapsed((c) => {
@@ -120,13 +135,29 @@ export function Sidebar({
       </div>
 
       <div className={cn("flex-1 overflow-y-auto pb-6", collapsed ? "px-3" : "px-3")}>
-        {sections.map((section, i) => (
+        {sections.map((section, i) => {
+          // a closed group never hides the page you are on
+          const hasActive = section.items.some(
+            (it) => it.active ?? (it.href ? pathname === it.href : false)
+          );
+          const isClosed = !!section.title && !!closedGroups[section.title] && !hasActive && !collapsed;
+          return (
           <div key={section.title ?? i} className={cn(i > 0 && (collapsed ? "mt-5 border-t border-sidebar-border pt-5" : "mt-7"))}>
             {section.title && !collapsed && (
-              <p className="px-3 pb-2 text-caption font-medium tracking-[0.08em] text-sidebar-muted uppercase">
+              <button
+                type="button"
+                aria-expanded={!isClosed}
+                onClick={() => toggleGroup(section.title!)}
+                className="flex w-full items-center justify-between px-3 pb-2 text-caption font-medium tracking-[0.08em] text-sidebar-muted uppercase transition-colors hover:text-sidebar-fg"
+              >
                 {section.title}
-              </p>
+                <ChevronDown
+                  aria-hidden
+                  className={cn("size-3.5 transition-transform", isClosed && "-rotate-90")}
+                />
+              </button>
             )}
+            {!isClosed && (
             <ul className="flex flex-col gap-1">
               {section.items.map((item) => {
                 const isActive = item.active ?? (item.href ? pathname === item.href : false);
@@ -198,8 +229,10 @@ export function Sidebar({
                 );
               })}
             </ul>
+            )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {footer && !collapsed && (

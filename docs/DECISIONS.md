@@ -306,3 +306,12 @@ The owner delivered a full UI/UX audit ("quieter but sharper"; Linear/Notion/Str
 - **P3 Workflows**: **decimal hours eliminated from the UI** (§5/§20) — new `fmtHM`/`fmtDeltaHM` render "18h 16m", "+16 min", "−2h 50m", approve button says "Approve 19h 31m"; CSV keeps decimals for payroll systems. **State-specific actions** (§11): Ready → Approve (direct) + Review, Needs review → Review, Approved → figure ("Review & approve everywhere" retired). Service-desk table: issue TITLE primary, ref secondary muted (§16). Residents action reads "Open resident" (§21).
 - **Deferred (recorded, not yet done)**: dev-only menu for LOCAL-DEMO/Reset-demo chips (§8), collapsible nav groups, sticky table headers, list-view calendar, mobile record-cards (§23), per-status filter counts on every list page (§14).
 Verified: tokens ✓ · contrast 37×13 ✓ · tsc ✓ · build ✓ · full e2e regression 23/23 + 14/14 + 17/17.
+
+## 2026-07-17 — Audit completion wave: no deferred items left (owner: "dont deferr lets finish it now")
+- **Dev menu (§8):** new `DevMenu` component (wrench button → popover). The service-desk header no longer shows LOCAL-DEMO/Reset-demo — both live inside Developer options.
+- **Collapsible nav groups (§7):** sidebar section titles toggle their group (chevron, persisted in `foct-sidebar-groups`); a closed group never hides the page you're currently on.
+- **Sticky table headers (§11):** `Table sticky` prop — 65vh cap + pinned thead on the four long tables (tickets, timesheets, residents directory, stock).
+- **Calendar list view (§18):** Month/List segmented toggle; List groups the month's events by day (today highlighted, tap opens the day drawer) — the category filter chips with counts already existed and drive both views.
+- **Mobile record cards (§23):** at <768px the timesheets, service-desk and residents tables swap for stacked record cards (status pill, key figures, state-specific actions incl. Approve/Review and Open resident); desktop keeps the full tables.
+- **Filter counts (§14):** timesheet status filters (All n / Needs review n / Approved n), residents residency filters, and stock category chips all show live counts; service desk + calendar already had them.
+Verified: tokens ✓ · contrast 37×13 ✓ · tsc ✓ · build ✓ · suites 14/14 + 23/23 + 17/17 + NEW wave-7 16/16 (dev menu open/close, header free of demo controls, all three count sets, computed sticky thead, group collapse/restore, list-view day groups + month return, 390px record-card behaviour on all three pages).
