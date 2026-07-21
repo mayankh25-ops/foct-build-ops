@@ -135,6 +135,13 @@ For a cleaning company or BM firm running 20–200 buildings:
   the integrations framework.
 - **NFC/QR checkpoint rounds**: security/cleaner patrol verification.
 - **Multi-language for cleaner app** (big AU workforce reality).
+- **Ambient audio** (REGISTERED 2026-07-18, owner-directed — build post-Stage 9):
+  scheduled lobby/reception background music on paired browser player devices
+  (kiosk-style pairing), uploaded tracks + AU radio streams, week-grid
+  schedules with crossfade, realtime play/pause/volume. Full spec in
+  `docs/modules/AMBIENT_AUDIO_PRD.md`. No Spotify/YouTube — prohibited for
+  commercial background playback; OneMusic Australia licensing is the
+  venue's responsibility.
 
 ---
 

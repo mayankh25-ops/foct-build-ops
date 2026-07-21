@@ -5,6 +5,7 @@ import {
   Cctv,
   Map,
   MonitorSmartphone,
+  Music2,
   Package,
   ShieldCheck,
   SprayCan,
@@ -75,6 +76,12 @@ export default function ModulesPage() {
           icon={MonitorSmartphone}
           name="Resident requests"
           description="Maintenance and amenity requests from residents, routed to the right provider."
+          status="coming-soon"
+        />
+        <ModuleCard
+          icon={Music2}
+          name="Ambient audio"
+          description="Scheduled background music for reception and lobby — playlists, radio streams and week-grid schedules on paired player devices. Public playback may require a OneMusic Australia licence (the venue's responsibility)."
           status="coming-soon"
         />
         <ModuleCard

@@ -5,7 +5,7 @@ import { BellRing, CalendarDays, Plus, UserPlus } from "lucide-react";
 import { AttendanceTimeline } from "@/components/ui/attendance-timeline";
 import { StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardBody } from "@/components/ui/card";
+import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Drawer,
   DrawerBody,
@@ -356,6 +356,7 @@ export default function RosterPage() {
   const now = useAttendanceReady();
   const shifts = useAttendanceStore((s) => s.shifts);
   const events = useAttendanceStore((s) => s.events);
+
   const shiftPatterns = useAttendanceStore((s) => s.shiftPatterns);
   const patternKind = (id: string) => shiftPatterns.find((pt) => pt.id === id)?.kind;
 
@@ -364,6 +365,11 @@ export default function RosterPage() {
   const [query, setQuery] = React.useState("");
 
   if (!now) return null;
+
+  const todaySelfie = (staffId: string, kind: "in" | "out"): string | undefined =>
+    [...events]
+      .filter((e) => e.staffId === staffId && e.kind === kind && e.selfie && dateKey(new Date(e.at)) === dateKey(now))
+      .pop()?.selfie;
 
   const today = dateKey(now);
   const todayLabel = now.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" });
@@ -449,9 +455,9 @@ export default function RosterPage() {
           value={view}
           onValueChange={setView}
           options={[
-            { value: "day", label: "Day" },
-            { value: "week", label: "Week" },
-            { value: "timeline", label: "Timeline" },
+            { value: "day", label: "Today" },
+            { value: "week", label: "This week" },
+            { value: "timeline", label: "Timeline · today" },
           ]}
         />
         <Select
@@ -537,6 +543,19 @@ export default function RosterPage() {
         </div>
       ) : view === "timeline" ? (
         <Card>
+          <CardHeader>
+            <div>
+              <CardTitle>
+                Timeline — today,{" "}
+                {now.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" })}
+              </CardTitle>
+              <p className="mt-1 text-body-sm text-fg-muted">
+                Rostered bar vs actual kiosk time, live. Future days live in This week; monthly
+                planning is on the Calendar.
+              </p>
+            </div>
+            <StatusPill tone="accent">Live</StatusPill>
+          </CardHeader>
           <CardBody>
             <AttendanceTimeline
               now={decHours(now)}
@@ -586,8 +605,32 @@ export default function RosterPage() {
                   <Td numeric>
                     {fmtTime(v.shift.start)}–{fmtTime(v.shift.end)}
                   </Td>
-                  <Td numeric>{fmtClock(v.checkIn)}</Td>
-                  <Td numeric>{fmtClock(v.checkOut)}</Td>
+                  <Td numeric>
+                    <span className="inline-flex items-center justify-end gap-2">
+                      {todaySelfie(v.staff.id, "in") && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={todaySelfie(v.staff.id, "in")}
+                          alt={`${v.staff.name} check-in photo`}
+                          className="size-7 rounded-sm border border-edge object-cover"
+                        />
+                      )}
+                      {fmtClock(v.checkIn)}
+                    </span>
+                  </Td>
+                  <Td numeric>
+                    <span className="inline-flex items-center justify-end gap-2">
+                      {todaySelfie(v.staff.id, "out") && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={todaySelfie(v.staff.id, "out")}
+                          alt={`${v.staff.name} check-out photo`}
+                          className="size-7 rounded-sm border border-edge object-cover"
+                        />
+                      )}
+                      {fmtClock(v.checkOut)}
+                    </span>
+                  </Td>
                   <Td>
                     <StatusPill tone={meta.tone}>{meta.label}</StatusPill>
                   </Td>

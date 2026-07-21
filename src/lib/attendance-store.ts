@@ -90,6 +90,9 @@ export interface AttendanceEvent {
   /** ISO timestamp */
   at: string;
   source: "kiosk" | "qr";
+  /** kiosk selfie taken at sign in/out (compressed data URL; Stage 2 →
+   *  Supabase Storage path). Stripped from persistence after 48 h. */
+  selfie?: string;
 }
 
 export type DerivedShiftStatus = "completed" | "on-site" | "late" | "missed" | "rostered";
@@ -440,6 +443,8 @@ interface AttendanceState {
   ensureSeed: () => void;
   checkIn: (pin: string) => CheckResult;
   checkOut: (pin: string) => CheckResult;
+  /** attach the kiosk selfie to the staff member's most recent event of that kind */
+  attachSelfie: (staffId: string, kind: "in" | "out", selfie: string) => void;
   addShift: (input: { staffId: string; date: string; start: number; end: number; zone: string }) => void;
   addShiftPattern: (input: Omit<ShiftPattern, "id">) => void;
   setCorrection: (shiftId: string, correction: ShiftCorrection | null) => void;
@@ -541,6 +546,20 @@ export const useAttendanceStore = create<AttendanceState>()(
         return { ok: true, staff };
       },
 
+      attachSelfie: (staffId, kind, selfie) =>
+        set((st) => {
+          // latest matching event wins — the one the kiosk just wrote
+          const idx = [...st.events]
+            .map((e, i) => ({ e, i }))
+            .filter(({ e }) => e.staffId === staffId && e.kind === kind)
+            .map(({ i }) => i)
+            .pop();
+          if (idx === undefined) return st;
+          const events = [...st.events];
+          events[idx] = { ...events[idx]!, selfie };
+          return { events };
+        }),
+
       addShift: (input) => {
         set((st) => ({
           shifts: [
@@ -619,6 +638,16 @@ export const useAttendanceStore = create<AttendanceState>()(
     {
       name: "foct-attendance-v1",
       storage: createJSONStorage(() => safeStorage),
+      // selfies are only needed for the current pay-review window; strip
+      // them after 48 h so localStorage stays well under quota.
+      partialize: (s) => ({
+        ...s,
+        events: s.events.map((e) =>
+          e.selfie && Date.now() - new Date(e.at).getTime() > 48 * 3600000
+            ? { ...e, selfie: undefined }
+            : e
+        ),
+      }),
       // SSR-safe: server render shows empty state; pages rehydrate + seed
       // post-mount via useAttendanceReady().
       skipHydration: true,
