@@ -71,13 +71,6 @@ function fmtClock(d: Date): string {
   return d.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
-const activityDot: Record<"check-in" | "check-out" | "task" | "alert" | "order", string> = {
-  "check-in": "bg-accent-text",
-  "check-out": "bg-edge-strong",
-  task: "bg-success",
-  alert: "bg-critical",
-  order: "bg-info",
-};
 
 export function DashboardClient() {
   const now = useAttendanceReady();
@@ -151,24 +144,6 @@ export function DashboardClient() {
   const weekActual = Math.round(weekData.reduce((n, d) => n + d.value, 0) * 10) / 10;
   const weekRostered = Math.round(weekData.reduce((n, d) => n + d.reference, 0) * 10) / 10;
 
-  const activity: { kind: keyof typeof activityDot; who: string; what: string; at: string }[] = [
-    ...missed.map((m) => ({
-      kind: "alert" as const,
-      who: m.staff.name,
-      what: `missed check-in — ${m.overdueMin} min overdue`,
-      at: fmtTime(m.shift.start),
-    })),
-    ...events
-      .filter((e) => dateKey(new Date(e.at)) === today)
-      .sort((a, b) => b.at.localeCompare(a.at))
-      .slice(0, 6)
-      .map((e) => ({
-        kind: e.kind === "in" ? ("check-in" as const) : ("check-out" as const),
-        who: staffById[e.staffId]?.name ?? "Unknown",
-        what: e.kind === "in" ? "checked in at the kiosk" : "checked out at the kiosk",
-        at: fmtClock(new Date(e.at)),
-      })),
-  ].slice(0, 7);
   return (
     <>
       {/* hero row */}
@@ -298,6 +273,9 @@ export function DashboardClient() {
         </Card>
       </div>
 
+      {/* live cameras + door soft-triggers (owner direction 2026-07-18) */}
+      <SecurityPanel />
+
       {/* stat row */}
       <div className="mt-4 grid grid-cols-2 gap-4 xl:grid-cols-3">
         <MetricCard label="Shifts today" value={views.length} context={`${onSite} in progress · ${done} done`} />
@@ -314,12 +292,10 @@ export function DashboardClient() {
         />
       </div>
 
-      {/* live cameras + door soft-triggers (owner direction 2026-07-18) */}
-      <SecurityPanel />
 
-      {/* shifts + activity */}
-      <div className="mt-8 grid gap-6 xl:grid-cols-3">
-        <div className="min-w-0 xl:col-span-2">
+      {/* today's shifts */}
+      <div className="mt-8">
+        <div className="min-w-0">
           <SectionHeader
             title="Today’s shifts"
             actions={
@@ -365,27 +341,6 @@ export function DashboardClient() {
             </TBody>
           </Table>
         </div>
-
-        <Card className="min-w-0 self-start">
-          <CardHeader>
-            <CardTitle>Live activity</CardTitle>
-            <StatusPill tone="accent">Streaming</StatusPill>
-          </CardHeader>
-          <CardBody className="flex flex-col gap-4">
-            {activity.map((e, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <span aria-hidden className={cn("mt-1.5 size-2 shrink-0 rounded-pill", activityDot[e.kind])} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-body-sm text-fg">
-                    <span className="font-medium">{e.who}</span>{" "}
-                    <span className="text-fg-secondary">— {e.what}</span>
-                  </p>
-                </div>
-                <p className="shrink-0 font-mono text-caption text-fg-muted">{e.at}</p>
-              </div>
-            ))}
-          </CardBody>
-        </Card>
       </div>
 
       {/* due this week + handover */}

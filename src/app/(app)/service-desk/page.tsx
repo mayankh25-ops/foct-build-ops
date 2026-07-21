@@ -29,6 +29,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { FilterBar } from "@/components/ui/filter-bar";
+import { SearchInput } from "@/components/ui/search-input";
 import { Input } from "@/components/ui/input";
 import { MetricCard } from "@/components/ui/metric-card";
 import {
@@ -498,6 +499,7 @@ export default function ServiceDeskPage() {
   const tickets = useSdStore((s) => s.tickets);
   const resetDemo = useSdStore((s) => s.resetDemo);
   const [view, setView] = React.useState("All open");
+  const [query, setQuery] = React.useState("");
   const [status, setStatus] = React.useState("all");
   const [selectedRef, setSelectedRef] = React.useState<string | null>(null);
   const [raiseOpen, setRaiseOpen] = React.useState(false);
@@ -511,7 +513,16 @@ export default function ServiceDeskPage() {
     "Resolved this week": tickets.filter((t) => t.status === "resolved" || t.status === "closed").length,
   } as const;
 
+  const q = query.trim().toLowerCase();
+  const matchesQuery = (t: SdTicketLive) =>
+    !q ||
+    t.ref.toLowerCase().includes(q) ||
+    t.category.toLowerCase().includes(q) ||
+    t.lodgedBy.toLowerCase().includes(q) ||
+    (t.assignee ?? "").toLowerCase().includes(q) ||
+    t.locations.some((l) => `${l.level} ${l.area ?? ""}`.toLowerCase().includes(q));
   const visible = tickets.filter((t) => {
+    if (!matchesQuery(t)) return false;
     if (view === "Urgent open") return t.priority === "urgent" && OPEN_STATUSES.includes(t.status);
     if (view === "Reopened") return t.status === "reopened";
     if (view === "Resolved this week") return t.status === "resolved" || t.status === "closed";
@@ -595,6 +606,12 @@ export default function ServiceDeskPage() {
 
       <div className="mt-8">
         <FilterBar>
+          <SearchInput
+            className="w-72"
+            placeholder="Search area, ticket, category or reporter…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
           {(Object.keys(counts) as Array<keyof typeof counts>).map((label) => (
             <button
               key={label}
