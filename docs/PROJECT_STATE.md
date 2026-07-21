@@ -30,6 +30,8 @@
 
 **Cameras & doors panel 2026-07-18 (owner directive):** dashboard section with live RTSP camera tiles via a LOCAL go2rtc gateway (config-driven; calm offline state; Windows setup guide in docs/SECURITY_CAMERAS_DOORS.md) + big door Lock/Unlock soft-trigger toggles (demo/http modes, auto-relock, security log; /api/security/door proxy is env-gated + private-network-only). Replaces the old camera-wall Pro banner. Wave-8 7/7 + full regression green.
 
+**Kiosk selfies + roster clarity 2026-07-18 (owner directive):** roster views renamed Today / This week / Timeline · today with a dated Live header on the timeline; kiosk gains NAME SEARCH (chip select, PIN must match the selected person) and a 3-2-1 front-camera SELFIE recorded on every sign in/out (attached to the attendance event, shown on the done screen + roster thumbnails; graceful no-camera fallback; 48 h localStorage cap — Stage 2 moves photos to Supabase Storage). iPad caveat: camera needs HTTPS. Wave-9 7/7 + full regression green.
+
 ## Previous stage
 **Stage 1.5 Theme Builder: SHIPPED (2026-07-07).** Appearance settings (`/settings/appearance`): all 15 themes as live preview cards applyable per building; custom theme creator (8 hex tokens, rest derived + contrast-nudged, WCAG AA validation with warn-on-save via the SAME shared pair list as the build gate); typography slots + woff2 upload; persisted in `foct-theme-builder-v1` mirroring the authored-but-not-yet-run `supabase/migrations/0001_theme_engine.sql` (+pgTAP test). Variant status unchanged underneath: Nature & Glass finalists, other option-* frozen, final pick still open.
 ## Previous stage detail
