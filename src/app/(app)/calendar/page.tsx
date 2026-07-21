@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CalendarPlus, ChevronLeft, ChevronRight, Lock, Phone, Repeat } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight, Lock, Megaphone, Phone, Printer, Repeat } from "lucide-react";
 import { Badge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
@@ -35,6 +35,8 @@ import {
   canModify,
   manualEventsForMonth,
   monthKey,
+  NOTICE_CHANNEL_LABELS,
+  noticeChannelSummary,
   REPEAT_LABELS,
   scopeEventsForMonth,
   seededEventsForMonth,
@@ -47,8 +49,11 @@ import {
   type CalRepeat,
   type CalRole,
   type CalVisibility,
+  type NoticeChannel,
 } from "@/lib/calendar-store";
+import { useResidentsReady, useResidentsStore } from "@/lib/residents-store";
 import { cn } from "@/lib/cn";
+import { PrintNoticeModal } from "./event-notice";
 
 /**
  * Building calendar — periodic works auto-populate from the Scope agreement,
@@ -108,20 +113,39 @@ function DayDrawer({
   events,
   viewRole,
   onClose,
+  onPrint,
 }: {
   date: Date | null;
   events: CalEvent[];
   viewRole: CalRole;
   onClose: () => void;
+  onPrint: (e: CalEvent) => void;
 }) {
   const removeJob = useCalendarStore((s) => s.removeJob);
   const removeSeries = useCalendarStore((s) => s.removeSeries);
   const { toast } = useToast();
+  // while the print-notice modal is stacked on top, its interactions register
+  // as "outside" this drawer. Radix can deliver the dismissal AFTER the modal
+  // has left the DOM, so check both the live DOM and the (possibly detached)
+  // ancestor chain of the interaction target — React state is stale by then.
+  const guardNotice = (e: Event) => {
+    const target = e.target as HTMLElement | null;
+    if (
+      document.querySelector("[data-print-notice]") ||
+      target?.closest?.("[data-print-notice]")
+    ) {
+      e.preventDefault();
+    }
+  };
   // the Root stays mounted and is driven by `open` — unmounting an open Radix
   // dialog mid-close leaks body pointer-events and strands the page
   return (
     <Drawer open={!!date} onOpenChange={(o) => !o && onClose()}>
-      <DrawerContent>
+      <DrawerContent
+        onInteractOutside={guardNotice}
+        onFocusOutside={guardNotice}
+        onEscapeKeyDown={guardNotice}
+      >
         <DrawerHeader>
           <DrawerTitle>
             {date?.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" })}
@@ -164,6 +188,12 @@ function DayDrawer({
                     </p>
                   )}
                   <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {e.residentNotice && (
+                      <Badge tone="info">
+                        <Megaphone aria-hidden className="mr-1 inline size-3" />
+                        Residents notified · {noticeChannelSummary(e.residentNotice.channels)}
+                      </Badge>
+                    )}
                     {e.repeat && e.repeat !== "none" && (
                       <Badge tone="accent">
                         <Repeat aria-hidden className="mr-1 inline size-3" />
@@ -182,6 +212,9 @@ function DayDrawer({
                     )}
                     {e.billable && <Badge tone="warning">Billable extra — quote first</Badge>}
                     {e.source === "scope" && <Badge tone="neutral">From the agreement</Badge>}
+                    <Button variant="ghost" size="sm" onClick={() => onPrint(e)}>
+                      <Printer aria-hidden className="size-3.5" /> Print notice
+                    </Button>
                     {e.source === "manual" &&
                       (canModify(e, viewRole) ? (
                         <Button
@@ -222,6 +255,11 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
   const { toast } = useToast();
   const [open, setOpen] = React.useState(false);
 
+  // live recipient count from the Residents directory (concierge module)
+  useResidentsReady();
+  const residents = useResidentsStore((s) => s.residents);
+  const activeResidents = residents.filter((r) => r.status === "active").length;
+
   const [title, setTitle] = React.useState("");
   const [date, setDate] = React.useState(defaultDate);
   const [start, setStart] = React.useState("09:00");
@@ -238,6 +276,9 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
   const [contactPhone, setContactPhone] = React.useState("");
   const [remindEmail, setRemindEmail] = React.useState("");
   const [remindDays, setRemindDays] = React.useState("1");
+  const [notifyResidents, setNotifyResidents] = React.useState(false);
+  const [noticeChannels, setNoticeChannels] = React.useState<NoticeChannel[]>(["email"]);
+  const [noticeMessage, setNoticeMessage] = React.useState("");
 
   const reset = () => {
     setTitle("");
@@ -250,6 +291,17 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
     setContactName("");
     setContactPhone("");
     setRemindEmail("");
+    setNotifyResidents(false);
+    setNoticeChannels(["email"]);
+    setNoticeMessage("");
+  };
+
+  const toggleChannel = (c: NoticeChannel) => {
+    // at least one channel stays picked while the notice is on
+    setNoticeChannels((prev) => {
+      const next = prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c];
+      return next.length ? next : prev;
+    });
   };
 
   const toggleRole = (role: CalRole) => {
@@ -264,6 +316,9 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
     const reminder = remindEmail.trim()
       ? { email: remindEmail.trim(), daysBefore: Number(remindDays) }
       : undefined;
+    const residentNotice = notifyResidents
+      ? { channels: noticeChannels, message: noticeMessage.trim() || undefined }
+      : undefined;
     const shared = {
       title: title.trim(),
       time: allDay ? undefined : parseTime(start),
@@ -271,6 +326,7 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
       category,
       detail: detail.trim() || undefined,
       reminder,
+      residentNotice,
       visibility,
       locked: viewRole === "admin" ? locked : false,
       createdBy: viewRole,
@@ -292,10 +348,14 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
     }
     setOpen(false);
     reset();
+    const sends = [
+      residentNotice && `${activeResidents} residents notified by ${noticeChannelSummary(residentNotice.channels)}`,
+      reminder && `reminder to ${reminder.email}`,
+    ].filter(Boolean);
     toast({
       tone: "success",
       title: repeat === "none" ? "Event added to the calendar" : `Recurring event added — ${REPEAT_LABELS[repeat].toLowerCase()}`,
-      description: reminder ? `${title.trim()} · reminder to ${reminder.email} queued` : title.trim(),
+      description: sends.length ? `${title.trim()} · ${sends.join(" · ")} — queued` : title.trim(),
     });
   };
 
@@ -484,6 +544,63 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
           </div>
 
           <div className="rounded-card border border-edge bg-canvas p-4">
+            <label className="flex items-start gap-2.5 text-body-sm text-fg">
+              <input
+                type="checkbox"
+                checked={notifyResidents}
+                onChange={(e) => setNotifyResidents(e.target.checked)}
+                className="mt-0.5 size-4 accent-[var(--accent)]"
+              />
+              <span>
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Megaphone aria-hidden className="size-3.5 text-fg-muted" />
+                  Notify residents
+                </span>
+                <span className="mt-0.5 block text-caption text-fg-muted">
+                  For works that affect residents — e.g. pool closed for maintenance. Sends when the
+                  event is saved.
+                </span>
+              </span>
+            </label>
+            {notifyResidents && (
+              <div className="mt-3 flex flex-col gap-3">
+                <div className="flex flex-wrap gap-1.5">
+                  {(Object.keys(NOTICE_CHANNEL_LABELS) as NoticeChannel[]).map((c) => {
+                    const active = noticeChannels.includes(c);
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => toggleChannel(c)}
+                        className={cn(
+                          "rounded-pill border px-3 py-1 text-body-sm font-medium transition-colors",
+                          active
+                            ? "border-edge-strong bg-accent-subtle text-accent-text"
+                            : "border-edge text-fg-secondary hover:text-fg"
+                        )}
+                      >
+                        {NOTICE_CHANNEL_LABELS[c]}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Input
+                  placeholder="Message (optional) — e.g. The pool is closed for maintenance; please plan around it."
+                  value={noticeMessage}
+                  onChange={(e) => setNoticeMessage(e.target.value)}
+                  aria-label="Resident notice message"
+                />
+                <p className="text-caption text-fg-muted">
+                  Goes to all <strong>{activeResidents} active residents</strong> in the directory via
+                  the org&apos;s configured email/SMS providers. Leave the message blank to send the
+                  event title and notes.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-card border border-edge bg-canvas p-4">
             <p className="text-body-sm font-medium text-fg">Email reminder (optional)</p>
             <p className="mt-0.5 text-caption text-fg-muted">
               Any address — contractor, BM, committee member. Sends via the org&apos;s email provider.
@@ -535,6 +652,7 @@ export default function CalendarPage() {
   const [filter, setFilter] = React.useState<CalCategory | "all">("all");
   const [view, setView] = React.useState<"month" | "list">("month");
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
+  const [noticeEvent, setNoticeEvent] = React.useState<CalEvent | null>(null);
 
   React.useEffect(() => {
     setCursor((c) => c ?? new Date());
@@ -572,6 +690,10 @@ export default function CalendarPage() {
   const queuedReminders = [
     ...manualEvents.filter((e) => e.reminder),
     ...series.filter((s) => s.reminder),
+  ];
+  const queuedNotices = [
+    ...manualEvents.filter((e) => e.residentNotice),
+    ...series.filter((s) => s.residentNotice),
   ];
 
   return (
@@ -745,14 +867,29 @@ export default function CalendarPage() {
         date={selectedKey ? new Date(`${selectedKey}T12:00:00`) : null}
         events={selectedKey ? (byDate.get(selectedKey) ?? []) : []}
         viewRole={viewRole}
-        onClose={() => setSelectedKey(null)}
+        // clicks inside the stacked print modal register as "outside" the
+        // drawer's layer — keep the drawer up while the notice is open
+        onClose={() => !noticeEvent && setSelectedKey(null)}
+        onPrint={setNoticeEvent}
       />
 
-      {queuedReminders.length > 0 && (
+      <PrintNoticeModal event={noticeEvent} onClose={() => setNoticeEvent(null)} />
+
+      {queuedReminders.length + queuedNotices.length > 0 && (
         <Card className="mt-6">
           <CardBody>
-            <p className="text-body-sm font-medium text-fg">Queued email reminders</p>
+            <p className="text-body-sm font-medium text-fg">Queued notifications</p>
             <div className="mt-3 flex flex-col gap-2">
+              {queuedNotices.map((e) => (
+                <p key={`rn-${e.id}`} className="text-body-sm text-fg-secondary">
+                  <Megaphone aria-hidden className="mr-1 inline size-3.5 text-fg-muted" />
+                  Resident notice — “{e.title}” · all active residents via{" "}
+                  {noticeChannelSummary(e.residentNotice!.channels)}
+                  {e.residentNotice!.message ? (
+                    <span className="text-fg-muted"> · “{e.residentNotice!.message}”</span>
+                  ) : null}
+                </p>
+              ))}
               {manualEvents
                 .filter((e) => e.reminder)
                 .map((e) => {
@@ -776,9 +913,9 @@ export default function CalendarPage() {
                 ))}
             </div>
             <p className="mt-3 text-caption text-fg-muted">
-              Delivery runs through the org&apos;s configured email provider (see Settings →
-              Integrations) once the calendar backend stage is live — reminders queue now so nothing
-              set today is lost.
+              Delivery runs through the org&apos;s configured email/SMS providers (see Settings →
+              Integrations) once the calendar backend stage is live — notices and reminders queue now
+              so nothing set today is lost.
             </p>
           </CardBody>
         </Card>

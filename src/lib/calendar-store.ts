@@ -57,6 +57,27 @@ export const REPEAT_LABELS: Record<CalRepeat, string> = {
 /** "everyone" or an explicit list of roles that may SEE the event. */
 export type CalVisibility = "everyone" | CalRole[];
 
+/** Channels a resident notice can go out on — matches the live integration
+ *  categories (Email + SMS providers); push joins when the resident app ships. */
+export type NoticeChannel = "email" | "sms";
+
+export const NOTICE_CHANNEL_LABELS: Record<NoticeChannel, string> = {
+  email: "Email",
+  sms: "SMS",
+};
+
+export const noticeChannelSummary = (channels: NoticeChannel[]) =>
+  channels.map((c) => NOTICE_CHANNEL_LABELS[c]).join(" + ");
+
+/** Opt-in resident notification for events that affect residents (e.g. pool
+ *  closed for maintenance). Queued with the event; delivery runs through the
+ *  org's configured email/SMS providers via notify() at the backend stage. */
+export interface ResidentNotice {
+  channels: NoticeChannel[];
+  /** optional custom wording — the notice falls back to the event details */
+  message?: string;
+}
+
 export interface CalEvent {
   id: string;
   title: string;
@@ -76,6 +97,8 @@ export interface CalEvent {
   source: "scope" | "seed" | "manual";
   /** email reminder queued for this event (sends via the email adapter) */
   reminder?: { email: string; daysBefore: number };
+  /** resident notification queued for this event (sends via notify()) */
+  residentNotice?: ResidentNotice;
   /** who may see it — undefined/"everyone" = the whole building */
   visibility?: CalVisibility;
   /** admin-locked: nobody but the building admin can change or remove it */
@@ -111,6 +134,7 @@ export interface CalSeries {
   contactName?: string;
   contactPhone?: string;
   reminder?: { email: string; daysBefore: number };
+  residentNotice?: ResidentNotice;
 }
 
 export const calCategoryMeta: Record<
@@ -235,6 +259,7 @@ function occurrence(s: CalSeries, key: string): CalEvent {
     detail: s.detail,
     source: "manual",
     reminder: s.reminder,
+    residentNotice: s.residentNotice,
     visibility: s.visibility,
     locked: s.locked,
     createdBy: s.createdBy,
@@ -311,6 +336,7 @@ export interface AddEventInput {
   category: CalCategory;
   detail?: string;
   reminder?: { email: string; daysBefore: number };
+  residentNotice?: ResidentNotice;
   visibility?: CalVisibility;
   locked?: boolean;
   createdBy?: CalRole;
