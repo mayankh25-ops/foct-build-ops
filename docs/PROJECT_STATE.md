@@ -34,6 +34,8 @@
 
 **Security/desk refinements 2026-07-21 (owner feedback):** Cameras & doors sits directly under the dashboard hero; doors are access-control TOGGLE SWITCHES (green secured / amber unlocked with relock countdown); security-log card and Live activity card removed (events still recorded for Stage 2 audit_logs); ticket desk gained SEARCH (area/ref/category/reporter/assignee); kiosk PINs are SYSTEM-GENERATED and shown to the admin once. All suites green.
 
+**Amenity booking desk flow 2026-07-21 (owner directive):** Book amenity modal on /residents — concierge books ON BEHALF (confirms immediately) with a LIVE availability check (`conflictingBookings`) that blocks double-bookings; the section gained a Requests / AVAILABILITY CALENDAR toggle (Mon–Sun week grid per amenity, today highlighted, green/amber chips, empty = available, week navigation). 6/6 new checks + regression green.
+
 ## Previous stage
 **Stage 1.5 Theme Builder: SHIPPED (2026-07-07).** Appearance settings (`/settings/appearance`): all 15 themes as live preview cards applyable per building; custom theme creator (8 hex tokens, rest derived + contrast-nudged, WCAG AA validation with warn-on-save via the SAME shared pair list as the build gate); typography slots + woff2 upload; persisted in `foct-theme-builder-v1` mirroring the authored-but-not-yet-run `supabase/migrations/0001_theme_engine.sql` (+pgTAP test). Variant status unchanged underneath: Nature & Glass finalists, other option-* frozen, final pick still open.
 ## Previous stage detail

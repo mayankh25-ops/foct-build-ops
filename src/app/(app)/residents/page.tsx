@@ -3,6 +3,9 @@
 import * as React from "react";
 import {
   CalendarCheck2,
+  CalendarPlus,
+  ChevronLeft,
+  ChevronRight,
   ClipboardList,
   KeyRound,
   Package,
@@ -46,6 +49,7 @@ import { useToast } from "@/components/ui/toast";
 import { useConciergeReady, useConciergeStore } from "@/lib/concierge-store";
 import {
   AMENITIES,
+  conflictingBookings,
   requestKindMeta,
   useResidentsReady,
   useResidentsStore,
@@ -291,6 +295,182 @@ function EnrolModal() {
           </Button>
           <Button disabled={!valid} onClick={submit}>
             Enrol resident
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+}
+
+/* ---------------------------------------------------------------- */
+/* Book amenity — the concierge desk books on behalf of a resident   */
+/* with a live availability check (no double bookings).              */
+/* ---------------------------------------------------------------- */
+
+function BookAmenityModal() {
+  const residents = useResidentsStore((s) => s.residents);
+  const bookings = useResidentsStore((s) => s.bookings);
+  const addBooking = useResidentsStore((s) => s.addBooking);
+  const { toast } = useToast();
+  const [open, setOpen] = React.useState(false);
+  const [amenity, setAmenity] = React.useState<AmenityId>("cinema");
+  const [date, setDate] = React.useState(daysAhead(1));
+  const [start, setStart] = React.useState("18");
+  const [hours, setHours] = React.useState("2");
+  const [residentId, setResidentId] = React.useState("");
+  const [guests, setGuests] = React.useState("6");
+  const [note, setNote] = React.useState("");
+
+  const openChange = (o: boolean) => {
+    setOpen(o);
+    if (o) {
+      setDate(daysAhead(1));
+      setNote("");
+      if (!residentId && residents[0]) setResidentId(residents[0].id);
+    }
+  };
+
+  const startN = Number(start);
+  const endN = startN + Number(hours);
+  const am = AMENITIES.find((a) => a.id === amenity)!;
+  const conflicts = conflictingBookings(bookings, amenity, date, startN, endN);
+  const byId = new Map(residents.map((r) => [r.id, r]));
+  const overCap = Number(guests) > am.capacity;
+  const valid = !!residentId && !!date && conflicts.length === 0 && Number(guests) >= 1;
+
+  const submit = () => {
+    addBooking({
+      residentId,
+      amenityId: amenity,
+      date,
+      start: startN,
+      end: endN,
+      guests: Math.max(1, Number(guests) || 1),
+      note: note.trim() || undefined,
+      status: "confirmed",
+    });
+    setOpen(false);
+    toast({
+      tone: "success",
+      title: `${am.name} booked`,
+      description: `${byId.get(residentId)?.name} · ${fmtDate(date)} · ${fmtTime(startN)}–${fmtTime(endN)}`,
+    });
+  };
+
+  const field = "flex flex-col gap-1.5 text-body-sm font-medium text-fg";
+
+  return (
+    <Modal open={open} onOpenChange={openChange}>
+      <ModalTrigger asChild>
+        <Button variant="secondary" size="sm">
+          <CalendarPlus aria-hidden /> Book amenity
+        </Button>
+      </ModalTrigger>
+      <ModalContent size="lg">
+        <ModalHeader>
+          <ModalTitle>Book an amenity</ModalTitle>
+          <ModalDescription>
+            Desk bookings confirm immediately — the availability check below stops double
+            bookings.
+          </ModalDescription>
+        </ModalHeader>
+        <ModalBody className="flex flex-col gap-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className={field}>
+              Amenity
+              <Select
+                aria-label="Amenity to book"
+                options={AMENITIES.map((a) => ({ value: a.id, label: `${a.name} · ${a.where} · cap ${a.capacity}` }))}
+                value={amenity}
+                onValueChange={(v) => setAmenity(v as AmenityId)}
+              />
+            </label>
+            <label className={field}>
+              For resident
+              <Select
+                aria-label="Resident the booking is for"
+                options={residents.map((r) => ({ value: r.id, label: `${r.name} · Apt ${r.apartment}` }))}
+                value={residentId}
+                onValueChange={setResidentId}
+              />
+            </label>
+            <label className={field}>
+              Date
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </label>
+            <div className={field}>
+              Time
+              <div className="flex gap-2">
+                <Select
+                  aria-label="Booking start time"
+                  className="flex-1"
+                  options={Array.from({ length: 15 }, (_, i) => i + 8).map((h) => ({ value: String(h), label: fmtTime(h) }))}
+                  value={start}
+                  onValueChange={setStart}
+                />
+                <Select
+                  aria-label="Booking duration"
+                  className="flex-1"
+                  options={[1, 2, 3, 4].map((h) => ({ value: String(h), label: `${h} h` }))}
+                  value={hours}
+                  onValueChange={setHours}
+                />
+              </div>
+            </div>
+            <label className={field}>
+              Guests
+              <Input
+                type="number"
+                min={1}
+                max={40}
+                value={guests}
+                onChange={(e) => setGuests(e.target.value)}
+              />
+            </label>
+            <label className={field}>
+              Note (optional)
+              <Input
+                placeholder="e.g. 30th birthday — projector needed"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
+            </label>
+          </div>
+
+          {conflicts.length > 0 ? (
+            <div className="rounded-card border border-edge bg-critical-subtle px-4 py-3">
+              <p className="text-body-sm font-medium text-critical-text">
+                Not available — {am.name} is already booked then:
+              </p>
+              {conflicts.map((c) => (
+                <p key={c.id} className="mt-1 text-body-sm text-fg">
+                  {fmtTime(c.start)}–{fmtTime(c.end)} · {byId.get(c.residentId)?.name ?? "Resident"}{" "}
+                  <span className="text-fg-muted">
+                    ({bookingStatusMeta[c.status].label.toLowerCase()})
+                  </span>
+                </p>
+              ))}
+              <p className="mt-1.5 text-caption text-fg-muted">Pick another time, date or amenity.</p>
+            </div>
+          ) : (
+            <div className="rounded-card border border-edge bg-success-subtle px-4 py-3">
+              <p className="text-body-sm font-medium text-success-text">
+                Available — nothing clashes with {fmtDate(date)} · {fmtTime(startN)}–{fmtTime(endN)}.
+              </p>
+            </div>
+          )}
+          {overCap && (
+            <p className="-mt-2 text-body-sm text-warning-text">
+              Over the room capacity of {am.capacity} — confirm numbers with the resident.
+            </p>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button disabled={!valid} onClick={submit}>
+            Confirm booking
           </Button>
         </ModalFooter>
       </ModalContent>
@@ -731,6 +911,8 @@ export default function ResidentsPage() {
   const [query, setQuery] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState("all");
   const [openId, setOpenId] = React.useState<string | null>(null);
+  const [bkView, setBkView] = React.useState<"cards" | "week">("cards");
+  const [weekOffset, setWeekOffset] = React.useState(0);
 
   if (!ready || !conciergeReady) return null;
 
@@ -907,9 +1089,119 @@ export default function ResidentsPage() {
       <div className="mt-10">
         <SectionHeader
           title="Amenity bookings"
-          description="Cinema, karaoke, BBQ terrace, private dining, pool hire and the PT room — pending requests need the building manager's confirmation."
+          description="Cinema, karaoke, BBQ terrace, private dining, pool hire and the PT room — the desk books on behalf; residents' own requests need confirmation."
+          actions={
+            <span className="flex items-center gap-2">
+              <SegmentedControl
+                label="Bookings view"
+                value={bkView}
+                onValueChange={(v) => setBkView(v as "cards" | "week")}
+                options={[
+                  { value: "cards", label: "Requests" },
+                  { value: "week", label: "Availability calendar" },
+                ]}
+              />
+              <BookAmenityModal />
+            </span>
+          }
         />
-        {upcomingBookings.length === 0 ? (
+        {bkView === "week" ? (() => {
+          const monday = new Date();
+          monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7) + weekOffset * 7);
+          monday.setHours(12, 0, 0, 0);
+          const days = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            return d;
+          });
+          const ymd = (d: Date) =>
+            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          const todayYmd = ymd(new Date());
+          return (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Button variant="secondary" size="sm" aria-label="Previous week" onClick={() => setWeekOffset((w) => w - 1)}>
+                    <ChevronLeft aria-hidden />
+                  </Button>
+                  <p className="min-w-44 text-center text-body-sm font-semibold text-fg">
+                    Week of {monday.toLocaleDateString("en-AU", { day: "numeric", month: "long" })}
+                  </p>
+                  <Button variant="secondary" size="sm" aria-label="Next week" onClick={() => setWeekOffset((w) => w + 1)}>
+                    <ChevronRight aria-hidden />
+                  </Button>
+                  {weekOffset !== 0 && (
+                    <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>
+                      This week
+                    </Button>
+                  )}
+                </div>
+                <p className="text-caption text-fg-muted">Empty cell = available all day</p>
+              </CardHeader>
+              <CardBody className="overflow-x-auto p-0">
+                <div className="min-w-[56rem]">
+                  <div className="grid grid-cols-[9.5rem_repeat(7,1fr)] border-b border-edge">
+                    <p className="px-4 py-2.5 text-caption font-semibold tracking-[0.05em] text-fg-secondary uppercase">
+                      Amenity
+                    </p>
+                    {days.map((d) => (
+                      <p
+                        key={d.toISOString()}
+                        className={cn(
+                          "border-l border-edge px-3 py-2.5 text-caption font-semibold tracking-[0.05em] uppercase",
+                          ymd(d) === todayYmd ? "bg-accent-subtle text-accent-text" : "text-fg-secondary"
+                        )}
+                      >
+                        {d.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" })}
+                      </p>
+                    ))}
+                  </div>
+                  {AMENITIES.map((a, ri) => (
+                    <div key={a.id} className={cn("grid grid-cols-[9.5rem_repeat(7,1fr)]", ri > 0 && "border-t border-edge")}>
+                      <div className="px-4 py-3">
+                        <p className="text-body-sm font-medium text-fg">{a.name}</p>
+                        <p className="text-caption text-fg-muted">{a.where} · cap {a.capacity}</p>
+                      </div>
+                      {days.map((d) => {
+                        const key = ymd(d);
+                        const cell = bookings
+                          .filter((b) => b.amenityId === a.id && b.date === key && b.status !== "declined")
+                          .sort((x, y) => x.start - y.start);
+                        return (
+                          <div
+                            key={key}
+                            className={cn(
+                              "flex min-h-16 flex-col gap-1 border-l border-edge p-1.5",
+                              key === todayYmd && "bg-accent-subtle/40"
+                            )}
+                          >
+                            {cell.map((b) => (
+                              <span
+                                key={b.id}
+                                title={`${residentById.get(b.residentId)?.name ?? ""} · ${b.guests} guests`}
+                                className={cn(
+                                  "rounded-sm px-1.5 py-1 text-caption leading-tight font-medium",
+                                  b.status === "confirmed"
+                                    ? "bg-success-subtle text-success-text"
+                                    : "bg-warning-subtle text-warning-text"
+                                )}
+                              >
+                                {fmtTime(b.start)}–{fmtTime(b.end)}
+                                <span className="block truncate font-normal">
+                                  {(residentById.get(b.residentId)?.name ?? "").split(" ").pop()}
+                                </span>
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </CardBody>
+            </Card>
+          );
+        })() : upcomingBookings.length === 0 ? (
           <EmptyState icon={CalendarCheck2} title="No bookings" description="Residents book amenities from their record — requests land here." />
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
