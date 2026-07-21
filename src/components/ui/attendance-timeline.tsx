@@ -41,9 +41,16 @@ export function AttendanceTimeline({
   ...props
 }: AttendanceTimelineProps) {
   const span = windowEnd - windowStart;
-  const pct = (h: number) => `${((h - windowStart) / span) * 100}%`;
-  const width = (a: number, b: number) => `${((b - a) / span) * 100}%`;
-  const hours = Array.from({ length: span + 1 }, (_, i) => windowStart + i);
+  // clamp everything into the window — a bar must never escape the card
+  const clamp = (h: number) => Math.min(windowEnd, Math.max(windowStart, h));
+  const pct = (h: number) => `${((clamp(h) - windowStart) / span) * 100}%`;
+  const width = (a: number, b: number) =>
+    `${(Math.max(0, clamp(b) - clamp(a)) / span) * 100}%`;
+  const hourStep = span > 14 ? 2 : 1; // wide windows label every 2nd hour
+  const hours = Array.from(
+    { length: Math.floor(span / hourStep) + 1 },
+    (_, i) => windowStart + i * hourStep
+  );
 
   return (
     <div className={cn("flex flex-col", className)} {...props}>
@@ -70,7 +77,7 @@ export function AttendanceTimeline({
               <p className="truncate text-body-sm font-medium text-fg">{row.name}</p>
               {row.zone && <p className="truncate text-caption text-fg-muted">{row.zone}</p>}
             </div>
-            <div className="relative h-9 flex-1">
+            <div className="relative h-9 flex-1 overflow-hidden">
               {/* hour gridlines */}
               {hours.map((h) => (
                 <span

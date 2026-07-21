@@ -57,7 +57,7 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-6 rounded-card border border-edge bg-surface p-6 shadow-card",
+        "flex flex-col gap-3.5 rounded-card border border-edge bg-surface p-5 shadow-card",
         className
       )}
       {...props}
@@ -68,11 +68,11 @@ export function MetricCard({
           <span
             aria-hidden
             className={cn(
-              "flex size-11 shrink-0 items-center justify-center rounded-control",
+              "flex size-9 shrink-0 items-center justify-center rounded-control",
               iconWells[tone]
             )}
           >
-            <Icon className="size-5" />
+            <Icon className="size-4" />
           </span>
         )}
         {trend && (

@@ -12,7 +12,6 @@ import {
   LayoutGrid,
   ListChecks,
   Map,
-  MonitorSmartphone,
   Package,
   PersonStanding,
   ScanLine,
@@ -20,6 +19,7 @@ import {
   SprayCan,
   Ticket,
   Timer,
+  UsersRound,
   Waves,
 } from "lucide-react";
 import { Palette, Plug } from "lucide-react";
@@ -91,8 +91,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             title: "Concierge",
             items: [
               { label: "Concierge desk", icon: Building2, href: "/concierge" },
+              { label: "Residents", icon: UsersRound, href: "/residents" },
               { label: "Parcels", icon: Package, disabled: true },
-              { label: "Resident requests", icon: MonitorSmartphone, disabled: true },
             ],
           },
           {

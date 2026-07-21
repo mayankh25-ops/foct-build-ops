@@ -31,7 +31,17 @@ import {
 import { FilterBar } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
 import { MetricCard } from "@/components/ui/metric-card";
+import {
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalDescription,
+  ModalHeader,
+  ModalTitle,
+  ModalTrigger,
+} from "@/components/ui/modal";
 import { PageHeader } from "@/components/ui/page-header";
+import { RaiseTicketForm } from "@/components/service-desk/raise-ticket-form";
 import { Select } from "@/components/ui/select";
 import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
@@ -43,6 +53,7 @@ import {
   type SdTicket,
 } from "@/lib/service-desk-data";
 import { SyncPill } from "@/components/ui/sync-pill";
+import { DevMenu } from "@/components/ui/dev-menu";
 import { useSdRehydrate, useSdStore, type SdTicketLive } from "@/lib/service-desk-store";
 import { cn } from "@/lib/cn";
 
@@ -489,6 +500,7 @@ export default function ServiceDeskPage() {
   const [view, setView] = React.useState("All open");
   const [status, setStatus] = React.useState("all");
   const [selectedRef, setSelectedRef] = React.useState<string | null>(null);
+  const [raiseOpen, setRaiseOpen] = React.useState(false);
   const { toast } = useToast();
 
   const counts = {
@@ -517,17 +529,19 @@ export default function ServiceDeskPage() {
         description="Concierge-reported cleaning & facilities issues — attended and closed with photo proof."
         actions={
           <>
-            <SyncPill />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                resetDemo();
-                toast({ tone: "neutral", title: "Demo data reset" });
-              }}
-            >
-              <RotateCcw aria-hidden /> Reset demo
-            </Button>
+            <DevMenu>
+              <SyncPill />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  resetDemo();
+                  toast({ tone: "neutral", title: "Demo data reset" });
+                }}
+              >
+                <RotateCcw aria-hidden /> Reset demo
+              </Button>
+            </DevMenu>
             <Link
               href="/support"
               className="inline-flex h-11 items-center gap-2 rounded-control border border-edge bg-surface px-4 text-body-sm font-medium text-fg transition-colors hover:bg-hover [&_svg]:size-4"
@@ -544,12 +558,24 @@ export default function ServiceDeskPage() {
             >
               <Link2 aria-hidden /> Copy intake link
             </Button>
-            <Link
-              href="/service-desk/new"
-              className="inline-flex h-11 items-center gap-2 rounded-control bg-accent px-5 font-medium text-on-accent transition-colors hover:bg-accent-hover [&_svg]:size-4"
-            >
-              <Plus aria-hidden /> Raise ticket
-            </Link>
+            <Modal open={raiseOpen} onOpenChange={setRaiseOpen}>
+              <ModalTrigger asChild>
+                <Button>
+                  <Plus aria-hidden /> Raise ticket
+                </Button>
+              </ModalTrigger>
+              <ModalContent size="lg">
+                <ModalHeader>
+                  <ModalTitle>Raise a ticket</ModalTitle>
+                  <ModalDescription>
+                    Pick, snap, submit — the cleaning team is notified instantly.
+                  </ModalDescription>
+                </ModalHeader>
+                <ModalBody>
+                  <RaiseTicketForm onDone={() => setRaiseOpen(false)} />
+                </ModalBody>
+              </ModalContent>
+            </Modal>
           </>
         }
       />
@@ -603,7 +629,33 @@ export default function ServiceDeskPage() {
           </div>
         </FilterBar>
 
-        <Table>
+        {/* mobile: record cards (audit §23) */}
+        <div className="flex flex-col gap-3 md:hidden">
+          {visible.map((t: SdTicketLive) => (
+            <button
+              key={t.ref}
+              type="button"
+              onClick={() => setSelectedRef(t.ref)}
+              className="rounded-card border border-edge bg-surface p-4 text-left shadow-card transition-colors hover:bg-hover"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-body-sm font-semibold text-fg">{t.category}</p>
+                <StatusPill tone={sdStatusMeta[t.status].tone}>{sdStatusMeta[t.status].label}</StatusPill>
+              </div>
+              <p className="mt-0.5 font-mono text-caption text-fg-muted">{t.ref}</p>
+              <p className="mt-2 text-body-sm text-fg-secondary">
+                {t.locations.map((l) => `${l.level}${l.area ? ` · ${l.area}` : ""}`).join(" + ")} · {t.lodgedBy}
+              </p>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <StatusPill tone={sdPriorityMeta[t.priority].tone}>{sdPriorityMeta[t.priority].label}</StatusPill>
+                <SlaChip sla={t.sla} />
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div className="hidden md:block">
+        <Table sticky>
           <THead>
             <Tr>
               <Th>Ticket</Th>
@@ -623,8 +675,8 @@ export default function ServiceDeskPage() {
                 onClick={() => setSelectedRef(t.ref)}
               >
                 <Td>
-                  <p className="font-mono text-body-sm text-fg">{t.ref}</p>
-                  <p className="mt-0.5 text-body-sm font-medium text-fg">{t.category}</p>
+                  <p className="text-body-sm font-semibold text-fg">{t.category}</p>
+                  <p className="mt-0.5 font-mono text-caption whitespace-nowrap text-fg-muted">{t.ref}</p>
                 </Td>
                 <Td>
                   {t.locations.map((l) => (
@@ -670,6 +722,7 @@ export default function ServiceDeskPage() {
             ))}
           </TBody>
         </Table>
+        </div>
       </div>
 
       <TicketDrawer ticketRef={selectedRef} onClose={() => setSelectedRef(null)} />

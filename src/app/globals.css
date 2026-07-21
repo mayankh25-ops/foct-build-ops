@@ -67,20 +67,20 @@
 
   /* type scale — use text-display, text-title-1 … never ad-hoc sizes */
   --text-*: initial;
-  /* Weight ramp (owner rule): big numbers get BIG & THICK, small text stays
-     regular/medium. Display = Mona Sans, body = DM Sans. */
+  /* Weight ramp per the 2026-07-17 audit: metrics ~650–700, titles 600,
+     body 400–500 — hierarchy from weight, no thin large numerals. */
   --text-hero: var(--fs-hero);
   --text-hero--line-height: var(--lh-hero);
   --text-hero--letter-spacing: var(--ls-hero);
-  --text-hero--font-weight: 800;
+  --text-hero--font-weight: 700;
   --text-display: var(--fs-display);
   --text-display--line-height: var(--lh-display);
   --text-display--letter-spacing: var(--ls-display);
-  --text-display--font-weight: 800;
+  --text-display--font-weight: 700;
   --text-title-1: var(--fs-title-1);
   --text-title-1--line-height: var(--lh-title-1);
   --text-title-1--letter-spacing: var(--ls-title-1);
-  --text-title-1--font-weight: 700;
+  --text-title-1--font-weight: 600;
   --text-title-2: var(--fs-title-2);
   --text-title-2--line-height: var(--lh-title-2);
   --text-title-2--letter-spacing: var(--ls-title-2);

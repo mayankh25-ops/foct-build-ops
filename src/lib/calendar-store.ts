@@ -3,11 +3,11 @@
 /**
  * Building calendar — one shared calendar for the building. Periodic works
  * are GENERATED from the Scope agreement dataset (same cadence rules as the
- * Scope periodic planner: quarterly Mar/Jun/Sep/Dec, bi-annual Apr/Oct,
- * annual staggered), so the contract's periodic tail lands on real dates
- * automatically. Building events (contractor visits, lift bookings, waste
- * pickups, inspections) are seeded; Add job writes manual events that
- * persist. Supabase replaces the store at the calendar backend stage.
+ * Scope periodic planner), building events are seeded, and manual entries
+ * persist. Since 2026-07-15 the calendar also carries RECURRING series
+ * (daily/weekly/fortnightly/monthly) with role-scoped visibility and
+ * admin-locked events (see docs/DECISIONS.md). Supabase replaces the store
+ * at the calendar backend stage; visibility/lock rules map 1:1 onto RLS then.
  */
 import * as React from "react";
 import { create } from "zustand";
@@ -20,15 +20,54 @@ export type CalCategory =
   | "booking"
   | "waste"
   | "inspection"
+  | "maintenance"
   | "other";
+
+/** The parties who read/write the shared calendar (org-type level, not user). */
+export type CalRole = "admin" | "bm" | "cleaning" | "concierge";
+
+export const CAL_ROLES: Array<{ value: CalRole; label: string }> = [
+  { value: "admin", label: "Building admin" },
+  { value: "bm", label: "Building manager" },
+  { value: "cleaning", label: "Cleaning team" },
+  { value: "concierge", label: "Concierge" },
+];
+
+export const calRoleLabel = (r: CalRole) => CAL_ROLES.find((x) => x.value === r)?.label ?? r;
+
+export type CalRepeat =
+  | "none"
+  | "daily"
+  | "weekly"
+  | "fortnightly"
+  | "monthly"
+  | "quarterly"
+  | "yearly";
+
+export const REPEAT_LABELS: Record<CalRepeat, string> = {
+  none: "Does not repeat",
+  daily: "Daily",
+  weekly: "Weekly",
+  fortnightly: "Fortnightly",
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  yearly: "Yearly",
+};
+
+/** "everyone" or an explicit list of roles that may SEE the event. */
+export type CalVisibility = "everyone" | CalRole[];
 
 export interface CalEvent {
   id: string;
   title: string;
-  /** yyyy-mm-dd */
+  /** yyyy-mm-dd — start date */
   date: string;
+  /** yyyy-mm-dd — finish date for MULTI-DAY events (shows on every day) */
+  endDate?: string;
   /** decimal hours; undefined = all-day */
   time?: number;
+  /** decimal hours — finish time for timed events */
+  endTime?: number;
   category: CalCategory;
   detail?: string;
   /** scope entity code for periodic works */
@@ -36,6 +75,41 @@ export interface CalEvent {
   billable?: boolean;
   source: "scope" | "seed" | "manual";
   /** email reminder queued for this event (sends via the email adapter) */
+  reminder?: { email: string; daysBefore: number };
+  /** who may see it — undefined/"everyone" = the whole building */
+  visibility?: CalVisibility;
+  /** admin-locked: nobody but the building admin can change or remove it */
+  locked?: boolean;
+  createdBy?: CalRole;
+  contactName?: string;
+  contactPhone?: string;
+  /** set on occurrences expanded from a recurring series */
+  seriesId?: string;
+  repeat?: CalRepeat;
+  /** set on day-occurrences expanded from a multi-day event (= original id) */
+  spanId?: string;
+}
+
+/** A recurring definition — expanded into CalEvents per displayed range. */
+export interface CalSeries {
+  id: string;
+  title: string;
+  category: CalCategory;
+  detail?: string;
+  /** first occurrence, yyyy-mm-dd */
+  startDate: string;
+  /** optional last date, yyyy-mm-dd */
+  until?: string;
+  time?: number;
+  endTime?: number;
+  repeat: Exclude<CalRepeat, "none">;
+  /** weekly/fortnightly: 0=Mon … 6=Sun (defaults to the start date's weekday) */
+  weekdays?: number[];
+  visibility: CalVisibility;
+  locked?: boolean;
+  createdBy: CalRole;
+  contactName?: string;
+  contactPhone?: string;
   reminder?: { email: string; daysBefore: number };
 }
 
@@ -48,11 +122,15 @@ export const calCategoryMeta: Record<
   booking: { label: "Booking / move", tone: "info" },
   waste: { label: "Waste", tone: "success" },
   inspection: { label: "Inspection", tone: "accent" },
+  maintenance: { label: "Maintenance", tone: "warning" },
   other: { label: "Other", tone: "neutral" },
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
 export const monthKey = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
+const dateKey = (d: Date) => monthKey(d.getFullYear(), d.getMonth(), d.getDate());
+/** Monday-start weekday: 0=Mon … 6=Sun */
+const mondayWeekday = (d: Date) => (d.getDay() + 6) % 7;
 
 /**
  * Periodic works for a given month, straight from the agreement.
@@ -109,17 +187,156 @@ export function seededEventsForMonth(year: number, month: number): CalEvent[] {
   ];
 }
 
+/* ---------------------------------------------------------------------------
+ * Recurring series expansion
+ * ------------------------------------------------------------------------- */
+
+function occursOn(s: CalSeries, d: Date): boolean {
+  const key = dateKey(d);
+  if (key < s.startDate) return false;
+  if (s.until && key > s.until) return false;
+  const start = new Date(`${s.startDate}T00:00:00`);
+  switch (s.repeat) {
+    case "daily":
+      return true;
+    case "weekly":
+    case "fortnightly": {
+      const days = s.weekdays?.length ? s.weekdays : [mondayWeekday(start)];
+      if (!days.includes(mondayWeekday(d))) return false;
+      if (s.repeat === "weekly") return true;
+      // fortnightly: even number of whole weeks since the start's week
+      const startMonday = new Date(start);
+      startMonday.setDate(start.getDate() - mondayWeekday(start));
+      const dayMs = 86_400_000;
+      const weeks = Math.floor((d.getTime() - startMonday.getTime()) / (7 * dayMs));
+      return weeks % 2 === 0;
+    }
+    case "monthly":
+      return d.getDate() === start.getDate();
+    case "quarterly": {
+      if (d.getDate() !== start.getDate()) return false;
+      const months =
+        (d.getFullYear() - start.getFullYear()) * 12 + (d.getMonth() - start.getMonth());
+      return months % 3 === 0;
+    }
+    case "yearly":
+      return d.getDate() === start.getDate() && d.getMonth() === start.getMonth();
+  }
+}
+
+function occurrence(s: CalSeries, key: string): CalEvent {
+  return {
+    id: `series-${s.id}-${key}`,
+    title: s.title,
+    date: key,
+    time: s.time,
+    endTime: s.endTime,
+    category: s.category,
+    detail: s.detail,
+    source: "manual",
+    reminder: s.reminder,
+    visibility: s.visibility,
+    locked: s.locked,
+    createdBy: s.createdBy,
+    contactName: s.contactName,
+    contactPhone: s.contactPhone,
+    seriesId: s.id,
+    repeat: s.repeat,
+  };
+}
+
+/** Every occurrence of every series inside one month. */
+export function seriesEventsForMonth(series: CalSeries[], year: number, month: number): CalEvent[] {
+  const out: CalEvent[] = [];
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  for (const s of series) {
+    for (let day = 1; day <= daysInMonth; day++) {
+      const d = new Date(year, month, day);
+      if (occursOn(s, d)) out.push(occurrence(s, dateKey(d)));
+    }
+  }
+  return out;
+}
+
+/** Manual events for one month — multi-day events (finish date set) expand
+ *  into one occurrence per day so they show across the whole span. */
+export function manualEventsForMonth(manual: CalEvent[], year: number, month: number): CalEvent[] {
+  const prefix = `${year}-${pad(month + 1)}`;
+  const out: CalEvent[] = [];
+  for (const e of manual) {
+    if (!e.endDate || e.endDate <= e.date) {
+      if (e.date.startsWith(prefix)) out.push(e);
+      continue;
+    }
+    const start = new Date(`${e.date}T00:00:00`);
+    const end = new Date(`${e.endDate}T00:00:00`);
+    // safety cap: a span never expands past 92 days, whatever the input says
+    for (let i = 0, d = new Date(start); d <= end && i < 92; i++, d.setDate(d.getDate() + 1)) {
+      const key = dateKey(d);
+      if (key.startsWith(prefix)) out.push({ ...e, id: `${e.id}-${key}`, date: key, spanId: e.id });
+    }
+  }
+  return out;
+}
+
+/* ---------------------------------------------------------------------------
+ * Visibility + permission rules (mirror of the future RLS policies)
+ * ------------------------------------------------------------------------- */
+
+/** Can this role SEE the event? Admin sees everything. */
+export function visibleTo(e: CalEvent, role: CalRole): boolean {
+  if (!e.visibility || e.visibility === "everyone") return true;
+  if (role === "admin") return true;
+  return e.visibility.includes(role);
+}
+
+/** Can this role CHANGE/REMOVE the event? Locked events are admin-only. */
+export function canModify(e: Pick<CalEvent, "source" | "locked">, role: CalRole): boolean {
+  if (e.source !== "manual") return false;
+  if (e.locked) return role === "admin";
+  return true;
+}
+
+/* ---------------------------------------------------------------------------
+ * Store
+ * ------------------------------------------------------------------------- */
+
+export interface AddEventInput {
+  title: string;
+  date: string;
+  /** finish date — makes it a multi-day event */
+  endDate?: string;
+  time?: number;
+  endTime?: number;
+  category: CalCategory;
+  detail?: string;
+  reminder?: { email: string; daysBefore: number };
+  visibility?: CalVisibility;
+  locked?: boolean;
+  createdBy?: CalRole;
+  contactName?: string;
+  contactPhone?: string;
+}
+
+export interface AddSeriesInput extends Omit<AddEventInput, "date"> {
+  startDate: string;
+  until?: string;
+  repeat: Exclude<CalRepeat, "none">;
+  weekdays?: number[];
+  visibility: CalVisibility;
+  createdBy: CalRole;
+}
+
 interface CalendarState {
   manualEvents: CalEvent[];
-  addJob: (input: {
-    title: string;
-    date: string;
-    time?: number;
-    category: CalCategory;
-    detail?: string;
-    reminder?: { email: string; daysBefore: number };
-  }) => void;
+  series: CalSeries[];
+  /** demo stand-in for the signed-in party; becomes real auth at backend stage */
+  viewRole: CalRole;
+  setViewRole: (r: CalRole) => void;
+  addJob: (input: AddEventInput) => void;
+  addSeries: (input: AddSeriesInput) => void;
   removeJob: (id: string) => void;
+  removeSeries: (id: string) => void;
   resetDemo: () => void;
 }
 
@@ -153,6 +370,9 @@ export const useCalendarStore = create<CalendarState>()(
   persist(
     (set) => ({
       manualEvents: [],
+      series: [],
+      viewRole: "admin",
+      setViewRole: (viewRole) => set({ viewRole }),
       addJob: (input) =>
         set((s) => ({
           manualEvents: [
@@ -160,9 +380,14 @@ export const useCalendarStore = create<CalendarState>()(
             { id: `manual-${Date.now()}-${seq++}`, source: "manual" as const, ...input },
           ],
         })),
+      addSeries: (input) =>
+        set((s) => ({
+          series: [...s.series, { id: `sr-${Date.now()}-${seq++}`, ...input }],
+        })),
       removeJob: (id) =>
         set((s) => ({ manualEvents: s.manualEvents.filter((e) => e.id !== id) })),
-      resetDemo: () => set({ manualEvents: [] }),
+      removeSeries: (id) => set((s) => ({ series: s.series.filter((x) => x.id !== id) })),
+      resetDemo: () => set({ manualEvents: [], series: [] }),
     }),
     {
       name: "foct-calendar-v1",
@@ -185,8 +410,13 @@ export function useCalendarReady(): boolean {
   return ready;
 }
 
-/** Every event (scope periodic + seeded + manual) between two dates inclusive. */
-export function eventsForRange(start: Date, end: Date, manual: CalEvent[]): CalEvent[] {
+/** Every event (scope periodic + seeded + manual + recurring) between two dates inclusive. */
+export function eventsForRange(
+  start: Date,
+  end: Date,
+  manual: CalEvent[],
+  series: CalSeries[] = []
+): CalEvent[] {
   const out: CalEvent[] = [];
   const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
   const startKey = monthKey(start.getFullYear(), start.getMonth(), start.getDate());
@@ -194,11 +424,12 @@ export function eventsForRange(start: Date, end: Date, manual: CalEvent[]): CalE
   while (cursor <= end) {
     out.push(
       ...scopeEventsForMonth(cursor.getFullYear(), cursor.getMonth()),
-      ...seededEventsForMonth(cursor.getFullYear(), cursor.getMonth())
+      ...seededEventsForMonth(cursor.getFullYear(), cursor.getMonth()),
+      ...seriesEventsForMonth(series, cursor.getFullYear(), cursor.getMonth()),
+      ...manualEventsForMonth(manual, cursor.getFullYear(), cursor.getMonth())
     );
     cursor.setMonth(cursor.getMonth() + 1);
   }
-  out.push(...manual);
   return out
     .filter((e) => e.date >= startKey && e.date <= endKey)
     .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? 24) - (b.time ?? 24));

@@ -18,33 +18,38 @@
      grotesque; macOS's native "DIN Alternate" is next in the stack).
      Roboto Mono stays for timestamps/IDs. Previous faces remain selectable
      in the Theme Builder. */
-  --font-stack-display: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
-  --font-stack-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
-  --font-stack-numeric: var(--font-barlow), Barlow, "DIN Alternate", "Segoe UI", system-ui, sans-serif;
+  /* Inter throughout — owner's senior design audit 2026-07-17 ("Use Inter
+     throughout the web application… do not mix font families"). Numerals
+     are Inter with tabular figures; Roboto Mono survives ONLY for kiosk
+     clock / genuine mono contexts. */
+  --font-stack-display: var(--font-inter), Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-stack-body: var(--font-inter), Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-stack-numeric: var(--font-inter), Inter, "Segoe UI", system-ui, sans-serif;
   --font-stack-mono: var(--font-roboto-mono), "SF Mono", ui-monospace, "Roboto Mono", monospace;
 
   /* Type scale (size / line-height / tracking) — documented in design/tokens.md */
   --fs-hero: 4.5rem;         /* 72px — kiosk clock only */
   --lh-hero: 1;
   --ls-hero: -0.02em;
-  --fs-display: 2.25rem;     /* 36px — page titles, metric numbers */
-  --lh-display: 2.75rem;     /* 44px */
+  /* Scale per the 2026-07-17 senior design audit */
+  --fs-display: 2rem;        /* 32px — card metrics (audit 30–34) */
+  --lh-display: 2.5rem;      /* 40px */
   --ls-display: -0.02em;
-  --fs-title-1: 1.75rem;     /* 28px — section titles */
-  --lh-title-1: 2.25rem;     /* 36px */
+  --fs-title-1: 1.625rem;    /* 26px — page titles (audit 26–28 @ 600) */
+  --lh-title-1: 2.125rem;    /* 34px */
   --ls-title-1: -0.015em;
-  --fs-title-2: 1.375rem;    /* 22px — modal titles, sub-sections */
-  --lh-title-2: 1.875rem;    /* 30px */
+  --fs-title-2: 1.1875rem;   /* 19px — section + modal titles (audit 18–20) */
+  --lh-title-2: 1.6875rem;   /* 27px */
   --ls-title-2: -0.01em;
-  --fs-title-3: 1.0625rem;   /* 17px — card titles */
-  --lh-title-3: 1.5625rem;   /* 25px */
+  --fs-title-3: 1rem;        /* 16px — card titles */
+  --lh-title-3: 1.5rem;      /* 24px */
   --ls-title-3: -0.005em;
-  --fs-body: 1rem;           /* 16px — default UI text */
-  --lh-body: 1.5rem;         /* 24px */
-  --fs-body-sm: 0.875rem;    /* 14px — tables, secondary copy (never smaller in tables) */
-  --lh-body-sm: 1.25rem;     /* 20px */
-  --fs-caption: 0.8125rem;   /* 13px — labels, hints, badges */
-  --lh-caption: 1.1875rem;   /* 19px — keeps caption inside the 1.4–1.6 band */
+  --fs-body: 0.875rem;       /* 14px — standard body (audit 14/20) */
+  --lh-body: 1.25rem;        /* 20px */
+  --fs-body-sm: 0.8125rem;   /* 13px — table body, secondary copy (audit 13–14) */
+  --lh-body-sm: 1.1875rem;   /* 19px */
+  --fs-caption: 0.75rem;     /* 12px — labels, table headers, hints (audit 12–13) */
+  --lh-caption: 1.125rem;    /* 18px */
   --ls-caption: 0.005em;
 
   /* Radius — cards 16px, controls 12px */
@@ -566,45 +571,49 @@
    pill-shaped controls/chips, solid sage active-nav pill, one rounded
    friendly family (Onest) for display AND body — the source design uses
    Quicksand everywhere; Onest is its approved-library equivalent. */
+/* Nature — refined per the owner's 2026-07-17 senior design audit: cream
+   stays on the CANVAS only, cards go white with a hairline border + crisp
+   1px shadow, olive green #617552 for brand/primary/selected, semantic
+   pairs per the audit's table, calm 12/16px radii (the full-pill controls
+   and borderless tiles retired), sidebar active = soft green not a solid
+   dark pill. */
 [data-theme="option-nature"] {
   color-scheme: light;
-  --r-card: 1.5rem;          /* design borderRadius.DEFAULT */
-  --r-control: 9999px;       /* every control/chip is a full pill */
-  --r-sm: 0.75rem;
-  --card-border: transparent;  /* cards have NO border — shadow only */
-  --bg-canvas: #f9f7f2;
+  --r-card: 1rem;            /* 16px large cards */
+  --r-control: 0.75rem;      /* 12px controls */
+  --r-sm: 0.5rem;
+  --card-border: #e1e5de;    /* subtle hairline — audit: minimal elevation */
+  --bg-canvas: #f7f7f4;
   --bg-surface: #ffffff;
   --bg-raised: #ffffff;
-  --bg-hover: #f1ede4;
-  --border-subtle: #e7e1d5;
-  --border-strong: #8f887a;
-  --text-primary: #262a22;
-  --text-secondary: #4d5347;
-  --text-muted: #5d6656;
-  --text-disabled: #a8ac9e;
+  --bg-hover: #f0f1ed;
+  --border-subtle: #e1e5de;
+  --border-strong: #838c81;  /* audit #D2D8CF deepened to hold 3:1 on white */
+  --text-primary: #20241f;
+  --text-secondary: #626a61;
+  --text-muted: #646b62;     /* audit #858D83 deepened to hold AA on all surfaces */
+  --text-disabled: #a3aaa0;
   --text-on-accent: #ffffff;
-  --accent: #657a59;         /* design sage #7d9070 darkened to AA for white text */
-  --accent-hover: #55684b;
-  --accent-subtle: #eaf0e2;
-  --accent-text: #596b4f;
-  --brand: #7d9070;          /* full-strength design sage — graphics/dots only */
-  /* Status + info tuned to the palette: success IS the sage family,
-     info is a stone teal — no off-palette green/blue anywhere. */
-  --success: #657a59; --success-subtle: #eaf0e2; --success-text: #596b4f;
-  --warning: #dc9a26; --warning-subtle: #f9f0dc; --warning-text: #8a6002;
-  --critical: #b1502f; --critical-hover: #96431f; --critical-subtle: #f9e7de; --critical-text: #a44526;
-  --info: #4e7d74; --info-subtle: #e4efec; --info-text: #3e685f;
-  --chart-1: #657a59; --chart-2: #7d9070; --chart-3: #e5e1d3;   /* sage ramp donut, per the design */
-  --focus-ring: #55684b;
-  --overlay: rgb(38 42 34 / 0.45);
-  --sidebar-bg: #f9f7f2;     /* rail sits on the cream canvas, per the design */
-  --sidebar-hover: #efeadf; --sidebar-fg: #4d5347;
-  --sidebar-muted: #5d6656; --sidebar-active: #4c5f43;
-  --sidebar-active-bg: #657a59;   /* solid sage pill, white label */
-  --sidebar-active-fg: #ffffff;
-  --sidebar-border: #e7e1d5;
-  --elevation-card: 0 8px 30px rgb(125 144 112 / 0.08);   /* design-exact soft sage */
-  --elevation-raised: 0 12px 40px rgb(125 144 112 / 0.16);
+  --accent: #617552;         /* audit primary green */
+  --accent-hover: #506344;
+  --accent-subtle: #eaf1e5;
+  --accent-text: #486140;
+  --brand: #7d9070;          /* full-strength sage — graphics/dots only */
+  --success: #617552; --success-subtle: #e9f2e5; --success-text: #486140;
+  --warning: #d09000; --warning-subtle: #fff1d3; --warning-text: #855900;
+  --critical: #b1502f; --critical-hover: #96431f; --critical-subtle: #fce8e1; --critical-text: #98462b;
+  --info: #4e7d74; --info-subtle: #e7f2f3; --info-text: #426a72;
+  --chart-1: #617552; --chart-2: #8fa37e; --chart-3: #e1e5de;
+  --focus-ring: #506344;
+  --overlay: rgb(32 36 31 / 0.45);
+  --sidebar-bg: #f7f7f4;
+  --sidebar-hover: #eceee8; --sidebar-fg: #454c43;   /* stronger inactive contrast */
+  --sidebar-muted: #646b62; --sidebar-active: #3c4c32;
+  --sidebar-active-bg: #eaf1e5;   /* soft green, dark-green label (audit) */
+  --sidebar-active-fg: #3c4c32;
+  --sidebar-border: #e1e5de;
+  --elevation-card: 0 1px 2px rgb(20 28 20 / 0.04);   /* audit-exact crisp shadow */
+  --elevation-raised: 0 12px 32px rgb(20 28 20 / 0.14);
 }
 
 /* SUPPORT (owner's Claude Design "Building Support Tickets" handoff,

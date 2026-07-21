@@ -1,10 +1,29 @@
 import * as React from "react";
 import { cn } from "@/lib/cn";
 
-export function Table({ className, ...props }: React.TableHTMLAttributes<HTMLTableElement>) {
+export function Table({
+  className,
+  sticky,
+  ...props
+}: React.TableHTMLAttributes<HTMLTableElement> & {
+  /** Long tables: cap height and keep the header row pinned while scrolling. */
+  sticky?: boolean;
+}) {
   return (
-    <div className="w-full overflow-x-auto rounded-card border border-edge bg-surface shadow-card">
-      <table className={cn("w-full caption-bottom text-body-sm", className)} {...props} />
+    <div
+      className={cn(
+        "w-full overflow-x-auto rounded-card border border-edge bg-surface shadow-card",
+        sticky && "max-h-[65vh] overflow-y-auto"
+      )}
+    >
+      <table
+        className={cn(
+          "w-full caption-bottom text-body-sm",
+          sticky && "[&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead]:bg-surface",
+          className
+        )}
+        {...props}
+      />
     </div>
   );
 }
@@ -29,7 +48,7 @@ export function Th({
   return (
     <th
       className={cn(
-        "h-12 px-6 py-3.5 text-left align-middle text-caption font-medium tracking-[0.06em] text-fg-muted uppercase",
+        "h-11 px-6 py-3 text-left align-middle text-caption font-semibold tracking-[0.05em] text-fg-secondary uppercase",
         numeric && "text-right",
         className
       )}
@@ -46,8 +65,8 @@ export function Td({
   return (
     <td
       className={cn(
-        "h-[3.75rem] px-6 py-4 align-middle text-body-sm text-fg",
-        numeric && "text-right font-mono",
+        "h-14 px-6 py-3.5 align-middle text-body-sm text-fg",
+        numeric && "text-right font-numeric tabular-nums",
         className
       )}
       {...props}

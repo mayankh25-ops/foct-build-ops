@@ -30,6 +30,57 @@ export interface RosterShift {
   start: number;
   end: number;
   zone: string;
+  /** set when this occurrence was materialised from an ongoing/temporary pattern */
+  patternId?: string;
+}
+
+export type ShiftPatternKind = "ongoing" | "temporary";
+
+/** A standing roster arrangement — permanent or for a fixed period. Expanded
+ *  into concrete RosterShift occurrences for the current week (all consumers
+ *  keep reading plain shifts). */
+export interface ShiftPattern {
+  id: string;
+  staffId: string;
+  zone: string;
+  start: number;
+  end: number;
+  kind: ShiftPatternKind;
+  /** yyyy-mm-dd — first day the arrangement applies */
+  startDate: string;
+  /** yyyy-mm-dd — last day (temporary only) */
+  endDate?: string;
+  /** 0=Mon … 6=Sun */
+  weekdays: number[];
+}
+
+/** Monday-start weekday: 0=Mon … 6=Sun */
+const mondayWeekday = (d: Date) => (d.getDay() + 6) % 7;
+
+/** Concrete occurrences of a pattern inside the week containing `now`. */
+export function patternOccurrencesForWeek(pattern: ShiftPattern, now: Date): RosterShift[] {
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - mondayWeekday(now));
+  monday.setHours(0, 0, 0, 0);
+  const out: RosterShift[] = [];
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(monday);
+    day.setDate(monday.getDate() + i);
+    const key = dateKey(day);
+    if (key < pattern.startDate) continue;
+    if (pattern.kind === "temporary" && pattern.endDate && key > pattern.endDate) continue;
+    if (!pattern.weekdays.includes(mondayWeekday(day))) continue;
+    out.push({
+      id: `${pattern.id}@${key}`,
+      staffId: pattern.staffId,
+      date: key,
+      start: pattern.start,
+      end: pattern.end,
+      zone: pattern.zone,
+      patternId: pattern.id,
+    });
+  }
+  return out;
 }
 
 export interface AttendanceEvent {
@@ -61,7 +112,18 @@ export const staffDirectory: StaffMember[] = [
   { id: "grace", name: "Grace Liu", pin: "6789", role: "Cleaner" },
 ];
 
-export const staffById = Object.fromEntries(staffDirectory.map((s) => [s.id, s]));
+export const staffById: Record<string, StaffMember> = Object.fromEntries(
+  staffDirectory.map((s) => [s.id, s])
+);
+
+/** Register a manager-added cleaner into the module registry (kiosk PIN
+ *  lookup, dashboard names, derivations all read it). Idempotent by id. */
+function registerStaff(m: StaffMember) {
+  if (!staffById[m.id]) {
+    staffDirectory.push(m);
+    staffById[m.id] = m;
+  }
+}
 
 export function dateKey(d: Date): string {
   const y = d.getFullYear();
@@ -248,6 +310,12 @@ export interface TimesheetEntry {
   /** paired in→out hours; 0 when missed, in-progress counts to `now` */
   actual: number;
   inProgress: boolean;
+  checkIn?: Date;
+  checkOut?: Date;
+  /** manager's per-shift +/- hours correction */
+  correction?: ShiftCorrection;
+  /** actual + correction, floored at 0 — what payroll pays for this shift */
+  paid: number;
 }
 
 export interface TimesheetWeekRow {
@@ -255,24 +323,33 @@ export interface TimesheetWeekRow {
   entries: TimesheetEntry[];
   rostered: number;
   actual: number;
+  /** actual with per-shift corrections applied — payroll's number */
+  corrected: number;
   variance: number;
   needsReview: boolean;
   approved: boolean;
+  /** manager's payroll decision — set when approved with the review modal */
+  approval?: { note?: string; approvedHours?: number };
 }
 
 export function deriveTimesheets(
   shifts: RosterShift[],
   events: AttendanceEvent[],
   approvals: Record<string, string>,
-  now: Date
+  now: Date,
+  approvalMeta: Record<string, ApprovalMeta> = {},
+  corrections: Record<string, ShiftCorrection> = {}
 ): TimesheetWeekRow[] {
   const monday = new Date(now);
   monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
   monday.setHours(0, 0, 0, 0);
 
+  const mondayKey = dateKey(monday);
+  const todayKey = dateKey(now);
   return staffDirectory.map((staff) => {
     const entries: TimesheetEntry[] = shifts
-      .filter((s) => s.staffId === staff.id && new Date(`${s.date}T12:00:00`) >= monday)
+      // this week, up to today — future pattern occurrences aren't payable yet
+      .filter((s) => s.staffId === staff.id && new Date(`${s.date}T12:00:00`) >= monday && s.date <= todayKey)
       .sort((a, b) => a.date.localeCompare(b.date))
       .map((s) => {
         const v = deriveShift(s, events, now);
@@ -283,30 +360,42 @@ export function deriveTimesheets(
           actual = (now.getTime() - v.checkIn.getTime()) / 3600000;
           inProgress = true;
         }
+        const rounded = Math.max(0, Math.round(actual * 100) / 100);
+        const correction = corrections[s.id];
         return {
           shift: s,
           staff,
           status: v.status,
           rostered: s.end - s.start,
-          actual: Math.max(0, Math.round(actual * 100) / 100),
+          actual: rounded,
           inProgress,
+          checkIn: v.checkIn,
+          checkOut: v.checkOut,
+          correction,
+          paid: Math.max(0, Math.round((rounded + (correction?.delta ?? 0)) * 100) / 100),
         };
       });
     const done = entries.filter((e) => !e.inProgress);
     const rostered = done.reduce((n, e) => n + e.rostered, 0);
     const actual = done.reduce((n, e) => n + e.actual, 0);
+    const corrected = done.reduce((n, e) => n + e.paid, 0);
     const variance = Math.round((actual - rostered) * 100) / 100;
     return {
       staff,
       entries,
       rostered,
       actual: Math.round(actual * 100) / 100,
+      corrected: Math.round(corrected * 100) / 100,
       variance,
       needsReview:
         Math.abs(variance) > REVIEW_VARIANCE_H || entries.some((e) => e.status === "missed"),
-      approved: approvals[staff.id] === dateKey(monday),
+      approved: approvals[staff.id] === mondayKey,
+      approval:
+        approvals[staff.id] === mondayKey && approvalMeta[staff.id]?.week === mondayKey
+          ? { note: approvalMeta[staff.id]!.note, approvedHours: approvalMeta[staff.id]!.approvedHours }
+          : undefined,
     };
-  });
+  }).filter((r) => r.entries.length > 0 || approvals[r.staff.id] === mondayKey);
 }
 
 /* ---------------- store ---------------- */
@@ -320,18 +409,42 @@ export interface CheckResult {
   noOpenShift?: boolean;
 }
 
+export interface ApprovalMeta {
+  week: string;
+  note?: string;
+  /** manager-adjusted payroll hours (defaults to derived actual) */
+  approvedHours?: number;
+}
+
+/** A per-shift payroll correction: +/- hours with the manager's reason. */
+export interface ShiftCorrection {
+  delta: number;
+  note: string;
+}
+
 interface AttendanceState {
   shifts: RosterShift[];
   events: AttendanceEvent[];
   /** staffId → monday dateKey of the approved week */
   approvals: Record<string, string>;
+  /** staffId → remarks + adjusted hours captured at approval */
+  approvalMeta: Record<string, ApprovalMeta>;
+  /** shift id → per-shift +/- hours correction with remark */
+  corrections: Record<string, ShiftCorrection>;
+  /** standing roster arrangements (ongoing / temporary) */
+  shiftPatterns: ShiftPattern[];
+  /** manager-added cleaners (seed cast lives in staffDirectory) */
+  customStaff: StaffMember[];
   seededAt: string | null;
   /** Seeds the demo week on first mount (client-only; needs the real clock). */
   ensureSeed: () => void;
   checkIn: (pin: string) => CheckResult;
   checkOut: (pin: string) => CheckResult;
   addShift: (input: { staffId: string; date: string; start: number; end: number; zone: string }) => void;
-  approveWeek: (staffId: string, now: Date) => void;
+  addShiftPattern: (input: Omit<ShiftPattern, "id">) => void;
+  setCorrection: (shiftId: string, correction: ShiftCorrection | null) => void;
+  addStaff: (input: { name: string; pin: string; role?: string }) => { ok: boolean; error?: string; staff?: StaffMember };
+  approveWeek: (staffId: string, now: Date, opts?: { note?: string; approvedHours?: number }) => void;
   approveAllReady: (now: Date) => void;
   resetDemo: () => void;
 }
@@ -369,15 +482,31 @@ export const useAttendanceStore = create<AttendanceState>()(
       shifts: [],
       events: [],
       approvals: {},
+      approvalMeta: {},
+      corrections: {},
+      shiftPatterns: [],
+      customStaff: [],
       seededAt: null,
 
       ensureSeed: () => {
         const s = get();
-        const today = dateKey(new Date());
+        // manager-added cleaners must survive reseeds AND reloads
+        s.customStaff.forEach(registerStaff);
+        const now = new Date();
+        const today = dateKey(now);
         // reseed when empty OR when the seed is from an older day (demo stays alive)
         if (s.seededAt === today && s.shifts.length) return;
-        const seeded = seedWeek(new Date());
-        set({ ...seeded, approvals: {}, seededAt: today });
+        const seeded = seedWeek(now);
+        // standing arrangements survive the reseed — re-materialise this week
+        const fromPatterns = s.shiftPatterns.flatMap((pt) => patternOccurrencesForWeek(pt, now));
+        set({
+          shifts: [...seeded.shifts, ...fromPatterns],
+          events: seeded.events,
+          approvals: {},
+          approvalMeta: {},
+          corrections: {},
+          seededAt: today,
+        });
       },
 
       checkIn: (pin) => {
@@ -421,10 +550,50 @@ export const useAttendanceStore = create<AttendanceState>()(
         }));
       },
 
-      approveWeek: (staffId, now) => {
+      addShiftPattern: (input) => {
+        const pattern: ShiftPattern = { id: `pt-${Date.now()}-${evSeq++}`, ...input };
+        const occurrences = patternOccurrencesForWeek(pattern, new Date());
+        set((st) => ({
+          shiftPatterns: [...st.shiftPatterns, pattern],
+          shifts: [...st.shifts, ...occurrences.filter((o) => !st.shifts.some((x) => x.id === o.id))],
+        }));
+      },
+
+      setCorrection: (shiftId, correction) =>
+        set((st) => {
+          const next = { ...st.corrections };
+          if (correction && Math.abs(correction.delta) > 0.001) next[shiftId] = correction;
+          else delete next[shiftId];
+          return { corrections: next };
+        }),
+
+      addStaff: (input) => {
+        const name = input.name.trim();
+        const pin = input.pin.trim();
+        if (name.length < 2) return { ok: false, error: "Enter the cleaner's name" };
+        if (!/^\d{4}$/.test(pin)) return { ok: false, error: "PIN must be exactly 4 digits" };
+        if (staffDirectory.some((s) => s.pin === pin))
+          return { ok: false, error: "That PIN is already in use — pick another" };
+        const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "cleaner";
+        let id = base;
+        let n = 2;
+        while (staffById[id]) id = `${base}-${n++}`;
+        const staff: StaffMember = { id, name, pin, role: input.role?.trim() || "Cleaner" };
+        registerStaff(staff);
+        set((st) => ({ customStaff: [...st.customStaff, staff] }));
+        return { ok: true, staff };
+      },
+
+      approveWeek: (staffId, now, opts) => {
         const monday = new Date(now);
         monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-        set((st) => ({ approvals: { ...st.approvals, [staffId]: dateKey(monday) } }));
+        const week = dateKey(monday);
+        set((st) => ({
+          approvals: { ...st.approvals, [staffId]: week },
+          approvalMeta: opts
+            ? { ...st.approvalMeta, [staffId]: { week, note: opts.note, approvedHours: opts.approvedHours } }
+            : st.approvalMeta,
+        }));
       },
 
       approveAllReady: (now) => {
@@ -444,7 +613,7 @@ export const useAttendanceStore = create<AttendanceState>()(
 
       resetDemo: () => {
         const seeded = seedWeek(new Date());
-        set({ ...seeded, approvals: {}, seededAt: dateKey(new Date()) });
+        set({ ...seeded, approvals: {}, approvalMeta: {}, corrections: {}, shiftPatterns: [], customStaff: [], seededAt: dateKey(new Date()) });
       },
     }),
     {

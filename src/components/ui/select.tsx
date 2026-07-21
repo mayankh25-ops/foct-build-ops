@@ -20,6 +20,8 @@ export interface SelectProps {
   onValueChange?: (value: string) => void;
   disabled?: boolean;
   className?: string;
+  /** accessible name for label-less selects (inline forms) */
+  "aria-label"?: string;
 }
 
 export function Select({
@@ -31,6 +33,7 @@ export function Select({
   onValueChange,
   disabled,
   className,
+  "aria-label": ariaLabel,
 }: SelectProps) {
   const id = React.useId();
   return (
@@ -48,6 +51,7 @@ export function Select({
       >
         <SelectPrimitive.Trigger
           id={id}
+          aria-label={ariaLabel}
           className={cn(
             "flex h-11 w-full items-center justify-between rounded-control border border-edge-strong",
             "bg-surface px-3.5 text-body text-fg transition-colors duration-150",
