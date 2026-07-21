@@ -44,9 +44,6 @@ const doorIconMap: Record<DoorIcon, React.ComponentType<{ className?: string }>>
   dock: Container,
 };
 
-const fmtWhen = (iso: string) =>
-  new Date(iso).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: false });
-
 /* ---------------------------------------------------------------- */
 /* Configure — gateway, cameras, doors                               */
 /* ---------------------------------------------------------------- */
@@ -259,7 +256,6 @@ export function SecurityPanel() {
   const gatewayUrl = useSecurityStore((s) => s.gatewayUrl);
   const cameras = useSecurityStore((s) => s.cameras);
   const doors = useSecurityStore((s) => s.doors);
-  const events = useSecurityStore((s) => s.events);
   const toggleDoor = useSecurityStore((s) => s.toggleDoor);
   const online = useGatewayOnline(gatewayUrl);
   const { toast } = useToast();
@@ -316,75 +312,78 @@ export function SecurityPanel() {
         </div>
 
         <div className="min-w-0">
-          <div className="grid grid-cols-2 gap-3">
-            {doors.map((d) => {
+          {/* access-control style: one row per door, lock toggle on the right */}
+          <div className="overflow-hidden rounded-card border border-edge bg-surface shadow-card">
+            {doors.map((d, i) => {
               const Icon = doorIconMap[d.icon];
               const unlocked = d.state === "unlocked";
               return (
-                <button
+                <div
                   key={d.id}
-                  type="button"
-                  aria-pressed={unlocked}
-                  aria-label={`${unlocked ? "Lock" : "Unlock"} ${d.name}`}
-                  onClick={() => {
-                    toggleDoor(d.id, building.manager.name);
-                    toast({
-                      tone: unlocked ? "success" : "neutral",
-                      title: `${d.name} ${unlocked ? "locked" : "unlocked"}`,
-                      description:
-                        !unlocked && d.autoRelockSeconds
-                          ? `Auto-relocks in ${d.autoRelockSeconds}s`
-                          : undefined,
-                    });
-                  }}
-                  className={cn(
-                    "flex flex-col items-center gap-2 rounded-card border p-4 text-center transition-colors",
-                    unlocked
-                      ? "border-edge-strong bg-warning-subtle"
-                      : "border-edge bg-surface shadow-card hover:bg-hover"
-                  )}
+                  className={cn("flex items-center gap-3.5 px-4 py-3.5", i > 0 && "border-t border-edge")}
                 >
-                  <span className="relative">
-                    <Icon aria-hidden className={cn("size-8", unlocked ? "text-warning-text" : "text-fg-secondary")} />
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "flex size-10 shrink-0 items-center justify-center rounded-control",
+                      unlocked ? "bg-warning-subtle text-warning-text" : "bg-accent-subtle text-accent-text"
+                    )}
+                  >
+                    <Icon className="size-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-body-sm font-medium text-fg">{d.name}</p>
+                    <p className={cn("flex items-center gap-1 text-caption", unlocked ? "text-warning-text" : "text-fg-muted")}>
+                      {unlocked ? <LockOpen aria-hidden className="size-3" /> : <Lock aria-hidden className="size-3" />}
+                      {unlocked
+                        ? d.autoRelockSeconds
+                          ? `Unlocked · auto-relocks in ${d.autoRelockSeconds}s`
+                          : "Unlocked"
+                        : "Locked · secure"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={unlocked}
+                    aria-label={`${unlocked ? "Lock" : "Unlock"} ${d.name}`}
+                    onClick={() => {
+                      toggleDoor(d.id, building.manager.name);
+                      toast({
+                        tone: unlocked ? "success" : "neutral",
+                        title: `${d.name} ${unlocked ? "locked" : "unlocked"}`,
+                        description:
+                          !unlocked && d.autoRelockSeconds
+                            ? `Auto-relocks in ${d.autoRelockSeconds}s`
+                            : undefined,
+                      });
+                    }}
+                    className={cn(
+                      "relative h-7 w-12 shrink-0 rounded-pill transition-colors duration-150",
+                      unlocked ? "bg-warning" : "bg-success"
+                    )}
+                  >
                     <span
                       aria-hidden
                       className={cn(
-                        "absolute -right-2.5 -bottom-1 flex size-5 items-center justify-center rounded-pill border",
-                        unlocked
-                          ? "border-warning-subtle bg-warning text-on-accent"
-                          : "border-surface bg-accent-subtle text-accent-text"
+                        "absolute top-0.5 flex size-6 items-center justify-center rounded-pill bg-surface shadow-card transition-[left] duration-150",
+                        unlocked ? "left-[1.375rem]" : "left-0.5"
                       )}
                     >
-                      {unlocked ? <LockOpen className="size-3" /> : <Lock className="size-3" />}
+                      {unlocked ? (
+                        <LockOpen className="size-3 text-warning-text" />
+                      ) : (
+                        <Lock className="size-3 text-success-text" />
+                      )}
                     </span>
-                  </span>
-                  <span className="text-body-sm font-medium text-fg">{d.name}</span>
-                  <StatusPill tone={unlocked ? "warning" : "success"}>
-                    {unlocked ? "Unlocked" : "Locked"}
-                  </StatusPill>
-                </button>
+                  </button>
+                </div>
               );
             })}
           </div>
-
-          {events.length > 0 && (
-            <div className="mt-4 rounded-card border border-edge bg-surface p-3.5 shadow-card">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-caption font-semibold tracking-[0.05em] text-fg-secondary uppercase">
-                  Security log
-                </p>
-                <Badge tone="neutral">{events.length}</Badge>
-              </div>
-              <div className="mt-2 flex flex-col gap-1.5">
-                {events.slice(0, 6).map((e) => (
-                  <p key={e.id} className="text-caption text-fg-secondary">
-                    <span className="font-numeric tabular-nums">{fmtWhen(e.at)}</span> · {e.action}{" "}
-                    <span className="font-medium text-fg">{e.target}</span> — {e.who}
-                  </p>
-                ))}
-              </div>
-            </div>
-          )}
+          <p className="mt-2.5 text-caption text-fg-muted">
+            Green = secured · amber = unlocked. Every action is recorded for the audit trail.
+          </p>
         </div>
       </div>
     </div>

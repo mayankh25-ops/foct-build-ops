@@ -448,7 +448,9 @@ interface AttendanceState {
   addShift: (input: { staffId: string; date: string; start: number; end: number; zone: string }) => void;
   addShiftPattern: (input: Omit<ShiftPattern, "id">) => void;
   setCorrection: (shiftId: string, correction: ShiftCorrection | null) => void;
-  addStaff: (input: { name: string; pin: string; role?: string }) => { ok: boolean; error?: string; staff?: StaffMember };
+  /** PIN is SYSTEM-GENERATED (unique 4 digits) unless explicitly supplied —
+   *  the admin is shown the PIN once to pass on privately. */
+  addStaff: (input: { name: string; pin?: string; role?: string }) => { ok: boolean; error?: string; staff?: StaffMember };
   approveWeek: (staffId: string, now: Date, opts?: { note?: string; approvedHours?: number }) => void;
   approveAllReady: (now: Date) => void;
   resetDemo: () => void;
@@ -588,11 +590,19 @@ export const useAttendanceStore = create<AttendanceState>()(
 
       addStaff: (input) => {
         const name = input.name.trim();
-        const pin = input.pin.trim();
         if (name.length < 2) return { ok: false, error: "Enter the cleaner's name" };
-        if (!/^\d{4}$/.test(pin)) return { ok: false, error: "PIN must be exactly 4 digits" };
-        if (staffDirectory.some((s) => s.pin === pin))
-          return { ok: false, error: "That PIN is already in use — pick another" };
+        let pin = input.pin?.trim() ?? "";
+        if (pin) {
+          if (!/^\d{4}$/.test(pin)) return { ok: false, error: "PIN must be exactly 4 digits" };
+          if (staffDirectory.some((s) => s.pin === pin))
+            return { ok: false, error: "That PIN is already in use — pick another" };
+        } else {
+          // system-generated: unique, never a trivial sequence
+          const trivial = new Set(["0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999", "1234", "4321"]);
+          do {
+            pin = String(Math.floor(1000 + Math.random() * 9000));
+          } while (trivial.has(pin) || staffDirectory.some((s) => s.pin === pin));
+        }
         const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "cleaner";
         let id = base;
         let n = 2;

@@ -122,7 +122,6 @@ function AddShiftModal({ now }: { now: Date }) {
   const [staffId, setStaffId] = React.useState(staffDirectory[0]!.id);
   const [newCleaner, setNewCleaner] = React.useState(false);
   const [newName, setNewName] = React.useState("");
-  const [newPin, setNewPin] = React.useState("");
   const [staffError, setStaffError] = React.useState<string | null>(null);
   const [duration, setDuration] = React.useState<"one-off" | "ongoing" | "temporary">("one-off");
   const [date, setDate] = React.useState(dateKey(now));
@@ -146,7 +145,7 @@ function AddShiftModal({ now }: { now: Date }) {
   const valid =
     zone.trim().length > 0 &&
     toDec(end) > toDec(start) &&
-    (!newCleaner || (newName.trim().length >= 2 && /^\d{4}$/.test(newPin))) &&
+    (!newCleaner || newName.trim().length >= 2) &&
     (duration === "one-off" || weekdays.length > 0) &&
     (duration !== "temporary" || (!!endDate && endDate >= date));
 
@@ -155,14 +154,16 @@ function AddShiftModal({ now }: { now: Date }) {
   const submit = () => {
     let id = staffId;
     let cleanerName = staffDirectory.find((s) => s.id === staffId)?.name ?? "";
+    let issuedPin = "";
     if (newCleaner) {
-      const res = addStaff({ name: newName, pin: newPin });
+      const res = addStaff({ name: newName });
       if (!res.ok || !res.staff) {
         setStaffError(res.error ?? "Couldn't add the cleaner");
         return;
       }
       id = res.staff.id;
       cleanerName = res.staff.name;
+      issuedPin = res.staff.pin;
     }
     if (duration === "one-off") {
       addShift({ staffId: id, date, start: toDec(start), end: toDec(end), zone: zone.trim() });
@@ -182,7 +183,6 @@ function AddShiftModal({ now }: { now: Date }) {
     setZone("");
     setNewCleaner(false);
     setNewName("");
-    setNewPin("");
     setStaffError(null);
     toast({
       tone: "success",
@@ -193,7 +193,7 @@ function AddShiftModal({ now }: { now: Date }) {
           : duration === "ongoing"
             ? "Ongoing shift set — every rostered week from now"
             : `Temporary shift set — ${date} to ${endDate}`,
-      description: `${cleanerName} · ${start}–${end}${newCleaner ? ` · kiosk PIN ${newPin}` : ""}`,
+      description: `${cleanerName} · ${start}–${end}${issuedPin ? ` · kiosk PIN ${issuedPin} — tell them privately` : ""}`,
     });
   };
 
@@ -238,21 +238,12 @@ function AddShiftModal({ now }: { now: Date }) {
                       onChange={(e) => setNewName(e.target.value)}
                     />
                   </label>
-                  <label className={label}>
-                    Kiosk PIN (4 digits)
-                    <Input
-                      inputMode="numeric"
-                      maxLength={4}
-                      placeholder="e.g. 7412"
-                      value={newPin}
-                      onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))}
-                    />
-                  </label>
                   {staffError && (
                     <p className="text-caption text-critical-text sm:col-span-2">{staffError}</p>
                   )}
                   <p className="text-caption text-fg-muted sm:col-span-2">
-                    They can check in at the kiosk with this PIN straight away.
+                    Their kiosk PIN is generated automatically — you&apos;ll see it after saving
+                    to pass on privately. At the kiosk they just search their name.
                   </p>
                 </div>
               ) : (
