@@ -12,6 +12,7 @@ import {
   LayoutGrid,
   ListChecks,
   Map,
+  Music2,
   Package,
   PersonStanding,
   ScanLine,
@@ -93,6 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               { label: "Concierge desk", icon: Building2, href: "/concierge" },
               { label: "Residents", icon: UsersRound, href: "/residents" },
               { label: "Parcels", icon: Package, disabled: true },
+              { label: "Ambient audio", icon: Music2, disabled: true },
             ],
           },
           {
