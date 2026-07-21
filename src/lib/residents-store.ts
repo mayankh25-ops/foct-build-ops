@@ -299,6 +299,27 @@ const seedRequests = (): ResidentRequest[] => [
   { id: "q4", ref: "RR-2028", residentId: "r-whitford", kind: "guest-access", at: daysAgo(4), detail: "Parents visiting 2 weeks — temporary fob + visitor bay", status: "done" },
 ];
 
+/** Non-declined bookings that clash with the proposed window — the
+ *  double-booking guard for the concierge desk. */
+export function conflictingBookings(
+  bookings: AmenityBooking[],
+  amenityId: AmenityId,
+  date: string,
+  start: number,
+  end: number,
+  ignoreId?: string
+): AmenityBooking[] {
+  return bookings.filter(
+    (b) =>
+      b.id !== ignoreId &&
+      b.amenityId === amenityId &&
+      b.date === date &&
+      b.status !== "declined" &&
+      b.start < end &&
+      start < b.end
+  );
+}
+
 export function nextRequestRef(requests: ResidentRequest[]): string {
   const nums = requests.map((r) => Number.parseInt(r.ref.replace("RR-", ""), 10)).filter(Number.isFinite);
   return `RR-${Math.max(2000, ...nums) + 1}`;
@@ -318,7 +339,9 @@ interface ResidentsState {
   addHistory: (residentId: string, entry: { kind: HistoryKind; by: string; text: string }) => void;
   addCredential: (residentId: string, kind: CredentialKind, label: string) => void;
   setCredentialStatus: (residentId: string, credentialId: string, status: CredentialStatus) => void;
-  addBooking: (input: Omit<AmenityBooking, "id" | "status">) => void;
+  /** residents' own requests default to "pending"; the concierge desk books
+   *  on behalf with status "confirmed". */
+  addBooking: (input: Omit<AmenityBooking, "id" | "status"> & { status?: AmenityBooking["status"] }) => void;
   setBookingStatus: (id: string, status: AmenityBooking["status"]) => void;
   addRequest: (input: Omit<ResidentRequest, "id" | "ref" | "at" | "status">) => string;
   setRequestStatus: (id: string, status: ResidentRequest["status"]) => void;
@@ -432,7 +455,7 @@ export const useResidentsStore = create<ResidentsState>()(
       addBooking: (input) =>
         set((s) => ({
           bookings: [
-            { ...input, id: `b-${Date.now()}-${seq++}`, status: "pending" as const },
+            { ...input, id: `b-${Date.now()}-${seq++}`, status: input.status ?? ("pending" as const) },
             ...s.bookings,
           ],
         })),
