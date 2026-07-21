@@ -28,6 +28,8 @@
 
 **Ambient Audio registered 2026-07-18 (owner directive, build post-Stage 9):** coming-soon shell only — nav + module card + roadmap entry; full spec in docs/modules/AMBIENT_AUDIO_PRD.md. No Spotify/YouTube ever (terms prohibit commercial background playback); OneMusic licensing disclaimer on the module page. Do not build until the owner opens the stage.
 
+**Cameras & doors panel 2026-07-18 (owner directive):** dashboard section with live RTSP camera tiles via a LOCAL go2rtc gateway (config-driven; calm offline state; Windows setup guide in docs/SECURITY_CAMERAS_DOORS.md) + big door Lock/Unlock soft-trigger toggles (demo/http modes, auto-relock, security log; /api/security/door proxy is env-gated + private-network-only). Replaces the old camera-wall Pro banner. Wave-8 7/7 + full regression green.
+
 ## Previous stage
 **Stage 1.5 Theme Builder: SHIPPED (2026-07-07).** Appearance settings (`/settings/appearance`): all 15 themes as live preview cards applyable per building; custom theme creator (8 hex tokens, rest derived + contrast-nudged, WCAG AA validation with warn-on-save via the SAME shared pair list as the build gate); typography slots + woff2 upload; persisted in `foct-theme-builder-v1` mirroring the authored-but-not-yet-run `supabase/migrations/0001_theme_engine.sql` (+pgTAP test). Variant status unchanged underneath: Nature & Glass finalists, other option-* frozen, final pick still open.
 ## Previous stage detail

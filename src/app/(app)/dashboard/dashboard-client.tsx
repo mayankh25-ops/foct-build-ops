@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  Camera,
   Cloud,
   CloudRain,
   MapPin,
@@ -21,9 +20,9 @@ import { MetricCard } from "@/components/ui/metric-card";
 import { MiniBarChart } from "@/components/ui/mini-bar-chart";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
+import { SecurityPanel } from "@/components/security-panel";
 import {
   building,
-  cameraZones,
   fmtTime,
   shiftStatusMeta,
   stock,
@@ -315,19 +314,8 @@ export function DashboardClient() {
         />
       </div>
 
-      {/* camera wall — locked module, one quiet line */}
-      <Card className="mt-6">
-        <CardBody className="flex flex-wrap items-center gap-4 py-4">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-control bg-hover">
-            <Camera aria-hidden className="size-4 text-fg-muted" />
-          </span>
-          <p className="min-w-0 flex-1 text-body-sm text-fg-secondary">
-            <span className="font-medium text-fg">Live camera wall</span> — presence verification
-            from building cameras ({cameraZones.length} zones ready to connect)
-          </p>
-          <Badge tone="info">Requires Automation Pro</Badge>
-        </CardBody>
-      </Card>
+      {/* live cameras + door soft-triggers (owner direction 2026-07-18) */}
+      <SecurityPanel />
 
       {/* shifts + activity */}
       <div className="mt-8 grid gap-6 xl:grid-cols-3">
