@@ -10,6 +10,7 @@
  *    /api/integrations routes. Secrets go straight to Vault; the client
  *    never sees them again.
  */
+import { activeOrgIdOr } from "@/lib/session";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -157,7 +158,7 @@ export const useIntegrationsStore = create<IntegrationsState>()(
           const res = await fetch("/api/integrations/test", {
             method: "POST",
             headers: { "Content-Type": "application/json", ...(await authHeader()) },
-            body: JSON.stringify({ orgId: DEMO_ORG_ID, slug, config: values }),
+            body: JSON.stringify({ orgId: activeOrgIdOr(DEMO_ORG_ID), slug, config: values }),
           });
           return (await res.json()) as TestOutcome;
         }
@@ -188,7 +189,7 @@ export const useIntegrationsStore = create<IntegrationsState>()(
             .single();
           const { data, error } = await supabase.rpc("integration_credential_save", {
             p_provider: providerRow?.id,
-            p_org: DEMO_ORG_ID,
+            p_org: activeOrgIdOr(DEMO_ORG_ID),
             p_building: null,
             p_label: label,
             p_config: config,

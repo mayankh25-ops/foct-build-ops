@@ -1,5 +1,7 @@
 "use client";
 
+import * as React from "react";
+
 import {
   Bot,
   Building2,
@@ -31,6 +33,8 @@ import { fontSlotStyle, ThemeRuntimeStyles } from "@/components/theme-runtime";
 import { building } from "@/lib/demo-data";
 import { BUILTIN_THEMES } from "@/lib/theme-registry";
 import { DEFAULT_THEME, useThemeRehydrate, useThemeStore } from "@/lib/theme-store";
+import { useRouter } from "next/navigation";
+import { signOut, useSessionInit, useSessionStore } from "@/lib/session";
 
 /**
  * AppShell. The rendered theme comes from the building's assignment in the
@@ -43,6 +47,18 @@ import { DEFAULT_THEME, useThemeRehydrate, useThemeStore } from "@/lib/theme-sto
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   useThemeRehydrate();
+  useSessionInit();
+  const router = useRouter();
+  const sessionStatus = useSessionStore((s) => s.status);
+  const profile = useSessionStore((s) => s.profile);
+  const activeOrgId = useSessionStore((s) => s.activeOrgId);
+
+  // live mode: unauthenticated users go to sign-in; demo mode never redirects
+  React.useEffect(() => {
+    if (sessionStatus === "signed-out") router.replace("/sign-in");
+  }, [sessionStatus, router]);
+
+  const membership = profile?.memberships.find((m) => m.org_id === activeOrgId);
   const assigned = useThemeStore((s) => s.assignedTheme);
   const customThemes = useThemeStore((s) => s.customThemes);
   const fontSlots = useThemeStore((s) => s.fontSlots);
@@ -123,10 +139,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar
-          orgName={building.org}
-          buildingName={building.name}
-          userName={building.manager.name}
-          userRole={building.manager.role}
+          orgName={membership?.org_name ?? building.org}
+          buildingName={profile?.buildings[0]?.name ?? building.name}
+          userName={profile?.name ?? building.manager.name}
+          userRole={membership?.role_name ?? building.manager.role}
+          onSignOut={
+            sessionStatus === "ready"
+              ? () => {
+                  void signOut().then(() => router.replace("/sign-in"));
+                }
+              : undefined
+          }
         />
         <ToastProvider>
           <main className="min-w-0 flex-1 overflow-y-auto">

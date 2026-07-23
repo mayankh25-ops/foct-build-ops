@@ -3,6 +3,9 @@
 > Read this first, every session. Update it before ending any session.
 
 ## Current stage
+**STAGE 2 IN PROGRESS (opened 2026-07-21, owner-approved 8-phase plan — see DECISIONS).** Phase 1 (logins & roles) SHIPPED: `current_profile()` RPC (0006 + APPLY_STAGE2_PHASE1.sql, mirror-proven 5/5), session layer with demo fallback (`src/lib/session.ts`), live-mode /sign-in redirect, real user/org/role in the TopBar + Sign out, integrations act as the session org. Next: phase 2 — attendance backend (shifts/patterns/events/selfie storage/approvals + kiosk device pairing), then Vercel deploy.
+
+
 **Stage 4 Integrations framework: SHIPPED (2026-07-14, branch `claude/integrations-framework-plan-fhmyij`).** Dynamic, GUI-configured providers exactly per CLAUDE.md — nothing third-party hardcoded:
 - **DB (0005 + APPLY_STAGE4_INTEGRATIONS.sql, awaiting owner paste):** catalogue rows now carry per-brand JSON Schemas; `integration_credentials` is Vault-backed, replace-only (DB trigger), one-active-per-scope (partial unique index), fully audit-logged (trigger); new `notification_log`; SECURITY DEFINER RPCs save/activate/deactivate/record_test/reveal (reveal = service_role ONLY). Proven on the local PG16 mirror: full-chain replay, double-run idempotency, APPLY bundle on a live-state mirror, **23 + 15 + 19 isolation assertions green** (`tests/integrations_isolation_check.sql`).
 - **Adapters (`src/lib/integrations/`):** `EmailProvider` (Resend, Postmark, SendGrid, AWS SES v2 with dependency-free SigV4) + `SmsProvider` (Twilio, MessageMedia, ClickSend) — plain fetch, zero brand SDKs; API versions in DECISIONS.md (2026-07-14 table).
