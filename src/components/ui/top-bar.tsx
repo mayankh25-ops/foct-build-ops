@@ -11,10 +11,11 @@ export interface TopBarProps extends React.HTMLAttributes<HTMLElement> {
   userName: string;
   /** e.g. "Cleaning manager" */
   userRole?: string;
+  onSignOut?: () => void;
 }
 
 /** App bar: organisation / building switchers, build chip, alerts, identity. */
-export function TopBar({ orgName, buildingName, userName, userRole, className, ...props }: TopBarProps) {
+export function TopBar({ orgName, buildingName, userName, userRole, onSignOut, className, ...props }: TopBarProps) {
   return (
     <header
       className={cn(
@@ -68,6 +69,15 @@ export function TopBar({ orgName, buildingName, userName, userRole, className, .
 
       <div className="flex items-center gap-2.5 border-l border-edge pl-3">
         <Avatar name={userName} size="sm" />
+        {onSignOut && (
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="ml-1 rounded-control px-2.5 py-1.5 text-body-sm font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+          >
+            Sign out
+          </button>
+        )}
         <div className="hidden leading-tight lg:block">
           <p className="text-body-sm font-medium text-fg">{userName}</p>
           {userRole && <p className="text-caption text-fg-muted">{userRole}</p>}
