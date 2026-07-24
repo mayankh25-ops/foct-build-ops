@@ -67,7 +67,18 @@ async function loadProfile(): Promise<SessionProfile | null> {
   const { data: sess } = await supabase.auth.getSession();
   if (!sess.session) return null;
   const { data, error } = await supabase.rpc("current_profile");
-  if (error || !data?.user) return null;
+  if (error || !data?.user) {
+    // authenticated but no linked profile row yet — stay signed in with a
+    // minimal identity instead of bouncing back to /sign-in in a loop
+    const email = sess.session.user.email ?? "";
+    return {
+      userId: sess.session.user.id,
+      name: email.split("@")[0] ?? "Account",
+      email,
+      memberships: [],
+      buildings: [],
+    };
+  }
   return {
     userId: data.user.id as string,
     name: (data.user.name as string) ?? "",

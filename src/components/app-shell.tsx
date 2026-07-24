@@ -59,6 +59,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [sessionStatus, router]);
 
   const membership = profile?.memberships.find((m) => m.org_id === activeOrgId);
+
   const assigned = useThemeStore((s) => s.assignedTheme);
   const customThemes = useThemeStore((s) => s.customThemes);
   const fontSlots = useThemeStore((s) => s.fontSlots);
@@ -68,6 +69,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // stale persisted slugs (e.g. a since-deleted review variant) fall back
   const isKnown = custom || BUILTIN_THEMES.some((t) => t.slug === assigned);
   const dataTheme = custom ? custom.baseTheme : isKnown ? assigned : DEFAULT_THEME;
+  // live mode: never paint the portal before the session is resolved — a
+  // quiet gate screen covers loading AND the signed-out redirect in flight
+  if (sessionStatus === "loading" || sessionStatus === "signed-out") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-canvas">
+        <div className="flex items-center gap-3 text-fg-muted">
+          <span aria-hidden className="size-3 animate-pulse rounded-pill bg-accent" />
+          <p className="text-body-sm">
+            {sessionStatus === "loading" ? "Checking your session…" : "Taking you to sign in…"}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
