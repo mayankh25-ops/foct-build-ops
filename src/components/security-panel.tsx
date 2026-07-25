@@ -13,7 +13,7 @@ import {
   Trash2,
   Warehouse,
 } from "lucide-react";
-import { Badge, StatusPill } from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

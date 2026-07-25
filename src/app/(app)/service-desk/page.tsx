@@ -9,6 +9,7 @@ import {
   Link2,
   Plus,
   RotateCcw,
+  SearchX,
   Smartphone,
   ThumbsDown,
   ThumbsUp,
@@ -20,7 +21,6 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { Badge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardBody } from "@/components/ui/card";
 import {
   Drawer,
   DrawerContent,
@@ -44,6 +44,7 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 import { RaiseTicketForm } from "@/components/service-desk/raise-ticket-form";
 import { Select } from "@/components/ui/select";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { compressImage } from "@/lib/compress-image";
@@ -646,6 +647,20 @@ export default function ServiceDeskPage() {
           </div>
         </FilterBar>
 
+        {/* a search or filter that matches nothing says so, rather than
+            showing an empty table and letting the reader wonder */}
+        {visible.length === 0 && (
+          <EmptyState
+            icon={SearchX}
+            title="No tickets match this view"
+            description={
+              query.trim()
+                ? `Nothing matches “${query.trim()}”. Try a level, an area, a ticket number or a name.`
+                : "Nothing in this filter right now. Choose a different view or clear the status filter."
+            }
+          />
+        )}
+
         {/* mobile: record cards (audit §23) */}
         <div className="flex flex-col gap-3 md:hidden">
           {visible.map((t: SdTicketLive) => (
@@ -671,7 +686,7 @@ export default function ServiceDeskPage() {
           ))}
         </div>
 
-        <div className="hidden md:block">
+        <div className={cn("hidden", visible.length > 0 && "md:block")}>
         <Table sticky>
           <THead>
             <Tr>

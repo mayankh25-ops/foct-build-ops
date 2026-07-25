@@ -1,0 +1,121 @@
+name: CI
+
+# Runs on every push and PR. Nothing merges to main that hasn't passed this —
+# the layers here are the automatable half of docs/TESTING.md; the human half
+# (staging UAT, device matrix, exploratory) is a checklist on the release PR.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  static:
+    name: Static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Design tokens (no raw colours)
+        run: npm run check:tokens
+      - name: Contrast (WCAG AA across every theme)
+        run: npm run check:contrast
+      - name: Types
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Committed credentials
+        run: npm run check:secrets
+      - name: Dependency advisories
+        run: npm run check:deps
+
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run --coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  database:
+    name: Database + RLS isolation
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports: ["5432:5432"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Bundle is current (a migration missing from APPLY_EVERYTHING fails here)
+        run: |
+          npm run build:apply-everything
+          git diff --exit-code supabase/APPLY_EVERYTHING.sql \
+            || (echo "::error::APPLY_EVERYTHING.sql is stale — run npm run build:apply-everything and commit it"; exit 1)
+      - name: Apply, re-apply, and run every isolation suite
+        env:
+          PGTEST_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: npm run test:db
+
+  e2e:
+    name: End-to-end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  release-gate:
+    name: Release gate
+    runs-on: ubuntu-latest
+    needs: [static, unit, database, e2e]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    steps:
+      - name: All automated layers green
+        run: echo "Static, unit, database and e2e passed. Human layers remain — see docs/TESTING.md."

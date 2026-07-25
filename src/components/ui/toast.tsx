@@ -3,7 +3,6 @@
 import * as React from "react";
 import * as ToastPrimitive from "@radix-ui/react-toast";
 import { CheckCircle2, AlertTriangle, XCircle, X } from "lucide-react";
-import { cn } from "@/lib/cn";
 
 type ToastTone = "success" | "warning" | "critical" | "neutral";
 

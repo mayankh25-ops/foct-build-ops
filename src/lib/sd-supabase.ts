@@ -23,7 +23,8 @@ const statusFromDb: Record<string, SdStatus> = {
   closed: "closed",
   reopened: "reopened",
 };
-const statusToDb = (s: SdStatus) => s.replace("-", "_");
+// kept for the write path that lands with live mutations (Stage 4)
+const _statusToDb = (s: SdStatus) => s.replace("-", "_");
 
 function fmtWhen(iso: string): string {
   const d = new Date(iso);

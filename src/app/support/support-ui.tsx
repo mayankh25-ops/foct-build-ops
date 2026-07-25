@@ -34,6 +34,11 @@ export function MicroLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Pill control on the phone surface. 44px tall, not 40 — the minimum touch
+ * target in both Apple HIG and Material, and this is tapped by someone
+ * holding a mop. Asserted in e2e/support-phone.mobile.spec.ts.
+ */
 export function Chip({
   active,
   dashed,
@@ -52,10 +57,10 @@ export function Chip({
       aria-pressed={active}
       className={
         active
-          ? "h-10 rounded-pill border border-fg bg-fg px-3.5 text-body-sm font-semibold text-surface"
+          ? "h-11 rounded-pill border border-fg bg-fg px-4 text-body-sm font-semibold text-surface"
           : dashed
-            ? "h-10 rounded-pill border-[1.5px] border-dashed border-edge-strong bg-hover px-3.5 text-body-sm text-fg-secondary"
-            : "h-10 rounded-pill border border-edge-strong/40 bg-surface px-3.5 text-body-sm text-fg-secondary"
+            ? "h-11 rounded-pill border-[1.5px] border-dashed border-edge-strong bg-hover px-4 text-body-sm text-fg-secondary"
+            : "h-11 rounded-pill border border-edge-strong/40 bg-surface px-4 text-body-sm text-fg-secondary"
       }
     >
       {children}

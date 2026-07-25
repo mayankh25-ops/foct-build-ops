@@ -1,0 +1,35 @@
+{
+  "$comment": [
+    "Triaged dependency advisories. An entry here means a human read the",
+    "advisory and judged that it cannot affect this product as shipped.",
+    "Every entry needs an expiry date so nothing is accepted permanently by",
+    "accident — an expired entry FAILS `npm run check:deps` until re-triaged.",
+    "Checked by scripts/check-deps.mjs."
+  ],
+  "entries": [
+    {
+      "package": "postcss",
+      "reason": "Build-time only. Pinned by next@15; the advisories (sourceMappingURL path traversal, </style> escaping) require attacker-controlled CSS passed through our build. Our CSS is authored in-repo. npm's only 'fix' is downgrading next to 9.3.3, which is not a fix.",
+      "advisories": ["GHSA-qx2v-qp2m-jg93", "GHSA-6g55-p6wh-862q", "GHSA-r28c-9q8g-f849"],
+      "accepted": "2026-07-25",
+      "expires": "2026-10-31",
+      "action": "Clear when Next ships a release pinning postcss > 8.5.17."
+    },
+    {
+      "package": "sharp",
+      "reason": "Build-time only. Pulled in by next's image optimiser; we serve no user-uploaded images through it (kiosk selfies go to Supabase Storage, ticket photos are client-compressed data URLs). Same forced-downgrade non-fix.",
+      "advisories": ["GHSA-f88m-g3jw-g9cj"],
+      "accepted": "2026-07-25",
+      "expires": "2026-10-31",
+      "action": "Clear when Next bumps sharp past 0.35.0. Re-triage IMMEDIATELY if we start passing uploaded images through next/image."
+    },
+    {
+      "package": "next",
+      "reason": "Inherits the two above transitively; on the latest 15.x patch (15.5.21) with no direct advisory outstanding against it.",
+      "advisories": [],
+      "accepted": "2026-07-25",
+      "expires": "2026-10-31",
+      "action": "Re-check on each Next upgrade."
+    }
+  ]
+}

@@ -396,3 +396,18 @@ Owner direction: an Android tablet on the building Wi-Fi running only the kiosk;
 **Test methodology fix:** the first version of the isolation test ran as a superuser, which bypasses RLS and would have passed no matter what the policies said. It now does `set local role anon` for every device-side step. 19 checks, proven on a PG16 mirror (`tests/_mirror_bootstrap.sql` makes a plain Postgres look enough like Supabase to run the real bundles).
 
 **Who creates what** is now written down (`docs/KIOSK.md`) and mostly self-service: cleaners, PINs and tablets are created in Settings → Cleaners & kiosks by the cleaning manager. Only organisations/buildings/module switches and logins still need SQL (`supabase/NEW_BUILDING.sql` + the Supabase Auth dashboard) until the onboarding screens land in phase 8.
+
+## 2026-07-25 — A layered test system, not a "final test" (owner-directed)
+The owner asked for the way large product teams test: automate the repeatable checks, keep humans for judgement, release gradually. Mapped onto this stack and built rather than described — `docs/TESTING.md` walks all twenty layers with an honest state column, and the release gate lives there and in the PR template.
+
+What is now automated, and why each layer earns its place:
+- **Unit (Vitest, 48 assertions)** on the calculations nobody can eyeball — late-vs-missed thresholds, paired hours, corrections floored at zero, the Scope dataset's 393.0 h/wk reconciliation. A regression in these is payroll, not pixels.
+- **Database (81 assertions)** — the only layer that can prove the promise the product is sold on: Company A cannot see Company B's data. It applies the SHIPPED BUNDLE the way the owner pastes it, then applies it again, so a migration authored but forgotten in `APPLY_EVERYTHING.sql` fails in CI rather than in the SQL editor.
+- **E2E (34 tests) against a production build**, not the dev server — dev-only behaviour has hidden real bugs here before. Demo mode, so a fresh clone and CI both run it; live-mode journeys stay a staging step because faking them would prove nothing.
+- **Secrets and dependencies.** `check:secrets` greps only TRACKED files (`.env.local` must stay untracked) and was proven against a deliberately planted key. `check:deps` refuses to be the usual ignored-audit theatre: high/critical fails unless the package is in `security/audit-allowlist.json` **with a reason and an expiry date**, and an expired entry fails too. The three current entries (postcss, sharp, next) are build-time-only advisories whose npm "fix" is downgrading Next to 9.3.3.
+
+Deliberate exclusions, so the gaps are visible rather than implied: no component tests yet, no WebKit in CI (Safari is a manual pass), no load testing, no penetration test, no production monitoring, and **the backup has never been restored** — which means it is not yet a backup. Those five are listed as the pre-client work.
+
+`eslint-config-next` was rejected: it pulls a vulnerable transitive tree for rules TypeScript mostly already gives us. The two plugins that catch real bugs here (react-hooks, @next/next) are wired directly. `react-hooks/set-state-in-effect` is a warning, not an error, because our `useXxxReady()` rehydration is exactly the sanctioned "synchronise with an external store" case.
+
+The suites paid for themselves immediately, finding three real defects: a missing favicon 404ing on every first page load, a Service Desk search that returned an empty table with no explanation, and phone controls at 40px/19px against a 44px touch minimum — all fixed in the same commit as the tests that caught them.

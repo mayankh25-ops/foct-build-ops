@@ -85,7 +85,7 @@ const safeStorage = {
 
 export const useThemeStore = create<ThemeState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       assignedTheme: DEFAULT_THEME,
       fontSlots: {},
       customThemes: [],

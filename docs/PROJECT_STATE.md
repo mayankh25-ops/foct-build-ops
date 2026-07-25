@@ -114,6 +114,18 @@ All consume semantic tokens only (`npm run check:tokens` enforces).
 - Operator guide: **`docs/KIOSK.md`** — who creates what, PIN rules, pairing, the Android tablet options (home-screen PWA / kiosk launcher / WebView APK), HTTPS-for-camera, troubleshooting.
 - Gates: `check:tokens` ✓ · `tsc` ✓ · `next build` ✓ · demo kiosk flow + pairing screen + admin screens Playwright-verified.
 
+### Session 2026-07-25 (later) — the testing system (owner-directed)
+Layered testing modelled on how large product teams work, mapped to this stack. **`docs/TESTING.md` is the reference**; the release gate is a checklist at the bottom of it and in `.github/pull_request_template.md`.
+
+- **Lint**: flat `eslint.config.mjs` (typescript-eslint + react-hooks + Next hazards; `eslint-config-next` deliberately not used — vulnerable transitive tree). Fixed 12 unused imports and one unstable-dependency effect it found. `set-state-in-effect` is a documented warning: our `useXxxReady()` rehydration is a legitimate external-store sync.
+- **Unit (`npm run test:unit`)**: Vitest, **48 assertions** over attendance maths (late/missed thresholds, paired hours, in-progress exclusion, corrections floored at 0, pattern expansion), formatting, booking conflicts, integration secret classification, and the Scope dataset reconciliation (393.0 h/wk, 222+16, 60.0/46.5).
+- **Database (`npm run test:db`)**: `scripts/test-db.mjs` builds a throwaway PG, applies **APPLY_EVERYTHING.sql as pasted**, applies it AGAIN (idempotency), then runs all five isolation suites — **81 assertions**. CI also fails if the bundle is stale. `_mirror_bootstrap.sql` gained a faithful Vault stand-in so the secrets suite runs off-platform.
+- **E2E (`npm run test:e2e`)**: Playwright against a PRODUCTION build. **34 tests**: 20-route smoke (no console errors, no same-origin 4xx/5xx, themed background actually computed), kiosk PIN/selfie/refusals, phone→desk ticket + photo-required + search, and a Pixel 7 project (no sideways scroll, 44px touch targets).
+- **Security**: `check:secrets` (greps tracked files for key shapes — proven against a planted key) and `check:deps` (`npm audit` with a triaged, EXPIRING allowlist in `security/audit-allowlist.json`).
+- **CI**: `.github/workflows/ci.yml` — static / unit / database (Postgres service) / e2e, gated on a `release-gate` job.
+- **Three real defects the new suites found and fixed**: no favicon (404 on every first page load → `src/app/icon.svg`); the Service Desk queue showed an empty table with no message when a search matched nothing (→ filtered `EmptyState`); phone chips and the "More options" link were 40px/19px tall, under the 44px touch minimum (→ h-11).
+- `npm run verify` runs the whole automated set in one command.
+
 ## Migrations applied
 Authored + locally verified, pending owner's dashboard apply: `0000_platform_foundation.sql`, `0001_theme_engine.sql`, `seed.sql` (see supabase/README.md).
 

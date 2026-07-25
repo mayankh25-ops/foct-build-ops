@@ -693,7 +693,9 @@ function AttendanceTab({ buildingId, live }: { buildingId: string | null; live: 
 
 export default function StaffSettingsPage() {
   const profile = useSessionStore((s) => s.profile);
-  const buildings = profile?.buildings ?? [];
+  // stable identity: `?? []` would be a fresh array every render and re-fire
+  // every effect downstream of it
+  const buildings = React.useMemo(() => profile?.buildings ?? [], [profile]);
   const [buildingId, setBuildingId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
