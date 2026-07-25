@@ -14,6 +14,29 @@ import { Input } from "@/components/ui/input";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { building } from "@/lib/demo-data";
 
+
+/**
+ * Raw auth errors are cryptic and — critically — "Invalid API key" and
+ * "Invalid login credentials" mean OPPOSITE things: the first is a
+ * configuration fault (the password was never checked), the second is the
+ * password itself. Say which, and what to do.
+ */
+function explain(raw: string): string {
+  const m = raw.toLowerCase();
+  if (m.includes("api key")) {
+    const ref =
+      process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/https:\/\/([a-z0-9]+)\./i)?.[1] ?? "your project";
+    return `Configuration problem, not your password: this app's key was rejected by Supabase project "${ref}". The key in .env.local almost certainly belongs to a different project. Run "npm run check:supabase" for the exact fix.`;
+  }
+  if (m.includes("invalid login credentials"))
+    return "That email and password don't match an account in this project. Check the address, or reset the password in Supabase → Authentication → Users.";
+  if (m.includes("email not confirmed") || m.includes("email_not_confirmed"))
+    return "This account exists but hasn't been confirmed. In Supabase → Authentication → Users, open the ⋯ menu on this user and choose Confirm email.";
+  if (m.includes("failed to fetch") || m.includes("load failed"))
+    return "Couldn't reach Supabase. Check your internet connection, and that the project isn't paused in the Supabase dashboard.";
+  return raw;
+}
+
 export default function SignInPage() {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -30,7 +53,7 @@ export default function SignInPage() {
     const { data, error } = await getSupabase().auth.signInWithPassword({ email, password });
     if (error) {
       setState("error");
-      setMessage(error.message);
+      setMessage(explain(error.message));
     } else {
       setState("done");
       setMessage(`Signed in as ${data.user?.email}. Live Service Desk data is now available.`);
