@@ -9,7 +9,7 @@ declare
   v_building uuid; v_org uuid;
   v_device uuid; v_code text; v_token uuid; v_res jsonb;
   v_staff uuid; v_staff2 uuid; v_pin text; v_pin2 text; v_count int;
-  v_cleaner_org uuid; v_priya_org uuid;
+  v_cleaner_org uuid; v_priya_org uuid; v_event uuid; v_event2 uuid;
   c_manager constant uuid := '22222222-0000-0000-0000-000000000003'; -- Priya, FOCT Cleaning
 begin
   select id, owner_org_id into v_building, v_org from public.buildings where slug = 'aurora-on-collins';
@@ -73,7 +73,9 @@ begin
 
   -- 8. the correct PIN checks in (with a selfie path)
   v_res := public.kiosk_punch(v_token, v_pin, 'in', 'selfies/test.jpg');
-  if (v_res ->> 'ok')::boolean and v_res ->> 'staff_name' = 'Kiosk Test Cleaner' then
+  v_event := (v_res ->> 'event_id')::uuid;
+  if (v_res ->> 'ok')::boolean and v_res ->> 'staff_name' = 'Kiosk Test Cleaner'
+     and v_event is not null then
     raise notice 'ok 8: check-in recorded';
   else raise exception 'FAIL 8: %', v_res; end if;
 
@@ -82,9 +84,14 @@ begin
   if (v_res ->> 'already')::boolean then raise notice 'ok 9: double check-in blocked';
   else raise exception 'FAIL 9: %', v_res; end if;
 
-  -- 10. check-out succeeds
+  -- 10. check-out succeeds, and its photo attaches after the fact
   v_res := public.kiosk_punch(v_token, v_pin, 'out');
-  if (v_res ->> 'ok')::boolean then raise notice 'ok 10: check-out recorded';
+  v_event2 := (v_res ->> 'event_id')::uuid;
+  if (v_res ->> 'ok')::boolean
+     and (public.kiosk_attach_selfie(v_token, v_event2, 'selfies/out.jpg') ->> 'ok')::boolean
+     -- and never twice
+     and not (public.kiosk_attach_selfie(v_token, v_event2, 'selfies/hack.jpg') ->> 'ok')::boolean then
+    raise notice 'ok 10: check-out recorded, selfie attached once';
   else raise exception 'FAIL 10: %', v_res; end if;
 
   -- 11. when a name was selected, someone else's PIN is rejected

@@ -1,10 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { Camera, CheckCircle2, Delete, Info, LogIn, LogOut, Search } from "lucide-react";
+import { Camera, CheckCircle2, Delete, Info, LogIn, LogOut, Search, Tablet } from "lucide-react";
 import { KioskButton } from "@/components/ui/kiosk-button";
 import { LiveClock } from "@/components/ui/live-clock";
 import { staffDirectory, useAttendanceReady, useAttendanceStore } from "@/lib/attendance-store";
+import {
+  forgetDevice,
+  KIOSK_LIVE,
+  pairDevice,
+  punch as livePunch,
+  readDevice,
+  searchStaff,
+  uploadSelfie,
+  type KioskDevice,
+  type KioskStaff,
+} from "@/lib/kiosk-live";
 import { cn } from "@/lib/cn";
 
 const PIN_LENGTH = 4;
@@ -142,14 +153,132 @@ function CameraStep({
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Pairing — a brand-new tablet, once, before anyone can sign in       */
+/* ------------------------------------------------------------------ */
+
+function PairScreen({ onPaired }: { onPaired: (d: KioskDevice) => void }) {
+  const [code, setCode] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const submit = async (value: string) => {
+    setBusy(true);
+    setError(null);
+    const res = await pairDevice(value);
+    setBusy(false);
+    if (res.ok) onPaired(res.device);
+    else {
+      setError(res.error);
+      setCode("");
+    }
+  };
+
+  const press = (d: string) => {
+    setError(null);
+    setCode((c) => {
+      const next = c.length < 6 ? c + d : c;
+      if (next.length === 6) void submit(next);
+      return next;
+    });
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-6 text-fg">
+      <div className="w-full max-w-md rounded-card border border-edge bg-surface p-8 text-center shadow-raised">
+        <span className="mx-auto flex size-14 items-center justify-center rounded-pill bg-accent-subtle">
+          <Tablet aria-hidden className="size-7 text-accent-text" />
+        </span>
+        <h1 className="mt-6 font-display text-title-1 text-fg">Set up this tablet</h1>
+        <p className="mt-3 text-body text-fg-secondary">
+          Ask your manager for the 6-digit pair code from
+          <br />
+          Settings → Cleaners &amp; kiosks.
+        </p>
+
+        <div aria-label="Pair code" className="mt-7 flex items-center justify-center gap-3">
+          {Array.from({ length: 6 }, (_, i) => (
+            <span
+              key={i}
+              className={cn(
+                "flex h-14 w-10 items-center justify-center rounded-card font-numeric text-title-2 font-bold text-fg",
+                i < code.length ? "bg-accent-subtle" : "bg-hover"
+              )}
+            >
+              {code[i] ?? ""}
+            </span>
+          ))}
+        </div>
+
+        {error && (
+          <p aria-live="assertive" className="mt-4 rounded-sm bg-warning-subtle px-3 py-2 text-body-sm text-warning-text">
+            {error}
+          </p>
+        )}
+        {busy && (
+          <p className="mt-4 text-body-sm text-fg-muted">Pairing…</p>
+        )}
+
+        <div className="mt-6 grid grid-cols-3 gap-3">
+          {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
+            <button
+              key={d}
+              type="button"
+              disabled={busy}
+              onClick={() => press(d)}
+              className="h-14 rounded-card bg-hover font-mono text-title-2 text-fg transition-all duration-100 hover:bg-accent-subtle active:scale-[0.97]"
+            >
+              {d}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setCode("")}
+            className="h-14 rounded-card text-body font-medium text-fg-muted transition-colors hover:bg-hover"
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => press("0")}
+            className="h-14 rounded-card bg-hover font-mono text-title-2 text-fg transition-all duration-100 hover:bg-accent-subtle active:scale-[0.97]"
+          >
+            0
+          </button>
+          <button
+            type="button"
+            aria-label="Delete last digit"
+            onClick={() => setCode((c) => c.slice(0, -1))}
+            className="flex h-14 items-center justify-center rounded-card text-fg-muted transition-colors hover:bg-hover"
+          >
+            <Delete aria-hidden className="size-6" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function KioskScreen() {
-  useAttendanceReady(); // rehydrate + seed the attendance store
+  useAttendanceReady(); // rehydrate + seed the attendance store (demo mode)
   const checkInAction = useAttendanceStore((s) => s.checkIn);
   const checkOutAction = useAttendanceStore((s) => s.checkOut);
   const attachSelfie = useAttendanceStore((s) => s.attachSelfie);
 
+  // Live mode needs a paired device; demo mode needs nothing. `hydrated`
+  // keeps the first server-rendered paint identical to the client's.
+  const [device, setDevice] = React.useState<KioskDevice | null>(null);
+  const [hydrated, setHydrated] = React.useState(false);
+  React.useEffect(() => {
+    setDevice(readDevice());
+    setHydrated(true);
+  }, []);
+  const live = KIOSK_LIVE && device !== null;
+
   const [query, setQuery] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [selectedName, setSelectedName] = React.useState<string | null>(null);
   const [pin, setPin] = React.useState("");
   const [phase, setPhase] = React.useState<Phase>("idle");
   const [action, setAction] = React.useState<"in" | "out">("in");
@@ -157,26 +286,79 @@ export function KioskScreen() {
   const [notice, setNotice] = React.useState<string | null>(null);
   const [doneName, setDoneName] = React.useState<string | undefined>();
   const [doneStaffId, setDoneStaffId] = React.useState<string | null>(null);
+  const [doneEventId, setDoneEventId] = React.useState<string | null>(null);
   const [selfie, setSelfie] = React.useState<string | undefined>();
+  const [busy, setBusy] = React.useState(false);
+  const [liveMatches, setLiveMatches] = React.useState<KioskStaff[]>([]);
 
-  const selected = staffDirectory.find((m) => m.id === selectedId);
-  const matches =
-    query.trim().length >= 2
+  // Live: the server searches (names only, never PINs). Demo: local directory.
+  const trimmed = query.trim();
+  React.useEffect(() => {
+    if (!live || !device || trimmed.length < 2) {
+      setLiveMatches([]);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      void searchStaff(device.token, trimmed).then((r) => {
+        if (!cancelled) setLiveMatches(r);
+      });
+    }, 200);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [live, device, trimmed]);
+
+  const matches: KioskStaff[] = live
+    ? liveMatches
+    : trimmed.length >= 2
       ? staffDirectory
-          .filter((m) => m.name.toLowerCase().includes(query.trim().toLowerCase()))
+          .filter((m) => m.name.toLowerCase().includes(trimmed.toLowerCase()))
           .slice(0, 6)
+          .map((m) => ({ id: m.id, name: m.name }))
       : [];
-  const name = selected?.name ?? staffDirectory.find((m) => m.pin === pin)?.name;
-  const ready = pin.length === PIN_LENGTH;
+
+  // Greeting: the selected name, or — demo only — the name behind the PIN.
+  // In live mode the PIN is never resolvable on the device, by design.
+  const name =
+    selectedName ?? (live ? undefined : staffDirectory.find((m) => m.pin === pin)?.name);
+  const ready = pin.length === PIN_LENGTH && !busy;
 
   const press = (d: string) => {
     setNotice(null);
     setPin((p) => (p.length < PIN_LENGTH ? p + d : p));
   };
 
-  const complete = (a: "in" | "out") => {
+  const succeed = (a: "in" | "out", who: string | undefined, staffId: string | null, eventId: string | null) => {
+    setDoneName(who);
+    setDoneStaffId(staffId);
+    setDoneEventId(eventId);
+    setAction(a);
+    setStamp(
+      new Date().toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: false })
+    );
+    setSelfie(undefined);
+    setPhase("camera");
+  };
+
+  const completeLive = async (a: "in" | "out") => {
+    if (!device) return;
+    setBusy(true);
+    const res = await livePunch({ token: device.token, pin, kind: a, staffId: selectedId });
+    setBusy(false);
+    if (!res.ok) {
+      setNotice(res.error ?? "That didn't work — try again.");
+      setPin("");
+      return;
+    }
+    succeed(a, res.staffName, null, res.eventId ?? null);
+  };
+
+  const completeDemo = (a: "in" | "out") => {
     // name was selected — the PIN must belong to that person
     const byPin = staffDirectory.find((m) => m.pin === pin);
+    const selected = staffDirectory.find((m) => m.id === selectedId);
     if (selected && byPin && byPin.id !== selected.id) {
       setNotice(`That PIN doesn't match ${selected.name} — check and try again.`);
       setPin("");
@@ -198,20 +380,28 @@ export function KioskScreen() {
       setPin("");
       return;
     }
-    setDoneName(result.staff?.name);
-    setDoneStaffId(result.staff?.id ?? null);
-    setAction(a);
-    setStamp(
-      new Date().toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: false })
-    );
-    setSelfie(undefined);
-    setPhase("camera");
+    succeed(a, result.staff?.name, result.staff?.id ?? null, null);
+  };
+
+  const complete = (a: "in" | "out") => {
+    if (live) void completeLive(a);
+    else completeDemo(a);
   };
 
   const onSelfie = (dataUrl?: string) => {
-    if (dataUrl && doneStaffId) {
-      attachSelfie(doneStaffId, action, dataUrl);
+    if (dataUrl) {
       setSelfie(dataUrl);
+      if (live && device && doneEventId) {
+        // fire-and-forget: the attendance record already exists without it
+        void uploadSelfie({
+          token: device.token,
+          buildingId: device.buildingId,
+          eventId: doneEventId,
+          dataUrl,
+        });
+      } else if (doneStaffId) {
+        attachSelfie(doneStaffId, action, dataUrl);
+      }
     }
     setPhase("done");
   };
@@ -220,6 +410,7 @@ export function KioskScreen() {
     setPin("");
     setQuery("");
     setSelectedId(null);
+    setSelectedName(null);
     setNotice(null);
     setSelfie(undefined);
     setPhase("idle");
@@ -231,6 +422,11 @@ export function KioskScreen() {
     const t = setTimeout(reset, 8000);
     return () => clearTimeout(t);
   }, [phase]);
+
+  // A live-capable build with an unpaired tablet does one thing only: pair.
+  if (KIOSK_LIVE && hydrated && device === null) {
+    return <PairScreen onPaired={setDevice} />;
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas text-fg">
@@ -244,13 +440,33 @@ export function KioskScreen() {
             <span className="size-3 rounded-pill bg-brand" />
           </span>
           <div className="leading-tight">
-            <p className="font-display text-title-3 font-medium text-fg">Aurora on Collins</p>
-            <p className="text-body-sm text-fg-muted">FOCT CleaningOps kiosk</p>
+            <p className="font-display text-title-3 font-medium text-fg">
+              {device?.buildingName || "Aurora on Collins"}
+            </p>
+            <p className="text-body-sm text-fg-muted">
+              {device ? device.label : "FOCT CleaningOps kiosk"}
+            </p>
           </div>
         </div>
-        <p className="hidden text-body-sm text-fg-muted sm:block">
-          Need help? Call your supervisor on <span className="font-mono">0491 570 156</span>
-        </p>
+        <div className="hidden items-center gap-6 sm:flex">
+          <p className="text-body-sm text-fg-muted">
+            Need help? Call your supervisor on <span className="font-mono">0491 570 156</span>
+          </p>
+          {device && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm("Unpair this tablet? A manager will need to issue a new pair code.")) {
+                  forgetDevice();
+                  setDevice(null);
+                }
+              }}
+              className="text-caption text-fg-muted underline-offset-2 transition-colors hover:text-fg hover:underline"
+            >
+              Unpair
+            </button>
+          )}
+        </div>
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-6 pb-14">
@@ -332,16 +548,17 @@ export function KioskScreen() {
                   <input
                     aria-label="Find your name"
                     placeholder="Find your name…"
-                    value={selected ? selected.name : query}
+                    value={selectedName ?? query}
                     onChange={(e) => {
                       setSelectedId(null);
+                      setSelectedName(null);
                       setQuery(e.target.value);
                       setNotice(null);
                     }}
                     className="h-12 w-full rounded-control border border-edge-strong bg-surface pl-10 text-body text-fg placeholder:text-fg-disabled"
                   />
                 </div>
-                {!selected && matches.length > 0 && (
+                {selectedId === null && matches.length > 0 && (
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     {matches.map((m) => (
                       <button
@@ -349,6 +566,7 @@ export function KioskScreen() {
                         type="button"
                         onClick={() => {
                           setSelectedId(m.id);
+                          setSelectedName(m.name);
                           setQuery("");
                           setPin("");
                           setNotice(null);
@@ -360,13 +578,14 @@ export function KioskScreen() {
                     ))}
                   </div>
                 )}
-                {selected && (
+                {selectedId !== null && (
                   <p className="mt-2 text-center text-caption text-fg-muted">
                     Not you?{" "}
                     <button
                       type="button"
                       onClick={() => {
                         setSelectedId(null);
+                        setSelectedName(null);
                         setPin("");
                       }}
                       className="font-medium text-accent-text"

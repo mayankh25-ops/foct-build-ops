@@ -258,7 +258,7 @@ create or replace function public.kiosk_punch(
   p_staff_id uuid default null
 ) returns jsonb
 language plpgsql security definer set search_path = public, app as $$
-declare d public.kiosk_devices; s public.staff; last_kind text;
+declare d public.kiosk_devices; s public.staff; last_kind text; v_event uuid;
 begin
   if p_kind not in ('in','out') then return jsonb_build_object('ok', false, 'error', 'Bad action'); end if;
   d := app.kiosk_device(p_token);
@@ -293,13 +293,36 @@ begin
   end if;
 
   insert into public.attendance_events (building_id, staff_id, kind, source, device_id, selfie_path)
-  values (d.building_id, s.id, p_kind, 'kiosk', d.id, p_selfie_path);
+  values (d.building_id, s.id, p_kind, 'kiosk', d.id, p_selfie_path)
+  returning id into v_event;
 
   return jsonb_build_object('ok', true, 'staff_id', s.id, 'staff_name', s.name,
-    'kind', p_kind, 'at', now());
+    'kind', p_kind, 'at', now(), 'event_id', v_event);
 end $$;
 revoke all on function public.kiosk_punch(uuid, text, text, text, uuid) from public;
 grant execute on function public.kiosk_punch(uuid, text, text, text, uuid) to anon, authenticated;
+
+-- ------------------------------------------- device: attach the selfie ----
+-- The punch answers the cleaner instantly ("you're checked in"); the photo
+-- uploads a beat later and is attached here. Only the device that recorded
+-- the event may attach to it, only once, and only within ten minutes.
+create or replace function public.kiosk_attach_selfie(
+  p_token uuid, p_event uuid, p_path text
+) returns jsonb
+language plpgsql security definer set search_path = public, app as $$
+declare d public.kiosk_devices; v_rows int;
+begin
+  d := app.kiosk_device(p_token);
+  if d.id is null then return jsonb_build_object('ok', false, 'error', 'Device not paired'); end if;
+  update public.attendance_events
+     set selfie_path = p_path
+   where id = p_event and device_id = d.id and selfie_path is null
+     and at > now() - interval '10 minutes';
+  get diagnostics v_rows = row_count;
+  return jsonb_build_object('ok', v_rows = 1);
+end $$;
+revoke all on function public.kiosk_attach_selfie(uuid, uuid, text) from public;
+grant execute on function public.kiosk_attach_selfie(uuid, uuid, text) to anon, authenticated;
 
 -- ------------------------------------------------- admin: create a cleaner ----
 -- Generates a unique non-trivial 4-digit PIN for the building and returns it

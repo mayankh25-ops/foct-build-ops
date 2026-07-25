@@ -104,10 +104,21 @@ All consume semantic tokens only (`npm run check:tokens` enforces).
 - `/scope` module shipped and screenshot-verified under Nature AND Subzero (whole portal re-tints; Nature remains default via theme-store).
 - Gates all green: `check:tokens` ✓ · `check:contrast` (37×12) ✓ · `tsc` ✓ · `next build` ✓ (19 static routes). Preview artifact refreshed at the same URL (13 pages, Subzero in the palette switcher).
 
+### Session 2026-07-25 — Stage 2 phase 2: attendance + kiosk devices (LIVE backend)
+- **`0007_attendance_kiosk.sql`** — `staff`, `kiosk_devices`, `roster_shifts`, `attendance_events`, all RLS'd. The kiosk is a provisioned DEVICE, not a user: `kiosk_pair` (single-use 6-digit code → long-lived device token) → `kiosk_staff_search` (names only) → `kiosk_punch` (PIN validated server-side) → `kiosk_attach_selfie`. PINs never leave the server. Admin side: `staff_create` / `staff_reset_pin` / `kiosk_device_create` / `kiosk_issue_pair_code`, plus `attendance_sessions()` which pairs punches into timesheet rows with worked minutes.
+- **`app.manages_staff_at()`** — the CLEANING company manages its own people at every building it services, not just the owner org. **`app.managing_org_for()`** — a new cleaner belongs to the org that created them.
+- **`0008_kiosk_selfie_storage.sql`** — private `kiosk-selfies` bucket, insert-only for the tablet, reads gated on building access (trade-off recorded in DECISIONS).
+- **19 isolation checks** (`tests/kiosk_isolation_check.sql`) pass on a PG16 mirror; device-side steps run as the real `anon` role so RLS is actually exercised. Mirror bootstrap checked in at `tests/_mirror_bootstrap.sql`.
+- **Client:** `/kiosk` gains a pairing screen + live punch + selfie upload (`src/lib/kiosk-live.ts`); falls back to the demo store when Supabase env is absent. New **Settings → Cleaners & kiosks** (`/settings/staff`): add cleaners with a PIN shown once, reset PIN, deactivate; provision tablets with pair codes, re-issue, retire; Attendance tab reading `attendance_sessions`.
+- **Paste bundles:** `APPLY_EVERYTHING.sql` regenerated (now includes 0007+0008); `APPLY_STAGE2_PHASE2.sql` for projects already set up; **`NEW_BUILDING.sql`** creates an org/building/module set + a real member (the interim answer to "who creates buildings and users").
+- Operator guide: **`docs/KIOSK.md`** — who creates what, PIN rules, pairing, the Android tablet options (home-screen PWA / kiosk launcher / WebView APK), HTTPS-for-camera, troubleshooting.
+- Gates: `check:tokens` ✓ · `tsc` ✓ · `next build` ✓ · demo kiosk flow + pairing screen + admin screens Playwright-verified.
+
 ## Migrations applied
 Authored + locally verified, pending owner's dashboard apply: `0000_platform_foundation.sql`, `0001_theme_engine.sql`, `seed.sql` (see supabase/README.md).
 
 ## Exact next steps
+0. **Owner: apply the kiosk backend** — `supabase/APPLY_STAGE2_PHASE2.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/kiosk_isolation_check.sql` (19 ok). Then `NEW_BUILDING.sql` for a real building, and follow `docs/KIOSK.md` to add cleaners and pair the tablet.
 1. **Owner applies `supabase/APPLY_STAGE4_INTEGRATIONS.sql`** in the SQL editor + runs `tests/integrations_isolation_check.sql` (expect 19 ok-notices) — supabase/README.md Stage 4. Then add real provider keys via `/settings/integrations` on a machine with `.env.local` set (SUPABASE_SECRET_KEY + NEXT_PUBLIC_INTEGRATIONS_LIVE=1) and prove a real send on the test page.
 2. Wire existing queued sends through `notify()`: calendar email reminders (currently a visible outbox), Service Desk follower emails + missed check-in alerts (Inngest stage).
 3. Ticketing import step 2 (per TICKETING_IMPORT_PLAN): 0006 offline-ref renumber trigger + billing fields, PDF+email report port (email goes via notify()), billing lock screen, insights charts.
