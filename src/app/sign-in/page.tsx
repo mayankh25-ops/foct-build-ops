@@ -8,6 +8,7 @@
  */
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ function explain(raw: string): string {
 }
 
 export default function SignInPage() {
+  const router = useRouter();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [state, setState] = React.useState<"idle" | "busy" | "done" | "error">("idle");
@@ -56,7 +58,9 @@ export default function SignInPage() {
       setMessage(explain(error.message));
     } else {
       setState("done");
-      setMessage(`Signed in as ${data.user?.email}. Live Service Desk data is now available.`);
+      setMessage(`Signed in as ${data.user?.email} — opening your dashboard…`);
+      // land the user in the product rather than leaving them on this page
+      router.replace("/dashboard");
     }
   };
 
