@@ -79,3 +79,23 @@ psql -f supabase/tests/isolation_check.sql   # expect 23 ok-notices
 `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see `.env.example`); the browser client is
 `src/lib/supabase.ts`. Screens keep their local demo stores until each
 module's data layer swaps over (Service Desk first, Stage 3).
+
+## Setting up a project from scratch (or fixing a half-built one)
+
+Two files cover every setup situation:
+
+| Situation | Do this |
+|---|---|
+| Brand-new / empty project | Paste **`APPLY_EVERYTHING.sql`** → Run |
+| Not sure what a project contains | Paste **`tests/project_inventory.sql`** → one row tells you the accounts that can sign in there and which subsystems exist |
+| APPLY fails with e.g. `column b.owner_org_id does not exist` | The project is stuck at an older half-built shape (`create table if not exists` skips an existing old table instead of upgrading it). Paste **`RESET_PUBLIC_SCHEMA.sql`** → Run → then `APPLY_EVERYTHING.sql`. **Your logins survive** — Supabase keeps accounts in the separate `auth` schema. |
+
+Verified on PG16: `APPLY_EVERYTHING` applies cleanly to an empty database and
+re-runs idempotently; on a deliberately drifted database it reproduces the
+owner's exact error, and `RESET_PUBLIC_SCHEMA` + `APPLY_EVERYTHING` repairs it
+with auth users preserved.
+
+Note: the seed inserts minimal `auth.users` rows for the demo cast so RLS tests
+have subjects. They appear in Authentication → Users but cannot sign in (no
+password). Your real account is unaffected.
+
