@@ -27,7 +27,7 @@ function explain(raw: string): string {
   if (m.includes("api key")) {
     const ref =
       process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/https:\/\/([a-z0-9]+)\./i)?.[1] ?? "your project";
-    return `Configuration problem, not your password: this app's key was rejected by Supabase project "${ref}". The key in .env.local almost certainly belongs to a different project. Run "npm run check:supabase" for the exact fix.`;
+    return `Configuration problem, not your password: this app's key was rejected by Supabase project "${ref}". If you just edited .env.local, RESTART the dev server — Next.js bakes these values in at start-up, so the browser is still using the old key. If "npm run check:supabase" passes but this keeps failing, that restart is the fix; otherwise the doctor names the real problem.`;
   }
   if (m.includes("invalid login credentials"))
     return "That email and password don't match an account in this project. Check the address, or reset the password in Supabase → Authentication → Users.";
