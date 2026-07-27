@@ -46,7 +46,8 @@ import { Select } from "@/components/ui/select";
 import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
-import { useSessionStore } from "@/lib/session";
+import { activeOrgIdOr, useSessionStore } from "@/lib/session";
+import { NoticesTab } from "@/components/settings/notices-tab";
 import {
   createDevice,
   createStaff,
@@ -704,6 +705,17 @@ export default function StaffSettingsPage() {
 
   const live = STAFF_LIVE && Boolean(profile);
 
+  // the personal-notice picker needs the same people the Cleaners tab lists
+  const [staffForNotices, setStaffForNotices] = React.useState<StaffRow[]>(
+    live ? [] : demoStaff
+  );
+  React.useEffect(() => {
+    if (!live || !buildingId) return;
+    listStaff(buildingId)
+      .then(setStaffForNotices)
+      .catch(() => setStaffForNotices([]));
+  }, [live, buildingId]);
+
   return (
     <>
       <PageHeader
@@ -741,6 +753,7 @@ export default function StaffSettingsPage() {
         <TabsList>
           <TabsTrigger value="cleaners">Cleaners</TabsTrigger>
           <TabsTrigger value="kiosks">Kiosk tablets</TabsTrigger>
+          <TabsTrigger value="notices">Notices</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
         </TabsList>
         <TabsContent value="cleaners">
@@ -748,6 +761,14 @@ export default function StaffSettingsPage() {
         </TabsContent>
         <TabsContent value="kiosks">
           <KiosksTab buildingId={buildingId} live={live} />
+        </TabsContent>
+        <TabsContent value="notices">
+          <NoticesTab
+            buildingId={buildingId}
+            orgId={live ? activeOrgIdOr("") || null : null}
+            staff={staffForNotices}
+            live={live}
+          />
         </TabsContent>
         <TabsContent value="attendance">
           <AttendanceTab buildingId={buildingId} live={live} />

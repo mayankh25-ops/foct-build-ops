@@ -77,6 +77,31 @@ const hubotSans = localFont({
   preload: false,
 });
 
+/* Noto Sans Devanagari / Gurmukhi — NOT decoration: the notices a cleaner
+   reads are typed in Hindi, Nepali and Punjabi, and the system stack renders
+   those scripts as empty boxes on most Windows and Android builds. Only the
+   400/600 weights of each script subset are shipped (~125 KB total) and they
+   load only when a non-Latin glyph is actually on screen. */
+const notoDevanagari = localFont({
+  src: [
+    { path: "../fonts/noto-devanagari/noto-sans-devanagari-devanagari-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/noto-devanagari/noto-sans-devanagari-devanagari-600-normal.woff2", weight: "600", style: "normal" },
+  ],
+  variable: "--font-noto-devanagari",
+  display: "swap",
+  preload: false,
+});
+
+const notoGurmukhi = localFont({
+  src: [
+    { path: "../fonts/noto-gurmukhi/noto-sans-gurmukhi-gurmukhi-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/noto-gurmukhi/noto-sans-gurmukhi-gurmukhi-600-normal.woff2", weight: "600", style: "normal" },
+  ],
+  variable: "--font-noto-gurmukhi",
+  display: "swap",
+  preload: false,
+});
+
 /* Barlow — DIN-style numerals (Power BI reference, owner direction
    2026-07-07). Big numbers only; UI text is Hubot Sans. */
 const barlow = localFont({
@@ -134,7 +159,7 @@ export default function RootLayout({
       lang="en-AU"
       data-theme="option-nature"
       suppressHydrationWarning
-      className={`${lato.variable} ${hubotSans.variable} ${barlow.variable} ${bricolage.variable} ${onest.variable} ${robotoMono.variable} ${monaSans.variable} ${dmSans.variable} ${inter.variable} ${roboto.variable}`}
+      className={`${lato.variable} ${hubotSans.variable} ${barlow.variable} ${bricolage.variable} ${onest.variable} ${robotoMono.variable} ${monaSans.variable} ${dmSans.variable} ${inter.variable} ${roboto.variable} ${notoDevanagari.variable} ${notoGurmukhi.variable}`}
     >
       <body>{children}</body>
     </html>
