@@ -38,7 +38,7 @@ options rejected, which is the part that saves the next argument.
 
 ## 2. Unit tests — automated (`npm run test:unit`)
 
-Vitest over the pure logic in `src/lib`. Currently 48 assertions covering the
+Vitest over the pure logic in `src/lib`. Currently 66 assertions covering the
 calculations nobody can eyeball:
 
 | File | What it protects |
@@ -48,6 +48,7 @@ calculations nobody can eyeball:
 | `tests/unit/bookings.test.ts` | amenity double-booking, including back-to-back bookings that must NOT conflict |
 | `tests/unit/integrations-catalogue.test.ts` | every secret field is classified as a secret (a misclassification stores an API key in plaintext), schema validation, masking |
 | `tests/unit/scope-data.test.ts` | the contract dataset still reconciles to 393.0 h/wk, 222+16 items, 60.0/46.5 h/day |
+| `tests/unit/kiosk-offline.test.ts` | the offline sync engine — outbox writes, clock-offset correction, a half-failed flush keeping what the server refused, a replayed batch pushing nothing twice, and PIN hashes that never contain the PIN |
 
 Add a test here whenever a calculation gets an argument, a rounding rule, or a
 threshold.
@@ -96,7 +97,7 @@ data.**
 
 It builds a throwaway database, applies `supabase/APPLY_EVERYTHING.sql`
 exactly as you'd paste it into the dashboard, applies it **again** (idempotency
-— you re-paste bundles routinely), then runs 81 assertions:
+— you re-paste bundles routinely), then runs 99 assertions:
 
 | Suite | Assertions | Proves |
 |---|---|---|
@@ -105,6 +106,7 @@ exactly as you'd paste it into the dashboard, applies it **again** (idempotency
 | `integrations_isolation_check.sql` | 19 | secrets never readable back, replace-only enforced in the DB |
 | `session_profile_check.sql` | 5 | `current_profile()` returns the right memberships |
 | `kiosk_isolation_check.sql` | 19 | PINs never leave the server, a device token grants no data access |
+| `notices_isolation_check.sql` | 18 | personal notices never cached on a shared tablet, offline batches replay without double-punching, reworded notices must be re-acknowledged |
 
 Two methodology rules learned the hard way:
 
@@ -152,6 +154,12 @@ dev server — dev-only behaviour has hidden real bugs here before.
 - `e2e/kiosk.spec.ts` — name search → PIN → 3-2-1 selfie → confirmation, plus
   wrong PIN, someone else's PIN, and double check-in
 - `e2e/service-desk.spec.ts` — phone-to-desk ticket flow and reload persistence
+- `e2e/kiosk-offline.live.spec.ts` — the kiosk's LIVE path in a real browser
+  with the Supabase RPCs intercepted: pair, cache, sign in with the network
+  cut, and confirm the event syncs **exactly once** when it returns. Runs
+  against a second build carrying placeholder Supabase env (`kiosk-live`
+  project), because IndexedDB, bcrypt-in-the-browser and the offline fallback
+  are precisely what unit tests cannot prove.
 
 Specs run in demo mode (no Supabase env) so a fresh clone and CI can both run
 them. The **live** journey — real pairing, real punch, real Storage upload —
@@ -321,7 +329,7 @@ are green or red in CI; the manual ones are a human saying yes.
 
 - [ ] Code reviewed by someone other than the author *(manual)*
 - [ ] `npm run verify` green — tokens, contrast, types, lint, unit, secrets, deps, build *(automated)*
-- [ ] `npm run test:db` green — 81 isolation assertions, bundle applies and re-applies *(automated)*
+- [ ] `npm run test:db` green — 99 isolation assertions, bundle applies and re-applies *(automated)*
 - [ ] `npm run test:e2e` green — routes, kiosk, service desk *(automated)*
 - [ ] `APPLY_EVERYTHING.sql` regenerated and committed *(automated check)*
 - [ ] New behaviour has tests; every fixed bug has a test *(manual)*
@@ -338,10 +346,11 @@ are green or red in CI; the manual ones are a human saying yes.
 | Layer | State |
 |---|---|
 | Static checks, secrets, dependency triage | automated |
-| Unit tests | automated, 48 assertions on the maths that matters |
-| Database + RLS isolation | automated, 81 assertions incl. idempotency |
+| Unit tests | automated, 66 assertions on the maths that matters |
+| Database + RLS isolation | automated, 99 assertions incl. idempotency |
 | End-to-end journeys | automated, demo mode, production build |
 | Component tests | **not started** |
+| Live-mode e2e (mocked RPCs, real browser) | automated — kiosk offline journey |
 | Live-mode e2e (real Supabase) | **manual on staging** |
 | Android device matrix | **manual, matrix defined above** |
 | Safari / WebKit | **manual — no WebKit in CI** |

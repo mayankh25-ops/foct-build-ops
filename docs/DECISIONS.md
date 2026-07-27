@@ -411,3 +411,20 @@ Deliberate exclusions, so the gaps are visible rather than implied: no component
 `eslint-config-next` was rejected: it pulls a vulnerable transitive tree for rules TypeScript mostly already gives us. The two plugins that catch real bugs here (react-hooks, @next/next) are wired directly. `react-hooks/set-state-in-effect` is a warning, not an error, because our `useXxxReady()` rehydration is exactly the sanctioned "synchronise with an external store" case.
 
 The suites paid for themselves immediately, finding three real defects: a missing favicon 404ing on every first page load, a Service Desk search that returned an empty table with no explanation, and phone controls at 40px/19px against a 44px touch minimum — all fixed in the same commit as the tests that caught them.
+
+## 2026-07-27 — Kiosk sign-in v1: notices, and offline as a first-class requirement
+The owner's brief was an admin app plus a tablet that "should save all info offline if there is no network and sync when it gets network", with notices shown at sign-in, in Hindi and English. Spec first (`docs/modules/KIOSK_SIGNIN_PRD.md`), then built in the order the PRD set — schema, admin, offline engine, UI — because the offline layer is the part that fails silently if it is left until last.
+
+**Notices are one table, two behaviours.** General (whole site, scrolls on the idle screen, cached on the device) and personal (one employee, shown only after they sign in, **never cached**). That last rule is a deliberate consequence of the tablet being shared: a personal note sitting in a device cache is a note the wrong person can read. Bodies are a per-language JSON map rather than rows-per-translation, because a notice is one thing said several ways, and the kiosk cycles the languages it has. Editing the wording bumps a version and un-acknowledges it — the mechanism a future induction re-issue will use.
+
+**Offline decisions, and why:**
+- **Outbox with client-generated UUIDs.** The server upserts on that id, so a batch replayed after a dropped connection records nothing twice. This is the single most important property in the module: the alternative is paying someone twice or not at all. Asserted three ways — SQL (replay a batch three times → 2 events), unit (flush twice → second call sends nothing), and in a real browser.
+- **Cached bcrypt hashes, not PINs.** Stated honestly in the migration and the code: a 4-digit PIN is 10,000 possibilities, so this makes extraction from a stolen tablet expensive, not impossible. The real mitigations remain retiring the device and resetting the PIN.
+- **Server-first when online.** The server still checks the PIN; the offline path engages only when the request genuinely never arrives. A tablet that merely *thinks* it is online must not silently downgrade its own security.
+- **The device's clock is not trusted.** Every sync learns `server_time - device_time`; events carry both the corrected time and a `recorded_offline` flag, so a manager can see which times came from an unsynced tablet rather than discovering it in a payroll dispute.
+- **Caps that degrade predictably.** 5,000 queued events, 500 selfies; past that, photos are dropped and events never are. Attendance matters more than its illustration.
+- **A stale cache keeps working but stops pretending.** Past seven days without a sync the idle screen says so, in words a cleaner can act on ("tell your supervisor"), and still signs people in.
+
+**Devanagari and Gurmukhi are shipped, not assumed.** The system font stack renders Hindi, Nepali and Punjabi as empty boxes on most Windows and Android builds; a notice nobody can read is not a notice. Only the 400/600 script subsets ship (~125 KB), loaded on demand.
+
+**Testing note worth keeping:** the browser-level offline test needed a *second* production build carrying placeholder Supabase env, because live mode is compiled in at build time. Unit tests cannot prove IndexedDB, bcrypt-in-the-browser, or the fallback when a request dies mid-flight. The spec now fails with an explicit message if that server was built without the env — after an hour lost to exactly that confusion during this session.

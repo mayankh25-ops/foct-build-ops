@@ -32,3 +32,6 @@ next-env.d.ts
 /coverage/
 /blob-report/
 /.playwright/
+
+# second e2e build output
+/.next-live/

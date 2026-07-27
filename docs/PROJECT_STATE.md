@@ -126,6 +126,15 @@ Layered testing modelled on how large product teams work, mapped to this stack. 
 - **Three real defects the new suites found and fixed**: no favicon (404 on every first page load → `src/app/icon.svg`); the Service Desk queue showed an empty table with no message when a search matched nothing (→ filtered `EmptyState`); phone chips and the "More options" link were 40px/19px tall, under the 44px touch minimum (→ h-11).
 - `npm run verify` runs the whole automated set in one command.
 
+### Session 2026-07-27 — Kiosk sign-in v1 (owner-directed): notices + offline
+Steps 1–5 of `docs/modules/KIOSK_SIGNIN_PRD.md`.
+
+- **0009**: notices (general vs personal, per-language JSON body, date + daily windows, priority, must-acknowledge, auto-versioned on reword), offline sync (`kiosk_bootstrap` / `kiosk_sync` / `notice_ack` / `notices_for_staff`), bcrypt PIN hashes for offline verification, and idempotent `kiosk_punch`. **18 new isolation checks; the database suite is now 99 assertions.**
+- **Admin**: Settings → Cleaners & kiosks → **Notices** (language tabs, everyone-vs-one-person, windows, priority, ack); Settings → **Sites** (name, address, timezone, kiosk language). Noto Sans Devanagari + Gurmukhi vendored so Hindi/Nepali/Punjabi render instead of boxes.
+- **Kiosk offline engine**: `src/lib/kiosk-db.ts` (Dexie: employees, notices, outbox, selfies, meta) and `src/lib/kiosk-sync.ts` (bootstrap, offline PIN check, outbox, flush with per-event verdicts, blob selfie queue, clock-offset learning, stale-cache detection).
+- **Kiosk UI**: notices ticker cycling languages on the idle screen, an offline chip, a stale-cache warning strip, and per-person notices with acknowledgement after sign-in. Online punches still go server-first (the server checks the PIN) and fall back to the outbox only when the request never arrives.
+- **Tests**: 18 unit tests for the sync engine (jsdom + fake-indexeddb) and **4 browser tests of the LIVE offline journey** against a second build with placeholder Supabase env and the RPCs intercepted — sign in with the network cut, then confirm the event syncs exactly once. Totals now: 66 unit, 99 database, 35 e2e.
+
 ## Migrations applied
 Authored + locally verified, pending owner's dashboard apply: `0000_platform_foundation.sql`, `0001_theme_engine.sql`, `seed.sql` (see supabase/README.md).
 

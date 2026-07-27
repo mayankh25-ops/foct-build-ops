@@ -1,7 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { Camera, CheckCircle2, Delete, Info, LogIn, LogOut, Search, Tablet } from "lucide-react";
+import {
+  Camera,
+  CheckCircle2,
+  CloudOff,
+  Delete,
+  Info,
+  LogIn,
+  LogOut,
+  Search,
+  Tablet,
+  TriangleAlert,
+} from "lucide-react";
 import { KioskButton } from "@/components/ui/kiosk-button";
 import { LiveClock } from "@/components/ui/live-clock";
 import { staffDirectory, useAttendanceReady, useAttendanceStore } from "@/lib/attendance-store";
@@ -11,11 +22,29 @@ import {
   pairDevice,
   punch as livePunch,
   readDevice,
+  noticesForStaff,
   searchStaff,
   uploadSelfie,
   type KioskDevice,
   type KioskStaff,
 } from "@/lib/kiosk-live";
+import {
+  bootstrap,
+  cachedNotices,
+  cachedSite,
+  describeLastSync,
+  dropQueued,
+  flush,
+  queueSelfie,
+  record,
+  recordAck,
+  searchCached,
+  syncState,
+  verifyPinOffline,
+  type KioskSite,
+  type SyncState,
+} from "@/lib/kiosk-sync";
+import { NoticeList, NoticeTicker, type DisplayNotice } from "@/components/kiosk/notice-display";
 import { cn } from "@/lib/cn";
 
 const PIN_LENGTH = 4;
@@ -276,6 +305,42 @@ export function KioskScreen() {
   }, []);
   const live = KIOSK_LIVE && device !== null;
 
+  // ---- offline engine ----------------------------------------------------
+  const [site, setSite] = React.useState<KioskSite | null>(null);
+  const [general, setGeneral] = React.useState<DisplayNotice[]>([]);
+  const [sync, setSync] = React.useState<SyncState | null>(null);
+  const [mine, setMine] = React.useState<DisplayNotice[]>([]);
+
+  const refreshLocal = React.useCallback(async () => {
+    setSite(await cachedSite());
+    setGeneral((await cachedNotices()) as unknown as DisplayNotice[]);
+    setSync(await syncState());
+  }, []);
+
+  // Pull the cache, then push anything waiting. Both are safe to repeat.
+  const syncNow = React.useCallback(async () => {
+    if (!live || !device) return;
+    if (typeof navigator !== "undefined" && navigator.onLine) {
+      await bootstrap(device.token);
+      await flush(device.token);
+    }
+    await refreshLocal();
+  }, [live, device, refreshLocal]);
+
+  React.useEffect(() => {
+    if (!live) return;
+    void syncNow();
+    const timer = setInterval(() => void syncNow(), 60_000);
+    const onOnline = () => void syncNow();
+    window.addEventListener("online", onOnline);
+    window.addEventListener("focus", onOnline);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("focus", onOnline);
+    };
+  }, [live, syncNow]);
+
   const [query, setQuery] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [selectedName, setSelectedName] = React.useState<string | null>(null);
@@ -287,6 +352,7 @@ export function KioskScreen() {
   const [doneName, setDoneName] = React.useState<string | undefined>();
   const [doneStaffId, setDoneStaffId] = React.useState<string | null>(null);
   const [doneEventId, setDoneEventId] = React.useState<string | null>(null);
+  const [doneClientId, setDoneClientId] = React.useState<string | null>(null);
   const [selfie, setSelfie] = React.useState<string | undefined>();
   const [busy, setBusy] = React.useState(false);
   const [liveMatches, setLiveMatches] = React.useState<KioskStaff[]>([]);
@@ -300,10 +366,20 @@ export function KioskScreen() {
     }
     let cancelled = false;
     const t = setTimeout(() => {
-      void searchStaff(device.token, trimmed).then((r) => {
-        if (!cancelled) setLiveMatches(r);
+      // The cache is the primary source: it answers instantly and works in a
+      // basement. The server is only asked when the cache has nothing, which
+      // covers someone added minutes ago.
+      void searchCached(trimmed).then(async (local) => {
+        if (cancelled) return;
+        if (local.length > 0) {
+          setLiveMatches(local.map((e) => ({ id: e.id, name: e.name })));
+          return;
+        }
+        if (typeof navigator !== "undefined" && !navigator.onLine) return;
+        const remote = await searchStaff(device.token, trimmed);
+        if (!cancelled) setLiveMatches(remote);
       });
-    }, 200);
+    }, 180);
     return () => {
       cancelled = true;
       clearTimeout(t);
@@ -330,10 +406,17 @@ export function KioskScreen() {
     setPin((p) => (p.length < PIN_LENGTH ? p + d : p));
   };
 
-  const succeed = (a: "in" | "out", who: string | undefined, staffId: string | null, eventId: string | null) => {
+  const succeed = (
+    a: "in" | "out",
+    who: string | undefined,
+    staffId: string | null,
+    eventId: string | null,
+    clientEventId?: string
+  ) => {
     setDoneName(who);
     setDoneStaffId(staffId);
     setDoneEventId(eventId);
+    setDoneClientId(clientEventId ?? null);
     setAction(a);
     setStamp(
       new Date().toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: false })
@@ -342,17 +425,90 @@ export function KioskScreen() {
     setPhase("camera");
   };
 
+  /**
+   * Online: the SERVER checks the PIN, which is the stronger path, and we send
+   * an idempotency key so a retry over a bad connection lands once.
+   * Offline (or if that request never arrives): the PIN is checked against the
+   * cached bcrypt hash and the event goes to the outbox. Either way the cleaner
+   * gets an answer immediately — they are never left waiting on Wi-Fi.
+   */
   const completeLive = async (a: "in" | "out") => {
     if (!device) return;
     setBusy(true);
-    const res = await livePunch({ token: device.token, pin, kind: a, staffId: selectedId });
+    const online = typeof navigator === "undefined" ? true : navigator.onLine;
+
+    if (online) {
+      const queued = await record({
+        kind: a,
+        staffId: selectedId ?? "",
+        staffName: selectedName ?? "",
+        online: true,
+      });
+      const res = await livePunch({
+        token: device.token,
+        pin,
+        kind: a,
+        staffId: selectedId,
+        clientEventId: queued.clientEventId,
+      });
+      if (res.ok || (!res.offline && !res.ok)) {
+        // the server answered — its verdict stands, so drop our local copy
+        await dropQueued(queued.clientEventId);
+      }
+      if (res.ok) {
+        setBusy(false);
+        await afterSignIn(res.staffId ?? selectedId, res.eventId ?? null, queued.clientEventId);
+        succeed(a, res.staffName, res.staffId ?? null, res.eventId ?? null, queued.clientEventId);
+        return;
+      }
+      if (!res.offline) {
+        setBusy(false);
+        setNotice(res.error ?? "That didn't work — try again.");
+        setPin("");
+        return;
+      }
+      // fell through: the request never arrived. Carry on offline.
+    }
+
+    const person = await verifyPinOffline(pin, selectedId);
     setBusy(false);
-    if (!res.ok) {
-      setNotice(res.error ?? "That didn't work — try again.");
+    if (!person) {
+      setNotice(
+        selectedId
+          ? "That PIN doesn't match the selected name — check and try again."
+          : "PIN not recognised — check with your supervisor."
+      );
       setPin("");
       return;
     }
-    succeed(a, res.staffName, null, res.eventId ?? null);
+    const queued = await record({
+      kind: a,
+      staffId: person.id,
+      staffName: person.name,
+      online: false,
+    });
+    await refreshLocal();
+    await afterSignIn(person.id, null, queued.clientEventId);
+    succeed(a, person.name, person.id, null, queued.clientEventId);
+  };
+
+  /** Fetch this person's notices — from the server when we can reach it,
+   *  otherwise the general ones already cached. */
+  const afterSignIn = async (
+    staffId: string | null,
+    _eventId: string | null,
+    _clientEventId: string
+  ) => {
+    if (!device || !staffId) {
+      setMine(general);
+      return;
+    }
+    if (typeof navigator !== "undefined" && navigator.onLine) {
+      const list = await noticesForStaff(device.token, staffId);
+      setMine(list as DisplayNotice[]);
+    } else {
+      setMine(general);
+    }
   };
 
   const completeDemo = (a: "in" | "out") => {
@@ -380,6 +536,7 @@ export function KioskScreen() {
       setPin("");
       return;
     }
+    setMine([]);
     succeed(a, result.staff?.name, result.staff?.id ?? null, null);
   };
 
@@ -392,13 +549,16 @@ export function KioskScreen() {
     if (dataUrl) {
       setSelfie(dataUrl);
       if (live && device && doneEventId) {
-        // fire-and-forget: the attendance record already exists without it
+        // the event already exists on the server — attach straight away
         void uploadSelfie({
           token: device.token,
           buildingId: device.buildingId,
           eventId: doneEventId,
           dataUrl,
         });
+      } else if (live && doneClientId) {
+        // recorded offline: hold the photo until its event syncs
+        void queueSelfie(doneClientId, dataUrl).then(refreshLocal);
       } else if (doneStaffId) {
         attachSelfie(doneStaffId, action, dataUrl);
       }
@@ -441,7 +601,7 @@ export function KioskScreen() {
           </span>
           <div className="leading-tight">
             <p className="font-display text-title-3 font-medium text-fg">
-              {device?.buildingName || "Aurora on Collins"}
+              {site?.name || device?.buildingName || "Aurora on Collins"}
             </p>
             <p className="text-body-sm text-fg-muted">
               {device ? device.label : "FOCT CleaningOps kiosk"}
@@ -449,6 +609,16 @@ export function KioskScreen() {
           </div>
         </div>
         <div className="hidden items-center gap-6 sm:flex">
+          {sync && !sync.online && (
+            <span className="flex items-center gap-2 rounded-pill bg-warning-subtle px-3.5 py-1.5 text-body-sm font-medium text-warning-text">
+              <CloudOff aria-hidden className="size-4" />
+              No Wi‑Fi — sign-ins are still recorded
+              {sync.pending > 0 && ` (${sync.pending} waiting)`}
+            </span>
+          )}
+          {sync?.online && sync.pending > 0 && (
+            <span className="text-body-sm text-fg-muted">{sync.pending} sending…</span>
+          )}
           <p className="text-body-sm text-fg-muted">
             Need help? Call your supervisor on <span className="font-mono">0491 570 156</span>
           </p>
@@ -496,6 +666,14 @@ export function KioskScreen() {
                 ? `Recorded at ${stamp}${selfie ? " with photo" : ""} · your supervisor can see you’re on site.`
                 : `Recorded at ${stamp}${selfie ? " with photo" : ""} · your hours go to this week’s timesheet.`}
             </p>
+            <NoticeList
+              notices={mine}
+              preferred={site?.default_language ?? "en"}
+              onAck={(noticeId) => {
+                if (doneStaffId) void recordAck(noticeId, doneStaffId).then(refreshLocal);
+              }}
+            />
+
             <KioskButton variant="secondary" className="mt-12 max-w-xs" onClick={reset}>
               Done
             </KioskButton>
@@ -510,15 +688,34 @@ export function KioskScreen() {
               </span>
               <LiveClock variant="hero" className="mt-6" showDate />
 
-              <div className="mt-10 w-full max-w-md rounded-card border border-edge bg-surface p-6 text-left shadow-card">
-                <div className="flex items-center gap-2.5">
-                  <Info aria-hidden className="size-4 text-accent-text" />
-                  <p className="text-body-sm font-medium text-fg">Today’s site note</p>
-                </div>
-                <p className="mt-2.5 text-body text-fg-secondary">
-                  Buff the lobby marble before 07:00. Loading dock is closed until 06:30 —
-                  use the Little Collins St entry.
-                </p>
+              {/* the day's notices, cycling their languages */}
+              <div className="mt-10 w-full max-w-md">
+                {live ? (
+                  general.length > 0 ? (
+                    <NoticeTicker notices={general} preferred={site?.default_language ?? "en"} />
+                  ) : null
+                ) : (
+                  <div className="rounded-card border border-edge bg-surface p-6 text-left shadow-card">
+                    <div className="flex items-center gap-2.5">
+                      <Info aria-hidden className="size-4 text-accent-text" />
+                      <p className="text-body-sm font-medium text-fg">Today’s site note</p>
+                    </div>
+                    <p className="mt-2.5 text-body text-fg-secondary">
+                      Buff the lobby marble before 07:00. Loading dock is closed until 06:30 —
+                      use the Little Collins St entry.
+                    </p>
+                  </div>
+                )}
+
+                {/* a tablet that has not synced in a week keeps working, but
+                    stops pretending it is current */}
+                {live && sync?.stale && (
+                  <p className="mt-4 flex items-start gap-2.5 rounded-card bg-warning-subtle px-4 py-3 text-body-sm text-warning-text">
+                    <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
+                    This tablet last synced {describeLastSync(sync.lastSync)}. Sign-ins are still
+                    recorded — tell your supervisor so it can be reconnected.
+                  </p>
+                )}
               </div>
             </div>
 

@@ -37,9 +37,12 @@ export interface PunchResult {
   ok: boolean;
   /** the cleaner is already checked in / has no open shift — a soft refusal */
   soft?: boolean;
+  staffId?: string;
   staffName?: string;
   eventId?: string;
   error?: string;
+  /** the request reached nobody — the caller should fall back to the outbox */
+  offline?: boolean;
 }
 
 /* ------------------------------------------------ device identity ------- */
@@ -112,31 +115,45 @@ export async function punch(args: {
   pin: string;
   kind: "in" | "out";
   staffId?: string | null;
+  /** idempotency key, so a retry over a bad connection lands once */
+  clientEventId?: string | null;
 }): Promise<PunchResult> {
-  const { data, error } = await getSupabase().rpc("kiosk_punch", {
-    p_token: args.token,
-    p_pin: args.pin,
-    p_kind: args.kind,
-    p_selfie_path: null,
-    p_staff_id: args.staffId ?? null,
-  });
-  if (error) return { ok: false, error: friendly(error.message) };
-  const res = data as {
-    ok: boolean;
-    already?: boolean;
-    no_open_shift?: boolean;
-    staff_name?: string;
-    event_id?: string;
-    error?: string;
-  } | null;
-  if (!res) return { ok: false, error: "No answer from the server — try again." };
-  return {
-    ok: res.ok,
-    soft: Boolean(res.already || res.no_open_shift),
-    staffName: res.staff_name,
-    eventId: res.event_id,
-    error: res.error,
-  };
+  try {
+    const { data, error } = await getSupabase().rpc("kiosk_punch", {
+      p_token: args.token,
+      p_pin: args.pin,
+      p_kind: args.kind,
+      p_selfie_path: null,
+      p_staff_id: args.staffId ?? null,
+      p_client_event_id: args.clientEventId ?? null,
+    });
+    if (error) {
+      const offline = /Failed to fetch|NetworkError|timeout/i.test(error.message);
+      return { ok: false, offline, error: friendly(error.message) };
+    }
+    const res = data as {
+      ok: boolean;
+      already?: boolean;
+      no_open_shift?: boolean;
+      staff_id?: string;
+      staff_name?: string;
+      event_id?: string;
+      error?: string;
+    } | null;
+    if (!res) return { ok: false, offline: true, error: "No answer from the server." };
+    return {
+      ok: res.ok,
+      soft: Boolean(res.already || res.no_open_shift),
+      staffId: res.staff_id,
+      staffName: res.staff_name,
+      eventId: res.event_id,
+      error: res.error,
+    };
+  } catch (e) {
+    // a thrown fetch is the tablet losing Wi-Fi mid-punch: not an error the
+    // cleaner should see, just a reason to record it locally instead
+    return { ok: false, offline: true, error: friendly((e as Error).message) };
+  }
 }
 
 /* ------------------------------------------------- selfie upload ------- */
@@ -182,4 +199,22 @@ function friendly(message: string): string {
     return "This tablet's configuration is out of date — tell your supervisor.";
   }
   return message;
+}
+
+/* --------------------------------------------------- notices online ---- */
+
+/** The notices this person should see right now — general plus their own. */
+export async function noticesForStaff(
+  token: string,
+  staffId: string
+): Promise<{ id: string; title?: Record<string, string>; body: Record<string, string>;
+             priority: "info" | "important" | "urgent"; personal?: boolean;
+             requires_ack?: boolean; acked?: boolean }[]> {
+  const { data, error } = await getSupabase().rpc("notices_for_staff", {
+    p_token: token,
+    p_staff: staffId,
+  });
+  if (error) return [];
+  const res = data as { ok: boolean; notices?: [] } | null;
+  return res?.ok ? (res.notices ?? []) : [];
 }
