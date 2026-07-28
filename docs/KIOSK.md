@@ -35,6 +35,20 @@ self-service in the app.
    notices. It creates two test cleaners and a test tablet on the demo
    building; delete them from the Cleaners tab afterwards if you don't want them.
 
+## 1b. The shortcut for the very first tablet
+
+`supabase/GO_LIVE_KIOSK.sql` does steps 2 and 3 below in one paste: it creates
+a cleaner, a tablet and today's notice, and prints the PIN and the 6-digit pair
+code straight into the results grid. Edit the six values at the top, Run, and
+go to the tablet.
+
+Re-running it is safe — it reuses the same person and tablet rather than
+duplicating them, and issues a fresh PIN and pair code each time (the old ones
+stop working immediately).
+
+Everything it does is also available by clicking, in Settings → Cleaners &
+kiosks. This file exists so the first one doesn't have to be.
+
 ## 2. Add cleaners and hand out PINs
 
 Settings → **Cleaners & kiosks** → Cleaners → **Add cleaner**.

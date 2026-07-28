@@ -84,7 +84,10 @@ psql -f supabase/tests/isolation_check.sql   # expect 23 ok-notices
    no data access at all, sessions pair into timesheet rows). It leaves two
    test cleaners and a test tablet on the demo building — delete them from
    Settings → Cleaners & kiosks if you don't want them.
-3. Then set up a real building with **`supabase/NEW_BUILDING.sql`** (edit the
+3. Fastest path to a working tablet: **`supabase/GO_LIVE_KIOSK.sql`** — one
+   paste that creates a cleaner, a tablet and today's notice and prints the
+   PIN and pair code. Safe to re-run.
+4. Or set up a real building first with **`supabase/NEW_BUILDING.sql`** (edit the
    six values at the top first) and follow **`docs/KIOSK.md`** to add cleaners,
    hand out PINs and pair the tablet.
 
