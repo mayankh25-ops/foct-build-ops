@@ -12,7 +12,14 @@
 --   psql -d k -f supabase/tests/kiosk_isolation_check.sql
 -- =============================================================================
 
-create extension if not exists pgcrypto;
+-- IMPORTANT: Supabase installs pgcrypto into an `extensions` schema, NOT
+-- `public`. A function with a pinned search_path that omits it fails with
+-- "function gen_salt(unknown, integer) does not exist" — on the real project
+-- only. The mirror therefore copies that layout exactly, so the failure
+-- happens in CI instead of in the owner's SQL editor.
+create schema if not exists extensions;
+create extension if not exists pgcrypto with schema extensions;
+grant usage on schema extensions to public;
 
 -- Supabase's three request roles.
 do $$ begin
@@ -64,23 +71,23 @@ create or replace function vault._key() returns text
 language sql stable as $$ select 'mirror-only-key' $$;
 
 create or replace function vault.create_secret(new_secret text, new_name text default null)
-returns uuid language sql volatile security definer set search_path = vault, public as $$
+returns uuid language sql volatile security definer set search_path = vault, public, extensions as $$
   insert into vault.secrets (name, secret)
-  values (new_name, pgp_sym_encrypt(new_secret, vault._key()))
+  values (new_name, extensions.pgp_sym_encrypt(new_secret, vault._key()))
   returning id
 $$;
 
 create or replace function vault.update_secret(
   secret_id uuid, new_secret text default null, new_name text default null)
-returns void language sql volatile security definer set search_path = vault, public as $$
+returns void language sql volatile security definer set search_path = vault, public, extensions as $$
   update vault.secrets
-     set secret = coalesce(pgp_sym_encrypt(new_secret, vault._key()), secret),
+     set secret = coalesce(extensions.pgp_sym_encrypt(new_secret, vault._key()), secret),
          name   = coalesce(new_name, name)
    where id = secret_id
 $$;
 
 create or replace view vault.decrypted_secrets as
-  select id, name, pgp_sym_decrypt(secret, vault._key()) as decrypted_secret, created_at
+  select id, name, extensions.pgp_sym_decrypt(secret, vault._key()) as decrypted_secret, created_at
     from vault.secrets;
 
 revoke all on vault.secrets, vault.decrypted_secrets from public, anon, authenticated;

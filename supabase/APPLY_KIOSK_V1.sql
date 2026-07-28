@@ -14,7 +14,6 @@
 -- notices). It creates two test employees, a test tablet and three notices on
 -- the demo building; remove them from the admin screens afterwards.
 -- =============================================================================
-
 -- =============================================================================
 -- 0009 — Kiosk sign-in v1: notices, offline sync, per-site language.
 --
@@ -43,7 +42,28 @@
 -- Idempotent — safe to re-run.
 -- =============================================================================
 
+-- pgcrypto lives in the `extensions` schema on Supabase and in `public` on a
+-- plain Postgres. `create extension if not exists` therefore does NOT
+-- guarantee it is reachable from a function with a pinned search_path — which
+-- is exactly how staff_create failed with
+--     function gen_salt(unknown, integer) does not exist
+-- The two helpers below are the single place that has to know this, and every
+-- caller goes through them.
 create extension if not exists pgcrypto;
+
+create or replace function app.hash_pin(p_pin text) returns text
+language sql volatile security definer
+set search_path = public, extensions, pg_temp as $$
+  select crypt(p_pin, gen_salt('bf', 10))
+$$;
+
+create or replace function app.pin_matches(p_pin text, p_hash text) returns boolean
+language sql stable security definer
+set search_path = public, extensions, pg_temp as $$
+  select p_hash is not null and p_hash = crypt(p_pin, p_hash)
+$$;
+revoke all on function app.hash_pin(text) from public;
+revoke all on function app.pin_matches(text, text) from public;
 
 -- ------------------------------------------------------- site settings ----
 alter table public.buildings
@@ -180,7 +200,7 @@ begin
   end loop;
   insert into public.staff (org_id, building_id, name, role, pin, pin_hash)
   values (v_org, p_building, trim(p_name), coalesce(nullif(trim(p_role),''),'Cleaner'),
-          v_pin, crypt(v_pin, gen_salt('bf', 10)))
+          v_pin, app.hash_pin(v_pin))
   returning id into v_id;
   return jsonb_build_object('ok', true, 'staff_id', v_id, 'name', trim(p_name), 'pin', v_pin);
 end $$;
@@ -201,14 +221,14 @@ begin
       and not exists (select 1 from public.staff
                        where building_id = v_building and pin = v_pin and active and id <> p_staff);
   end loop;
-  update public.staff set pin = v_pin, pin_hash = crypt(v_pin, gen_salt('bf', 10)) where id = p_staff;
+  update public.staff set pin = v_pin, pin_hash = app.hash_pin(v_pin) where id = p_staff;
   return jsonb_build_object('ok', true, 'staff_id', p_staff, 'pin', v_pin);
 end $$;
 revoke all on function public.staff_reset_pin(uuid) from public;
 grant execute on function public.staff_reset_pin(uuid) to authenticated;
 
 -- backfill hashes for anyone created before this migration
-update public.staff set pin_hash = crypt(pin, gen_salt('bf', 10))
+update public.staff set pin_hash = app.hash_pin(pin)
  where pin_hash is null;
 
 

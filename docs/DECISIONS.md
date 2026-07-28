@@ -428,3 +428,12 @@ The owner's brief was an admin app plus a tablet that "should save all info offl
 **Devanagari and Gurmukhi are shipped, not assumed.** The system font stack renders Hindi, Nepali and Punjabi as empty boxes on most Windows and Android builds; a notice nobody can read is not a notice. Only the 400/600 script subsets ship (~125 KB), loaded on demand.
 
 **Testing note worth keeping:** the browser-level offline test needed a *second* production build carrying placeholder Supabase env, because live mode is compiled in at build time. Unit tests cannot prove IndexedDB, bcrypt-in-the-browser, or the fallback when a request dies mid-flight. The spec now fails with an explicit message if that server was built without the env — after an hour lost to exactly that confusion during this session.
+
+## 2026-07-27 — pgcrypto's schema: a bug the local mirror could not see
+`staff_create` failed on the owner's project with `function gen_salt(unknown, integer) does not exist`, having passed every local run. Cause: **Supabase installs pgcrypto into an `extensions` schema; a plain Postgres puts it in `public`.** Our SECURITY DEFINER functions pin `search_path = public, app` — correct and necessary for safety — which on Supabase excludes the schema the function actually lives in. `create extension if not exists pgcrypto` did not help: the extension already existed, just elsewhere.
+
+Two fixes, because the second is the one that matters:
+1. **`app.hash_pin()` / `app.pin_matches()`** — the single place that knows where pgcrypto is (`search_path = public, extensions, pg_temp`). Every caller, including the isolation test, goes through them rather than calling `crypt()`/`gen_salt()` inline. Adding a schema to a pinned search_path is safe; dropping the pin would not be.
+2. **The mirror now reproduces Supabase's layout** — `create extension pgcrypto with schema extensions` — so this class of divergence fails in CI instead of in the owner's SQL editor. Verified by re-running the old bundle against the corrected mirror and watching it reproduce the owner's exact error, then watching the fix clear it.
+
+The general lesson, recorded in `docs/TESTING.md` §6: a test double has to copy the platform's *shape*, not only its API. The Vault shim was already in that spirit; the extensions schema was the gap.

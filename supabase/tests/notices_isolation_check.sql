@@ -29,7 +29,7 @@ begin
   -- 1. a PIN hash is stored for offline verification, and it is NOT the PIN
   select pin_hash into v_hash from public.staff where id = v_alice;
   if v_hash is not null and v_hash <> v_pin and v_hash like '$2%'
-     and v_hash = crypt(v_pin, v_hash) then
+     and app.pin_matches(v_pin, v_hash) then
     raise notice 'ok 1: PIN stored as a bcrypt hash that verifies';
   else raise exception 'FAIL 1: bad pin_hash %', v_hash; end if;
 
@@ -38,8 +38,8 @@ begin
   begin
     v_new := public.staff_reset_pin(v_alice) ->> 'pin';
     select pin_hash into v_hash2 from public.staff where id = v_alice;
-    if v_hash2 <> v_hash and v_hash2 = crypt(v_new, v_hash2)
-       and v_hash2 <> crypt(v_pin, v_hash2) then
+    if v_hash2 <> v_hash and app.pin_matches(v_new, v_hash2)
+       and not app.pin_matches(v_pin, v_hash2) then
       v_pin := v_new;
       raise notice 'ok 2: PIN reset replaced the hash and the old PIN no longer verifies';
     else raise exception 'FAIL 2: stale hash after reset'; end if;

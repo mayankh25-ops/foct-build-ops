@@ -108,13 +108,19 @@ exactly as you'd paste it into the dashboard, applies it **again** (idempotency
 | `kiosk_isolation_check.sql` | 19 | PINs never leave the server, a device token grants no data access |
 | `notices_isolation_check.sql` | 18 | personal notices never cached on a shared tablet, offline batches replay without double-punching, reworded notices must be re-acknowledged |
 
-Two methodology rules learned the hard way:
+Three methodology rules learned the hard way:
 
 - **Never test RLS as a superuser** — superusers bypass it, so the suite passes
   no matter what the policies say. Device-side steps do `set local role anon`.
 - **`create table if not exists` skips an existing older table** instead of
   upgrading it. That's why a half-built project needs
   `RESET_PUBLIC_SCHEMA.sql`, and why CI asserts the bundle is regenerated.
+- **The mirror must copy Supabase's schema LAYOUT, not just its API.** pgcrypto
+  lives in an `extensions` schema on Supabase and in `public` on a plain
+  Postgres, so a function with a pinned `search_path` can pass locally and fail
+  on the real project with `function gen_salt(...) does not exist`. The mirror
+  now installs pgcrypto exactly where Supabase does, and that failure is
+  reproducible in CI.
 
 CI also fails if `APPLY_EVERYTHING.sql` is stale — a migration authored but
 left out of the bundle is caught before it reaches you.
