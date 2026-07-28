@@ -45,6 +45,7 @@ import {
   type SyncState,
 } from "@/lib/kiosk-sync";
 import { NoticeList, NoticeTicker, type DisplayNotice } from "@/components/kiosk/notice-display";
+import { feedbackRefuse, feedbackSuccess, feedbackTap } from "@/lib/kiosk-feedback";
 import { cn } from "@/lib/cn";
 
 const PIN_LENGTH = 4;
@@ -255,7 +256,7 @@ function PairScreen({ onPaired }: { onPaired: (d: KioskDevice) => void }) {
               type="button"
               disabled={busy}
               onClick={() => press(d)}
-              className="h-14 rounded-card bg-hover font-mono text-title-2 text-fg transition-all duration-100 hover:bg-accent-subtle active:scale-[0.97]"
+              className="h-[4.5rem] rounded-card bg-hover font-numeric text-display font-semibold text-fg transition-all duration-100 hover:bg-accent-subtle active:scale-[0.97]"
             >
               {d}
             </button>
@@ -263,7 +264,7 @@ function PairScreen({ onPaired }: { onPaired: (d: KioskDevice) => void }) {
           <button
             type="button"
             onClick={() => setCode("")}
-            className="h-14 rounded-card text-body font-medium text-fg-muted transition-colors hover:bg-hover"
+            className="h-[4.5rem] rounded-card text-title-3 font-medium text-fg-muted transition-colors hover:bg-hover"
           >
             Clear
           </button>
@@ -279,7 +280,7 @@ function PairScreen({ onPaired }: { onPaired: (d: KioskDevice) => void }) {
             type="button"
             aria-label="Delete last digit"
             onClick={() => setCode((c) => c.slice(0, -1))}
-            className="flex h-14 items-center justify-center rounded-card text-fg-muted transition-colors hover:bg-hover"
+            className="flex h-[4.5rem] items-center justify-center rounded-card text-fg-muted transition-colors hover:bg-hover"
           >
             <Delete aria-hidden className="size-6" />
           </button>
@@ -304,6 +305,26 @@ export function KioskScreen() {
     setHydrated(true);
   }, []);
   const live = KIOSK_LIVE && device !== null;
+
+  /**
+   * The tablet wears its own theme ("Dawn Shift"), not the portal's, and
+   * switches to the night set after 18:00. The same screen should not be the
+   * same brightness at 5am and 8pm in a room with no windows.
+   */
+  React.useEffect(() => {
+    const root = document.documentElement;
+    const previous = root.getAttribute("data-theme");
+    const apply = () => {
+      const hour = new Date().getHours();
+      root.setAttribute("data-theme", hour >= 18 || hour < 5 ? "kiosk-night" : "kiosk");
+    };
+    apply();
+    const timer = setInterval(apply, 10 * 60_000);
+    return () => {
+      clearInterval(timer);
+      if (previous) root.setAttribute("data-theme", previous);
+    };
+  }, []);
 
   // ---- offline engine ----------------------------------------------------
   const [site, setSite] = React.useState<KioskSite | null>(null);
@@ -348,7 +369,12 @@ export function KioskScreen() {
   const [phase, setPhase] = React.useState<Phase>("idle");
   const [action, setAction] = React.useState<"in" | "out">("in");
   const [stamp, setStamp] = React.useState("");
-  const [notice, setNotice] = React.useState<string | null>(null);
+  const [notice, setNoticeRaw] = React.useState<string | null>(null);
+  /** every refusal is heard as well as read */
+  const setNotice = React.useCallback((message: string | null) => {
+    if (message) feedbackRefuse();
+    setNoticeRaw(message);
+  }, []);
   const [doneName, setDoneName] = React.useState<string | undefined>();
   const [doneStaffId, setDoneStaffId] = React.useState<string | null>(null);
   const [doneEventId, setDoneEventId] = React.useState<string | null>(null);
@@ -403,6 +429,7 @@ export function KioskScreen() {
 
   const press = (d: string) => {
     setNotice(null);
+    feedbackTap();
     setPin((p) => (p.length < PIN_LENGTH ? p + d : p));
   };
 
@@ -413,6 +440,7 @@ export function KioskScreen() {
     eventId: string | null,
     clientEventId?: string
   ) => {
+    feedbackSuccess();
     setDoneName(who);
     setDoneStaffId(staffId);
     setDoneEventId(eventId);
@@ -740,7 +768,7 @@ export function KioskScreen() {
                 <div className="relative mt-5">
                   <Search
                     aria-hidden
-                    className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-fg-muted"
+                    className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-fg-muted"
                   />
                   <input
                     aria-label="Find your name"
@@ -752,7 +780,7 @@ export function KioskScreen() {
                       setQuery(e.target.value);
                       setNotice(null);
                     }}
-                    className="h-12 w-full rounded-control border border-edge-strong bg-surface pl-10 text-body text-fg placeholder:text-fg-disabled"
+                    className="h-16 w-full rounded-control border border-edge-strong bg-surface pl-12 text-title-3 text-fg placeholder:text-fg-disabled"
                   />
                 </div>
                 {selectedId === null && matches.length > 0 && (
@@ -768,7 +796,7 @@ export function KioskScreen() {
                           setPin("");
                           setNotice(null);
                         }}
-                        className="rounded-pill border border-edge bg-canvas px-3.5 py-2 text-body-sm font-medium text-fg transition-colors hover:bg-accent-subtle"
+                        className="min-h-16 rounded-pill border border-edge bg-canvas px-5 py-2 text-title-3 font-medium text-fg transition-colors hover:bg-accent-subtle"
                       >
                         {m.name}
                       </button>
@@ -798,7 +826,7 @@ export function KioskScreen() {
                       key={i}
                       aria-hidden
                       className={cn(
-                        "size-4 rounded-pill transition-colors duration-150",
+                        "size-5 rounded-pill transition-colors duration-150",
                         i < pin.length ? "bg-accent" : "bg-hover"
                       )}
                     />
@@ -815,7 +843,7 @@ export function KioskScreen() {
                       type="button"
                       onClick={() => press(d)}
                       className={cn(
-                        "h-14 rounded-card bg-hover font-mono text-title-2 text-fg",
+                        "h-[4.5rem] min-w-24 rounded-card bg-hover font-numeric text-display font-semibold text-fg",
                         "transition-all duration-100 hover:bg-accent-subtle active:scale-[0.97]"
                       )}
                     >
@@ -825,7 +853,7 @@ export function KioskScreen() {
                   <button
                     type="button"
                     onClick={() => setPin("")}
-                    className="h-14 rounded-card text-body font-medium text-fg-muted transition-colors hover:bg-hover"
+                    className="h-[4.5rem] rounded-card text-title-3 font-medium text-fg-muted transition-colors hover:bg-hover"
                   >
                     Clear
                   </button>
@@ -833,7 +861,7 @@ export function KioskScreen() {
                     type="button"
                     onClick={() => press("0")}
                     className={cn(
-                      "h-14 rounded-card bg-hover font-mono text-title-2 text-fg",
+                      "h-[4.5rem] min-w-24 rounded-card bg-hover font-numeric text-display font-semibold text-fg",
                       "transition-all duration-100 hover:bg-accent-subtle active:scale-[0.97]"
                     )}
                   >
@@ -843,9 +871,9 @@ export function KioskScreen() {
                     type="button"
                     aria-label="Delete last digit"
                     onClick={() => setPin((p) => p.slice(0, -1))}
-                    className="flex h-14 items-center justify-center rounded-card text-fg-muted transition-colors hover:bg-hover"
+                    className="flex h-[4.5rem] items-center justify-center rounded-card text-fg-muted transition-colors hover:bg-hover"
                   >
-                    <Delete aria-hidden className="size-6" />
+                    <Delete aria-hidden className="size-7" />
                   </button>
                 </div>
 

@@ -10,8 +10,9 @@ export interface KioskButtonProps extends React.ButtonHTMLAttributes<HTMLButtonE
 }
 
 /**
- * Very large touch target for the kiosk (min 88px tall). Feels like an
- * iPad control, not an admin button.
+ * The kiosk's primary control: 88px tall, well past the 64px minimum the
+ * tablet works to (itself double the 44px web rule). Wet hands, gloves, no
+ * reading glasses, read from 1.5 m away.
  */
 export const KioskButton = React.forwardRef<HTMLButtonElement, KioskButtonProps>(
   ({ icon: Icon, variant = "primary", className, children, ...props }, ref) => (

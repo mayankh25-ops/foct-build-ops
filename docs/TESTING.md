@@ -157,6 +157,9 @@ dev server — dev-only behaviour has hidden real bugs here before.
 - `e2e/smoke.spec.ts` — all 20 routes render, no console errors, no 5xx, and
   the themed background actually computed (catches the "loading like this"
   unstyled-page failure)
+- `e2e/kiosk-touch.mobile.spec.ts` — the tablet's ergonomics: every control
+  ≥64px (double the web rule), the clock the largest thing on screen, no
+  sideways scroll
 - `e2e/kiosk.spec.ts` — name search → PIN → 3-2-1 selfie → confirmation, plus
   wrong PIN, someone else's PIN, and double check-in
 - `e2e/service-desk.spec.ts` — phone-to-desk ticket flow and reload persistence

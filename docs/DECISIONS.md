@@ -437,3 +437,11 @@ Two fixes, because the second is the one that matters:
 2. **The mirror now reproduces Supabase's layout** — `create extension pgcrypto with schema extensions` — so this class of divergence fails in CI instead of in the owner's SQL editor. Verified by re-running the old bundle against the corrected mirror and watching it reproduce the owner's exact error, then watching the fix clear it.
 
 The general lesson, recorded in `docs/TESTING.md` §6: a test double has to copy the platform's *shape*, not only its API. The Vault shim was already in that spirit; the extensions schema was the gap.
+
+## 2026-07-28 — "Dawn Shift": the kiosk gets its own palette and its own night
+Step 6 of the kiosk build order. The tablet is not a laptop: it is mounted on a wall in a fluorescent-lit basement, read from about 1.5 m, and touched with wet hands and gloves.
+
+- **A surface theme, not a Theme Builder built-in** — same status as `support`. A building admin picks a portal theme; the kiosk's job is legibility, not brand expression, so it is not up for selection. Neutrals from Radix Sand/Sage, accent Radix Grass `#2f6f4e`. Both sets pass the full 37-pair AA gate (now 15 themes).
+- **`kiosk-night` after 18:00.** The same brightness at 5am and 8pm is wrong in a windowless room. Switched by the clock, re-checked every ten minutes, and the previous theme is restored when the screen unmounts so the rest of the app is untouched.
+- **64px minimum touch targets** — double the 44px web rule the phone surface works to, with 72px keypad keys. Asserted, not asserted-to: `e2e/kiosk-touch.mobile.spec.ts` walks every visible control and fails on anything shorter. The one deliberate exception is the discreet "Unpair" link, which *should* be hard to hit by accident.
+- **Sound and haptics** (`src/lib/kiosk-feedback.ts`): a soft click per key, a rising two-tone on success, a low tone on refusal, each paired with a short vibration. Synthesised with WebAudio rather than shipped as files — three short tones are not worth three network requests on a tablet that may be offline, and a synthesised tone plays instantly. Muteable per device; the context resumes on first gesture because browsers block audio before one, and a blocked tone is worse than no tone.
