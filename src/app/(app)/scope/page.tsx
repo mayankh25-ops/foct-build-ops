@@ -17,7 +17,6 @@ function CardHeader({ title, actions }: { title: string; actions?: React.ReactNo
 import {
   SCOPE_SEED,
   type ScopeEntity,
-  type ScopePosition,
   type ScopeShift,
 } from "@/lib/scope-data";
 import { QuoteStudioView } from "./quote-studio";

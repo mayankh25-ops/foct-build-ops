@@ -74,6 +74,22 @@ psql -f supabase/tests/isolation_check.sql   # expect 23 ok-notices
    flag is set, the GUI runs on the local demo store (masked-only, no secrets
    persisted anywhere client-side).
 
+## Stage 2 phase 2 apply (attendance + kiosk devices)
+1. SQL Editor → paste **`supabase/APPLY_STAGE2_PHASE2.sql`** → Run (idempotent).
+   A fresh `APPLY_EVERYTHING.sql` already contains it — this file is for
+   projects set up before it existed.
+2. New query → paste **`supabase/tests/kiosk_isolation_check.sql`** → Run.
+   Expect **19 `ok` notices** (PINs generated + unique, pair codes single-use,
+   search never returns a PIN, double check-in blocked, a device token grants
+   no data access at all, sessions pair into timesheet rows). It leaves two
+   test cleaners and a test tablet on the demo building — delete them from
+   Settings → Cleaners & kiosks if you don't want them.
+3. Then set up a real building with **`supabase/NEW_BUILDING.sql`** (edit the
+   six values at the top first) and follow **`docs/KIOSK.md`** to add cleaners,
+   hand out PINs and pair the tablet.
+
+Selfies need the `kiosk-selfies` bucket, created by `0008` in the same bundle.
+
 ## App wiring
 `.env.local` (gitignored) carries `NEXT_PUBLIC_SUPABASE_URL` +
 `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see `.env.example`); the browser client is

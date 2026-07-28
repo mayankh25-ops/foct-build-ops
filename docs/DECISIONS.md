@@ -379,3 +379,69 @@ APPLY_EVERYTHING failed on the owner's project even though it applies cleanly to
 
 ## 2026-07-25 — Deployment env documented (live site rejected the key while local worked)
 Local sign-in succeeded; the Vercel deployment returned "Invalid API key". Cause: `.env.local` is gitignored and never reaches Vercel — the hosted site needs its own environment variables — AND `NEXT_PUBLIC_*` values are inlined at BUILD time there too, so editing them in the dashboard has no effect until a **redeploy**. `docs/DEPLOY.md` now covers first deploy (both variables, all environments), the change-a-key-then-redeploy loop, the rule that `SUPABASE_SECRET_KEY` must never carry a NEXT_PUBLIC_ prefix, and why hosting matters (single URL for every machine + the iPad, and HTTPS so the kiosk camera is permitted at all).
+
+## 2026-07-25 — The kiosk is a DEVICE, not a user (Stage 2 phase 2)
+Owner direction: an Android tablet on the building Wi-Fi running only the kiosk; cleaners sign in and out; the office manages the resulting timesheets. The obvious implementations are both wrong. A shared login on the tablet gives whoever holds it a real account with real read access. Shipping the PIN list to the device makes every credential in the building readable from a stolen tablet. So the kiosk is modelled as a provisioned **device**:
+- An admin creates the device and gets a **single-use 6-digit pair code** (24 h). The tablet redeems it once for a long-lived device token in localStorage; the code is cleared on redemption.
+- The token grants exactly four RPCs — `kiosk_pair`, `kiosk_staff_search` (names only), `kiosk_punch`, `kiosk_attach_selfie` — and **no table privileges whatsoever** (0003 anon hardening). Checks 12–13 of the isolation test assert precisely this: holding a device token reads nothing.
+- **PINs never leave the server.** The tablet sends a PIN, Postgres compares and answers yes/no. There is no client-side PIN list to steal, and `staff_reset_pin` is the only recovery path because nobody — including the admin — can read an existing PIN.
+- PINs are generated, unique per building, and never trivial (`0000`/`1234`/repeats excluded). A stolen device token can only punch, only for its own building; **Retire** revokes it instantly.
+- `kiosk_punch` answers immediately and returns `event_id`; the selfie uploads afterwards and attaches via `kiosk_attach_selfie` (same device, once, within 10 minutes). A cleaner never waits on the network for a photo, and a failed upload does not cost them their attendance record.
+- "Today" is evaluated in **Australia/Melbourne**, not UTC — a 6 am start is the previous UTC date for most of the year, which would have broken the double-check-in guard daily.
+
+**Multi-org correction found by the tests:** `app.manages_building()` only recognises the OWNER org, but the cleaning company must manage its own cleaners at every building it services. Added `app.manages_staff_at()` (super admin ∪ building manager ∪ org_admin/manager of a servicing org) and `app.managing_org_for()` so a new cleaner belongs to the org that created them — a cleaner is FOCT Cleaning's employee even in Meridian's tower.
+
+**Storage trade-off, stated rather than hidden:** the selfie bucket must accept an INSERT from `anon` because the kiosk has no session. It is private, capped at 2 MB, JPEG/PNG/WebP only, and anon can do nothing else — no list, read, overwrite or delete. Reads require a signed URL issued to an authenticated member of that building.
+
+**Test methodology fix:** the first version of the isolation test ran as a superuser, which bypasses RLS and would have passed no matter what the policies said. It now does `set local role anon` for every device-side step. 19 checks, proven on a PG16 mirror (`tests/_mirror_bootstrap.sql` makes a plain Postgres look enough like Supabase to run the real bundles).
+
+**Who creates what** is now written down (`docs/KIOSK.md`) and mostly self-service: cleaners, PINs and tablets are created in Settings → Cleaners & kiosks by the cleaning manager. Only organisations/buildings/module switches and logins still need SQL (`supabase/NEW_BUILDING.sql` + the Supabase Auth dashboard) until the onboarding screens land in phase 8.
+
+## 2026-07-25 — A layered test system, not a "final test" (owner-directed)
+The owner asked for the way large product teams test: automate the repeatable checks, keep humans for judgement, release gradually. Mapped onto this stack and built rather than described — `docs/TESTING.md` walks all twenty layers with an honest state column, and the release gate lives there and in the PR template.
+
+What is now automated, and why each layer earns its place:
+- **Unit (Vitest, 48 assertions)** on the calculations nobody can eyeball — late-vs-missed thresholds, paired hours, corrections floored at zero, the Scope dataset's 393.0 h/wk reconciliation. A regression in these is payroll, not pixels.
+- **Database (81 assertions)** — the only layer that can prove the promise the product is sold on: Company A cannot see Company B's data. It applies the SHIPPED BUNDLE the way the owner pastes it, then applies it again, so a migration authored but forgotten in `APPLY_EVERYTHING.sql` fails in CI rather than in the SQL editor.
+- **E2E (34 tests) against a production build**, not the dev server — dev-only behaviour has hidden real bugs here before. Demo mode, so a fresh clone and CI both run it; live-mode journeys stay a staging step because faking them would prove nothing.
+- **Secrets and dependencies.** `check:secrets` greps only TRACKED files (`.env.local` must stay untracked) and was proven against a deliberately planted key. `check:deps` refuses to be the usual ignored-audit theatre: high/critical fails unless the package is in `security/audit-allowlist.json` **with a reason and an expiry date**, and an expired entry fails too. The three current entries (postcss, sharp, next) are build-time-only advisories whose npm "fix" is downgrading Next to 9.3.3.
+
+Deliberate exclusions, so the gaps are visible rather than implied: no component tests yet, no WebKit in CI (Safari is a manual pass), no load testing, no penetration test, no production monitoring, and **the backup has never been restored** — which means it is not yet a backup. Those five are listed as the pre-client work.
+
+`eslint-config-next` was rejected: it pulls a vulnerable transitive tree for rules TypeScript mostly already gives us. The two plugins that catch real bugs here (react-hooks, @next/next) are wired directly. `react-hooks/set-state-in-effect` is a warning, not an error, because our `useXxxReady()` rehydration is exactly the sanctioned "synchronise with an external store" case.
+
+The suites paid for themselves immediately, finding three real defects: a missing favicon 404ing on every first page load, a Service Desk search that returned an empty table with no explanation, and phone controls at 40px/19px against a 44px touch minimum — all fixed in the same commit as the tests that caught them.
+
+## 2026-07-27 — Kiosk sign-in v1: notices, and offline as a first-class requirement
+The owner's brief was an admin app plus a tablet that "should save all info offline if there is no network and sync when it gets network", with notices shown at sign-in, in Hindi and English. Spec first (`docs/modules/KIOSK_SIGNIN_PRD.md`), then built in the order the PRD set — schema, admin, offline engine, UI — because the offline layer is the part that fails silently if it is left until last.
+
+**Notices are one table, two behaviours.** General (whole site, scrolls on the idle screen, cached on the device) and personal (one employee, shown only after they sign in, **never cached**). That last rule is a deliberate consequence of the tablet being shared: a personal note sitting in a device cache is a note the wrong person can read. Bodies are a per-language JSON map rather than rows-per-translation, because a notice is one thing said several ways, and the kiosk cycles the languages it has. Editing the wording bumps a version and un-acknowledges it — the mechanism a future induction re-issue will use.
+
+**Offline decisions, and why:**
+- **Outbox with client-generated UUIDs.** The server upserts on that id, so a batch replayed after a dropped connection records nothing twice. This is the single most important property in the module: the alternative is paying someone twice or not at all. Asserted three ways — SQL (replay a batch three times → 2 events), unit (flush twice → second call sends nothing), and in a real browser.
+- **Cached bcrypt hashes, not PINs.** Stated honestly in the migration and the code: a 4-digit PIN is 10,000 possibilities, so this makes extraction from a stolen tablet expensive, not impossible. The real mitigations remain retiring the device and resetting the PIN.
+- **Server-first when online.** The server still checks the PIN; the offline path engages only when the request genuinely never arrives. A tablet that merely *thinks* it is online must not silently downgrade its own security.
+- **The device's clock is not trusted.** Every sync learns `server_time - device_time`; events carry both the corrected time and a `recorded_offline` flag, so a manager can see which times came from an unsynced tablet rather than discovering it in a payroll dispute.
+- **Caps that degrade predictably.** 5,000 queued events, 500 selfies; past that, photos are dropped and events never are. Attendance matters more than its illustration.
+- **A stale cache keeps working but stops pretending.** Past seven days without a sync the idle screen says so, in words a cleaner can act on ("tell your supervisor"), and still signs people in.
+
+**Devanagari and Gurmukhi are shipped, not assumed.** The system font stack renders Hindi, Nepali and Punjabi as empty boxes on most Windows and Android builds; a notice nobody can read is not a notice. Only the 400/600 script subsets ship (~125 KB), loaded on demand.
+
+**Testing note worth keeping:** the browser-level offline test needed a *second* production build carrying placeholder Supabase env, because live mode is compiled in at build time. Unit tests cannot prove IndexedDB, bcrypt-in-the-browser, or the fallback when a request dies mid-flight. The spec now fails with an explicit message if that server was built without the env — after an hour lost to exactly that confusion during this session.
+
+## 2026-07-27 — pgcrypto's schema: a bug the local mirror could not see
+`staff_create` failed on the owner's project with `function gen_salt(unknown, integer) does not exist`, having passed every local run. Cause: **Supabase installs pgcrypto into an `extensions` schema; a plain Postgres puts it in `public`.** Our SECURITY DEFINER functions pin `search_path = public, app` — correct and necessary for safety — which on Supabase excludes the schema the function actually lives in. `create extension if not exists pgcrypto` did not help: the extension already existed, just elsewhere.
+
+Two fixes, because the second is the one that matters:
+1. **`app.hash_pin()` / `app.pin_matches()`** — the single place that knows where pgcrypto is (`search_path = public, extensions, pg_temp`). Every caller, including the isolation test, goes through them rather than calling `crypt()`/`gen_salt()` inline. Adding a schema to a pinned search_path is safe; dropping the pin would not be.
+2. **The mirror now reproduces Supabase's layout** — `create extension pgcrypto with schema extensions` — so this class of divergence fails in CI instead of in the owner's SQL editor. Verified by re-running the old bundle against the corrected mirror and watching it reproduce the owner's exact error, then watching the fix clear it.
+
+The general lesson, recorded in `docs/TESTING.md` §6: a test double has to copy the platform's *shape*, not only its API. The Vault shim was already in that spirit; the extensions schema was the gap.
+
+## 2026-07-28 — "Dawn Shift": the kiosk gets its own palette and its own night
+Step 6 of the kiosk build order. The tablet is not a laptop: it is mounted on a wall in a fluorescent-lit basement, read from about 1.5 m, and touched with wet hands and gloves.
+
+- **A surface theme, not a Theme Builder built-in** — same status as `support`. A building admin picks a portal theme; the kiosk's job is legibility, not brand expression, so it is not up for selection. Neutrals from Radix Sand/Sage, accent Radix Grass `#2f6f4e`. Both sets pass the full 37-pair AA gate (now 15 themes).
+- **`kiosk-night` after 18:00.** The same brightness at 5am and 8pm is wrong in a windowless room. Switched by the clock, re-checked every ten minutes, and the previous theme is restored when the screen unmounts so the rest of the app is untouched.
+- **64px minimum touch targets** — double the 44px web rule the phone surface works to, with 72px keypad keys. Asserted, not asserted-to: `e2e/kiosk-touch.mobile.spec.ts` walks every visible control and fails on anything shorter. The one deliberate exception is the discreet "Unpair" link, which *should* be hard to hit by accident.
+- **Sound and haptics** (`src/lib/kiosk-feedback.ts`): a soft click per key, a rising two-tone on success, a low tone on refusal, each paired with a short vibration. Synthesised with WebAudio rather than shipped as files — three short tones are not worth three network requests on a tablet that may be offline, and a synthesised tone plays instantly. Muteable per device; the context resumes on first gesture because browsers block audio before one, and a blocked tone is worse than no tone.

@@ -22,8 +22,11 @@
      throughout the web application… do not mix font families"). Numerals
      are Inter with tabular figures; Roboto Mono survives ONLY for kiosk
      clock / genuine mono contexts. */
-  --font-stack-display: var(--font-inter), Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-stack-body: var(--font-inter), Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Devanagari and Gurmukhi sit in every text stack: the browser falls
+     through to them only for glyphs the Latin face has no coverage for, so
+     Hindi/Nepali/Punjabi notices render instead of showing empty boxes. */
+  --font-stack-display: var(--font-inter), Inter, var(--font-noto-devanagari), var(--font-noto-gurmukhi), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-stack-body: var(--font-inter), Inter, var(--font-noto-devanagari), var(--font-noto-gurmukhi), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-stack-numeric: var(--font-inter), Inter, "Segoe UI", system-ui, sans-serif;
   --font-stack-mono: var(--font-roboto-mono), "SF Mono", ui-monospace, "Roboto Mono", monospace;
 
@@ -653,6 +656,83 @@
   --chart-1: #de192a; --chart-2: #c07a00; --chart-3: #eaedf1;
   --elevation-card: 0 1px 2px rgb(14 15 17 / 0.04), 0 2px 8px rgb(14 15 17 / 0.04);
   --elevation-raised: 0 10px 30px rgb(14 15 17 / 0.18);
+}
+
+
+/* ===========================================================================
+   KIOSK — "Dawn Shift". The wall tablet's own surface theme, not a Theme
+   Builder built-in (same status as `support`).
+ 
+   A tablet in a fluorescent-lit basement is a different problem from a laptop
+   screen: high contrast, low glare, and calm at 5am. Neutrals from Radix Sand
+   and Sage, accent from Radix Grass — the "go" colour on every primary action.
+   `kiosk-night` is the same palette after sunset; the same screen should not
+   be the same brightness at 5am and 8pm.
+   =========================================================================== */
+[data-theme="kiosk"] {
+  color-scheme: light;
+  --bg-canvas: #f7f7f5;
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #eceee9;
+  --border-subtle: #e2e5dd;
+  --border-strong: #7c8479;
+  --text-primary: #1a1d19;
+  --text-secondary: #4e564a;
+  --text-muted: #5a6156;
+  --text-disabled: #949c8e;
+  --text-on-accent: #ffffff;
+  --accent: #2f6f4e;           /* Radix Grass 9 — 4.83:1 on white */
+  --accent-hover: #275b41;
+  --accent-subtle: #e4efe7;
+  --accent-text: #235539;
+  --brand: #2f6f4e;
+  --success: #2f6f4e; --success-subtle: #e4efe7; --success-text: #235539;
+  --warning: #b5730f; --warning-subtle: #fbf0dd; --warning-text: #7f4f08;
+  --critical: #b3261e; --critical-hover: #921d17; --critical-subtle: #fdeceb; --critical-text: #8f1e17;
+  --info: #2a5f8f; --info-subtle: #e8f0f8; --info-text: #24547f;
+  --focus-ring: #2f6f4e;
+  --overlay: rgb(26 29 25 / 0.55);
+  --sidebar-bg: #1a1d19; --sidebar-hover: #2a2e27; --sidebar-fg: #f2f3f0;
+  --sidebar-muted: #949c8e; --sidebar-active: #ffffff;
+  --sidebar-active-bg: #2a2e27; --sidebar-active-fg: #ffffff;
+  --sidebar-border: #2a2e27;
+  --chart-1: #2f6f4e; --chart-2: #b5730f; --chart-3: #e2e5dd;
+  --elevation-card: 0 1px 2px rgb(26 29 25 / 0.04), 0 2px 8px rgb(26 29 25 / 0.05);
+  --elevation-raised: 0 12px 34px rgb(26 29 25 / 0.16);
+}
+
+[data-theme="kiosk-night"] {
+  color-scheme: dark;
+  --bg-canvas: #121311;
+  --bg-surface: #1c1e1b;
+  --bg-raised: #22241f;
+  --bg-hover: #2a2d27;
+  --border-subtle: #2f322c;
+  --border-strong: #6e766a;
+  --text-primary: #f2f3f0;
+  --text-secondary: #c2c8bd;
+  --text-muted: #a8b0a4;
+  --text-disabled: #767d71;
+  --text-on-accent: #0d130f;
+  --accent: #4e9b72;
+  --accent-hover: #62ad84;
+  --accent-subtle: #1f3128;
+  --accent-text: #7cc198;
+  --brand: #4e9b72;
+  --success: #4e9b72; --success-subtle: #1f3128; --success-text: #7cc198;
+  --warning: #e0a44a; --warning-subtle: #33280f; --warning-text: #eec07c;
+  --critical: #e5645c; --critical-hover: #ef7e77; --critical-subtle: #3a1e1c; --critical-text: #f09892;
+  --info: #6ea8dc; --info-subtle: #16283a; --info-text: #93c0e8;
+  --focus-ring: #4e9b72;
+  --overlay: rgb(0 0 0 / 0.65);
+  --sidebar-bg: #0d0e0c; --sidebar-hover: #1c1e1b; --sidebar-fg: #f2f3f0;
+  --sidebar-muted: #a8b0a4; --sidebar-active: #ffffff;
+  --sidebar-active-bg: #22241f; --sidebar-active-fg: #ffffff;
+  --sidebar-border: #22241f;
+  --chart-1: #4e9b72; --chart-2: #e0a44a; --chart-3: #2f322c;
+  --elevation-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 2px 10px rgb(0 0 0 / 0.35);
+  --elevation-raised: 0 14px 40px rgb(0 0 0 / 0.55);
 }
 
 /* SUBZERO — red on black (owner's "Aurora Scope Explorer" dark design,

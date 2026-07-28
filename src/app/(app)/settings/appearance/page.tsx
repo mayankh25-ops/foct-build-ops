@@ -30,7 +30,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { Select } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
-import { fontSlotStyle, resolveFontStack } from "@/components/theme-runtime";
+import { fontSlotStyle } from "@/components/theme-runtime";
 import {
   AUTHORED_TOKENS,
   BUILTIN_TOKENS,
@@ -45,7 +45,6 @@ import { BUILTIN_THEMES, DEFAULT_SLOTS, FONT_OPTIONS, themeKindLabel } from "@/l
 import { useThemeRehydrate, useThemeStore, type CustomTheme } from "@/lib/theme-store";
 import { isValidHex } from "@/lib/wcag";
 import { building } from "@/lib/demo-data";
-import { cn } from "@/lib/cn";
 
 /* ---------------------------------------------------------------- */
 /* Mini theme preview — a real themed subtree, not a mock image      */

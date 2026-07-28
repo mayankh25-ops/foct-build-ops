@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Camera, Check, CheckCircle2, ChevronLeft, Info } from "lucide-react";
+import { Camera, CheckCircle2, ChevronLeft, Info } from "lucide-react";
 import { Chip, JobStatusPill, MicroLabel, SyncedChip } from "@/app/support/support-ui";
 import { useToast } from "@/components/ui/toast";
 import { compressImage } from "@/lib/compress-image";

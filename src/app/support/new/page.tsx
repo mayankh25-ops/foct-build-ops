@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   AppWindow,
   Bath,
@@ -49,7 +48,6 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
 export default function SupportNewTicketPage() {
   useSdRehydrate();
   const createTicket = useSdStore((s) => s.createTicket);
-  const router = useRouter();
   const { toast } = useToast();
 
   const [step, setStep] = React.useState<1 | 2>(1);
@@ -252,7 +250,7 @@ export default function SupportNewTicketPage() {
               <button
                 type="button"
                 onClick={() => setMoreCats((m) => !m)}
-                className="mt-2 text-body-sm font-medium text-accent-text"
+                className="mt-1 flex h-11 items-center text-body-sm font-medium text-accent-text"
               >
                 {moreCats ? "Fewer options" : "More options…"}
               </button>
@@ -292,7 +290,7 @@ export default function SupportNewTicketPage() {
                     onClick={() => setPriority(p)}
                     aria-pressed={priority === p}
                     className={cn(
-                      "h-10 rounded-sm text-body-sm capitalize",
+                      "h-11 rounded-sm text-body-sm capitalize",
                       priority === p ? "bg-fg font-semibold text-surface" : "text-fg-muted"
                     )}
                   >
