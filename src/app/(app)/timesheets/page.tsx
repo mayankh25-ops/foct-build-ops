@@ -23,6 +23,9 @@ import {
 } from "@/components/ui/modal";
 import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
+import { LiveTimesheets } from "@/components/timesheets/live-timesheets";
+import { useSessionStore } from "@/lib/session";
+import { TIMESHEETS_LIVE } from "@/lib/timesheets-live";
 import {
   dateKey,
   deriveShift,
@@ -338,7 +341,21 @@ function ReviewApproveModal({
   );
 }
 
+/**
+ * Live when there is a session and a site; the demo store otherwise, so a
+ * fresh clone still shows a working screen. The two never mix: the live
+ * component reads the database, this one reads localStorage.
+ */
 export default function TimesheetsPage() {
+  const profile = useSessionStore((s) => s.profile);
+  const site = profile?.buildings[0];
+  if (TIMESHEETS_LIVE && site) {
+    return <LiveTimesheets buildingId={site.id} siteName={site.name} />;
+  }
+  return <DemoTimesheetsPage />;
+}
+
+function DemoTimesheetsPage() {
   const now = useAttendanceReady();
   const shifts = useAttendanceStore((s) => s.shifts);
   const events = useAttendanceStore((s) => s.events);

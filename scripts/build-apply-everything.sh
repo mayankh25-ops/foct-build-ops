@@ -23,7 +23,8 @@ OUT=supabase/APPLY_EVERYTHING.sql
     supabase/migrations/0006_session_profile.sql \
     supabase/migrations/0007_attendance_kiosk.sql \
     supabase/migrations/0008_kiosk_selfie_storage.sql \
-    supabase/migrations/0009_kiosk_notices.sql ; do
+    supabase/migrations/0009_kiosk_notices.sql \
+    supabase/migrations/0010_timesheets.sql ; do
     echo "-- ---------------------------------------------------------------------------"
     echo "-- $(basename "$f")"
     echo "-- ---------------------------------------------------------------------------"
