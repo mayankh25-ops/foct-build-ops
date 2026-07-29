@@ -136,6 +136,15 @@ Steps 1–5 of `docs/modules/KIOSK_SIGNIN_PRD.md`.
 - **Step 6 — "Dawn Shift"**: the kiosk wears its own surface theme (like `support`), NOT a Theme Builder built-in, and switches to `kiosk-night` after 18:00 — the same screen must not be the same brightness at 5am and 8pm in a windowless room. Radix Sand/Sage neutrals, Radix Grass `#2f6f4e` accent; contrast gate now 37 pairs × **15** themes. Keypad keys 72px tall, name field and chips 64px, PIN dots and clock enlarged, and every kiosk control asserted ≥64px by `e2e/kiosk-touch.mobile.spec.ts`. WebAudio + haptic feedback (`src/lib/kiosk-feedback.ts`): click on a key, rising two-tone on success, low tone on refusal — silence makes people press twice.
 - **Tests**: 18 unit tests for the sync engine (jsdom + fake-indexeddb) and **4 browser tests of the LIVE offline journey** against a second build with placeholder Supabase env and the RPCs intercepted — sign in with the network cut, then confirm the event syncs exactly once. Totals now: 66 unit, 99 database, 38 e2e.
 
+### Session 2026-07-29 — Timesheets live: the kiosk now pays people
+The gap that mattered: the kiosk recorded punches into Postgres while Timesheets still read localStorage. Closed.
+
+- **0010**: `attendance_adjustments` (a signed correction per session, always with a reason — **the punch itself is never edited**, so both numbers survive a payroll query) and `timesheet_weeks` (pending → approved / rejected, with decider, time, paid figure and note). **An approved week is LOCKED** against corrections until someone reopens it.
+- RPCs: `timesheet_week()` returns the week exactly as payroll should see it — sessions, corrections, roster comparison, decision — so the screen and the CSV can never disagree; `attendance_adjust()`; `timesheet_decide()` for approve / reject / reopen.
+- **Screen** (`/timesheets`, live when signed in): week picker, rostered vs worked vs payable vs variance, filter by status, per-session ± corrections with reasons, approve with an optional override, send back with a required reason, reopen, bulk-approve only the weeks with nothing to argue about, and a **payroll CSV — one row per session**, with decimal hours, offline flags, and Excel formula-injection neutralised.
+- Unclosed shifts (someone forgot to sign out) pay nothing and are **flagged everywhere** rather than silently dropped.
+- Tests: **20 SQL assertions** (incl. a cross-company isolation probe), **18 unit**, **7 browser** driving the real buttons. Totals now 84 unit / 119 database / 45 e2e.
+
 ## Migrations applied
 Authored + locally verified, pending owner's dashboard apply: `0000_platform_foundation.sql`, `0001_theme_engine.sql`, `seed.sql` (see supabase/README.md).
 

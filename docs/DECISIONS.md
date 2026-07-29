@@ -445,3 +445,17 @@ Step 6 of the kiosk build order. The tablet is not a laptop: it is mounted on a 
 - **`kiosk-night` after 18:00.** The same brightness at 5am and 8pm is wrong in a windowless room. Switched by the clock, re-checked every ten minutes, and the previous theme is restored when the screen unmounts so the rest of the app is untouched.
 - **64px minimum touch targets** — double the 44px web rule the phone surface works to, with 72px keypad keys. Asserted, not asserted-to: `e2e/kiosk-touch.mobile.spec.ts` walks every visible control and fails on anything shorter. The one deliberate exception is the discreet "Unpair" link, which *should* be hard to hit by accident.
 - **Sound and haptics** (`src/lib/kiosk-feedback.ts`): a soft click per key, a rising two-tone on success, a low tone on refusal, each paired with a short vibration. Synthesised with WebAudio rather than shipped as files — three short tones are not worth three network requests on a tablet that may be offline, and a synthesised tone plays instantly. Muteable per device; the context resumes on first gesture because browsers block audio before one, and a blocked tone is worse than no tone.
+
+## 2026-07-29 — Timesheets: corrections sit beside punches, and approval locks
+Owner priority: "kiosk working fine, timesheet hour management working fine — approve, disapprove, reject and export. Close this end to end."
+
+The design decisions worth keeping:
+
+- **A correction never edits the punch.** `attendance_adjustments` holds a signed delta against the check-in event, with a mandatory reason. What the tablet recorded stays exactly as recorded. When a cleaner disputes a week months later, both the original and the adjustment are still there, with who made it and why. Editing the event in place would have been simpler and would have destroyed the only evidence.
+- **An approved week is locked.** `attendance_adjust` refuses while the week is approved, and says so. Reopening is an explicit, recorded act that clears the decision. Without this, "approved" means nothing — it is the difference between a record and a spreadsheet.
+- **A rejection requires a reason** and an unclosed shift is never silently paid as zero: it is counted, flagged on the row, in the modal, in the metric and in the CSV. Payroll silence is how disputes start.
+- **One RPC feeds both the screen and the export**, so they cannot drift apart. The CSV is one row per SESSION rather than per person, because a payroll clerk queries a day, not a week — and it carries decimal hours (what payroll systems import), the offline flag, and a `'` prefix on anything starting with `=`, `+`, `-` or `@` so a note cannot become an Excel formula.
+- **Variance is measured against what is PAID**, not what was punched. A corrected week that matches the roster should read as zero variance, not as a discrepancy someone re-investigates.
+- The demo store stays for a fresh clone: `/timesheets` renders the live component only when signed in with a site. The two never mix.
+
+Tested at three levels, because this decides what people are paid: 20 SQL assertions (including that another company cannot read the week), 18 unit tests on payable/variance/CSV arithmetic, and 7 browser tests that press the actual buttons and assert the RPC arguments.
