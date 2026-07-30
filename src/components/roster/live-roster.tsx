@@ -39,6 +39,7 @@ import {
   ModalHeader,
   ModalTitle,
 } from "@/components/ui/modal";
+import { FilterBar, SegmentedControl } from "@/components/ui/filter-bar";
 import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
@@ -55,6 +56,7 @@ import {
   type RosterShift,
   type RosterWeek,
 } from "@/lib/roster-live";
+import { LiveToday } from "@/components/roster/live-today";
 import { shiftWeek, weekStart } from "@/lib/timesheets-live";
 import { cn } from "@/lib/cn";
 
@@ -303,6 +305,7 @@ function ShiftModal({
 
 export function LiveRoster({ buildingId, siteName }: { buildingId: string; siteName: string }) {
   const { toast } = useToast();
+  const [view, setView] = React.useState("today");
   const [week, setWeek] = React.useState(() => weekStart());
   const [data, setData] = React.useState<RosterWeek | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -362,6 +365,7 @@ export function LiveRoster({ buildingId, siteName }: { buildingId: string; siteN
         title="Roster"
         description={`Who is meant to be at ${siteName}, and when. The kiosk and timesheets read these same shifts.`}
         actions={
+          view === "today" ? undefined : (
           <>
             <Button variant="secondary" disabled={copying} onClick={() => void copyLastWeek()}>
               {copying ? (
@@ -379,8 +383,28 @@ export function LiveRoster({ buildingId, siteName }: { buildingId: string; siteN
               Add shift
             </Button>
           </>
+          )
         }
       />
+
+      <FilterBar>
+        <SegmentedControl
+          label="View"
+          value={view}
+          onValueChange={setView}
+          options={[
+            { value: "today", label: "Today" },
+            { value: "week", label: "Week board" },
+          ]}
+        />
+      </FilterBar>
+
+      {/* Two questions, one screen: who is here now, and who is meant to be
+          here this week. They read the same shifts. */}
+      {view === "today" ? (
+        <LiveToday buildingId={buildingId} siteName={siteName} />
+      ) : (
+      <>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <Button variant="secondary" onClick={() => setWeek((w) => shiftWeek(w, -1))}>
@@ -522,6 +546,9 @@ export function LiveRoster({ buildingId, siteName }: { buildingId: string; siteN
           <Badge tone="neutral">empty week</Badge>
           Nothing rostered yet — add a shift, or copy last week.
         </p>
+      )}
+
+      </>
       )}
 
       <ShiftModal

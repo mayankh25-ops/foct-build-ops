@@ -501,3 +501,62 @@ Verified: mirror applies + re-applies clean, `roster_isolation_check.sql` 14/14,
 15 unit, 7 browser tests against the placeholder-env build, full suite 52/52,
 `npm run verify` green. Paste bundle `supabase/APPLY_ROSTER.sql`;
 `APPLY_EVERYTHING.sql` regenerated through 0011.
+
+## 2026-07-30 (2) — Staff records belong to their employer, not to the building (0012)
+
+Building the "who is on site now" read raised the question of who may see it,
+and the honest answer exposed a defect in everything written before it.
+
+**What was wrong.** Every staff-related read — staff, kiosk devices, roster
+shifts, attendance events, corrections, timesheet weeks, notices — was gated on
+`app.can_access_building()`. At a real tower that set is the concierge company,
+the strata manager, every subcontractor and any competing cleaning company.
+Supabase grants each new `public` table to `authenticated` by default, so those
+policies were the only guard, and a signed-in user from any of those orgs could
+read, through the REST API, a cleaner's row **including the plaintext 4-digit
+kiosk PIN** — a credential that would let them sign that person in — plus when
+each cleaner came and went, the roster and what each is paid. Reproduced on the
+mirror against three different orgs before writing a line of the fix.
+
+**Why the suite was green.** A plain Postgres grants nothing to `authenticated`,
+so every RLS hole read as "permission denied for table staff" locally. The
+mirror now installs Supabase's default privileges. This is the second
+mirror-fidelity bug (after pgcrypto's schema), and the rule is now written down
+in docs/TESTING.md: the mirror copies the project's LAYOUT and GRANTS, not just
+its API.
+
+Decisions taken:
+
+1. **The unit of privacy is the employing organisation, not the building.**
+   `app.in_org()` / `app.employs_staff()` / `app.manages_staff()` are the single
+   definition, used by both the policies and the definer functions.
+2. **The building owner and the concierge keep PROGRESS, not people.**
+   `attendance_day()` returns `detail: false` plus counts to anyone with
+   building access who employs nobody there. That is CLAUDE.md's "completion
+   status only when granted" enforced in the read, where the UI cannot bypass
+   it — and the screen says so in words rather than rendering an empty table.
+3. **Credentials lose their column privileges outright.** `staff.pin`,
+   `staff.pin_hash` and `kiosk_devices.device_token` are unreadable by any API
+   role. Note for later: `revoke select (pin)` alone is a NO-OP while table
+   SELECT is granted — the table grant covers every column, including ones added
+   later. Table SELECT is withdrawn and re-granted column by column, so a new
+   column is invisible to the app until it is added to that list. That is the
+   safe direction to fail in, and the test reads the column and expects a
+   privilege error rather than trusting the revoke.
+4. **A tablet belongs to one company.** `kiosk_bootstrap`, `kiosk_staff_search`,
+   `kiosk_punch` and `kiosk_sync` are scoped to the device's org, so a shared
+   site cannot cache another company's PIN hashes and another company's PIN is
+   refused on the wrong tablet. Two isolation tests had provisioned a device to
+   the building's OWNER org; that was the tests being unrealistic, and they now
+   use `kiosk_device_create` like the app does.
+5. **The migration is GENERATED.** `create or replace` needs a whole body, and
+   hand-copying one is how a function quietly loses a rule. `scripts/build-0012-
+   org-isolation.mjs` lifts each of the 15 bodies verbatim from the migration
+   that shipped it and applies one named patch; a patch that fails to match
+   exactly once is a hard error.
+
+Verified: mirror applies and re-applies clean, `org_isolation_check.sql` 22/22
+(two competing cleaning companies at one tower, plus concierge, strata and an
+electrician), `attendance_day_isolation_check.sql` 16/16, every earlier suite
+still green (171 assertions), 111 unit, 57 browser, `npm run verify` green.
+Paste bundle `supabase/APPLY_ORG_ISOLATION.sql`.

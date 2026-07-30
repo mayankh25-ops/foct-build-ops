@@ -36,9 +36,12 @@ begin
   else raise exception 'FAIL 2: duplicate PINs issued'; end if;
 
   -- 3. a kiosk device is provisioned and gets a 6-digit pair code
-  insert into public.kiosk_devices (building_id, org_id, label)
-  values (v_building, v_org, 'Cleaners room tablet') returning id into v_device;
-  v_code := public.kiosk_issue_pair_code(v_device);
+  -- through the real RPC, so the tablet belongs to the company whose staff use
+  -- it. 0012: a device provisioned to the wrong organisation sees none of their
+  -- people — which is the point, and was how this test first failed.
+  v_res := public.kiosk_device_create(v_building, 'Cleaners room tablet');
+  v_device := (v_res ->> 'device_id')::uuid;
+  v_code := v_res ->> 'pair_code';
   if v_code ~ '^[0-9]{6}$' then raise notice 'ok 3: 6-digit pair code issued';
   else raise exception 'FAIL 3: bad pair code %', v_code; end if;
 

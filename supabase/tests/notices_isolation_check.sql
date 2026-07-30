@@ -14,12 +14,15 @@ declare
   v_count int; v_version int;
   c_manager constant uuid := '22222222-0000-0000-0000-000000000003'; -- Priya, FOCT Cleaning
 begin
-  select id, owner_org_id, timezone into v_building, v_org, v_tz
+  -- v_org is the org that EMPLOYS the cleaners (0012): notices, staff and the
+  -- tablet all belong to the cleaning company, not to the building's owner.
+  select id, timezone into v_building, v_tz
     from public.buildings where slug = 'aurora-on-collins';
 
   -- ================= admin side: acting as the cleaning manager =============
   perform set_config('request.jwt.claims',
     format('{"sub":"%s","role":"authenticated"}', c_manager), true);
+  v_org := app.managing_org_for(v_building);
 
   v_res := public.staff_create(v_building, 'Notice Test Alice');
   v_alice := (v_res ->> 'staff_id')::uuid;

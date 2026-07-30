@@ -93,6 +93,23 @@ psql -f supabase/tests/isolation_check.sql   # expect 23 ok-notices
 
 Selfies need the `kiosk-selfies` bucket, created by `0008` in the same bundle.
 
+## Org isolation + today  ← APPLY THIS ONE FIRST
+1. SQL Editor → paste **`supabase/APPLY_ORG_ISOLATION.sql`** → Run (idempotent).
+   It closes a real hole: before it, any organisation attached to the building —
+   the concierge company, the strata manager, a subcontractor, a competing
+   cleaning company — could read the cleaners' rows through the API **including
+   the plaintext kiosk PIN**, plus their check-ins, roster and pay. Afterwards
+   staff records belong to the organisation that employs them, and the PIN and
+   device-token columns are unreadable by any API role.
+2. New query → **`supabase/tests/org_isolation_check.sql`** → expect **22 ok**.
+3. New query → **`supabase/tests/attendance_day_isolation_check.sql`** → **16 ok**.
+
+It also adds today's board (`/roster` → Today): on site, late, no check-in,
+finished. The building owner and the concierge see the counts, never the names.
+
+Both test files leave a few test cleaners on the demo building — delete them
+from Settings → Cleaners & kiosks if you don't want them.
+
 ## Timesheets + roster apply (payable hours, and who is meant to be here)
 Both are already inside a fresh `APPLY_EVERYTHING.sql`; these two files are for
 projects set up before they existed. Apply in this order:
