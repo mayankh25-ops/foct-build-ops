@@ -34,6 +34,9 @@ import {
   ModalTitle,
   ModalTrigger,
 } from "@/components/ui/modal";
+import { LiveRoster } from "@/components/roster/live-roster";
+import { useSessionStore } from "@/lib/session";
+import { ROSTER_LIVE } from "@/lib/roster-live";
 import {
   dateKey,
   decHours,
@@ -343,7 +346,21 @@ function AddShiftModal({ now }: { now: Date }) {
   );
 }
 
+/**
+ * Live when there is a session and a site; the demo store otherwise, so a
+ * fresh clone still shows a working screen. The two never mix: the live board
+ * reads roster_shifts in Postgres, this one reads localStorage.
+ */
 export default function RosterPage() {
+  const profile = useSessionStore((s) => s.profile);
+  const site = profile?.buildings[0];
+  if (ROSTER_LIVE && site) {
+    return <LiveRoster buildingId={site.id} siteName={site.name} />;
+  }
+  return <DemoRosterPage />;
+}
+
+function DemoRosterPage() {
   const now = useAttendanceReady();
   const shifts = useAttendanceStore((s) => s.shifts);
   const events = useAttendanceStore((s) => s.events);

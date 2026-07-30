@@ -32,6 +32,7 @@ const SUITES = [
   { file: "supabase/tests/kiosk_isolation_check.sql", expect: 19, name: "kiosk + attendance" },
   { file: "supabase/tests/notices_isolation_check.sql", expect: 18, name: "notices + offline sync" },
   { file: "supabase/tests/timesheet_isolation_check.sql", expect: 20, name: "timesheets + approvals" },
+  { file: "supabase/tests/roster_isolation_check.sql", expect: 14, name: "roster rules" },
 ];
 
 const BOOTSTRAP = "supabase/tests/_mirror_bootstrap.sql";
