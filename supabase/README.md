@@ -93,6 +93,25 @@ psql -f supabase/tests/isolation_check.sql   # expect 23 ok-notices
 
 Selfies need the `kiosk-selfies` bucket, created by `0008` in the same bundle.
 
+## Timesheets + roster apply (payable hours, and who is meant to be here)
+Both are already inside a fresh `APPLY_EVERYTHING.sql`; these two files are for
+projects set up before they existed. Apply in this order:
+
+1. SQL Editor → paste **`supabase/APPLY_TIMESHEETS.sql`** → Run (idempotent),
+   then **`supabase/tests/timesheet_isolation_check.sql`** → expect **20 `ok`
+   notices** (a correction never edits the punch, a reason is required, an
+   approved week LOCKS, one decision row per person per week, another company
+   cannot read the week).
+2. SQL Editor → paste **`supabase/APPLY_ROSTER.sql`** → Run (idempotent), then
+   **`supabase/tests/roster_isolation_check.sql`** → expect **14 `ok` notices**
+   (a finish before its start refused, the same person never rostered twice at
+   once, back-to-back allowed, a week-copy that reports what it skipped, and the
+   timesheet reading the same rostered hours as the board).
+
+Both leave a couple of test cleaners on the demo building — delete them from
+Settings → Cleaners & kiosks if you don't want them. `/timesheets` and `/roster`
+switch to live data automatically once you are signed in.
+
 ## App wiring
 `.env.local` (gitignored) carries `NEXT_PUBLIC_SUPABASE_URL` +
 `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see `.env.example`); the browser client is

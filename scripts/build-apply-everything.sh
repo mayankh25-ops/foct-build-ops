@@ -4,7 +4,7 @@ OUT=supabase/APPLY_EVERYTHING.sql
   echo "-- ============================================================================="
   echo "-- APPLY_EVERYTHING.sql — GENERATED. Sets up a COMPLETE, EMPTY Supabase project"
   echo "-- in one paste: platform foundation, theme engine, demo seed, Service Desk,"
-  echo "-- anon hardening, authz, integrations framework, session profile, attendance +\n-- kiosk devices."
+  echo "-- anon hardening, authz, integrations framework, session profile, attendance +\n-- kiosk devices, notices, timesheets, roster."
   echo "--"
   echo "-- Use when a project has auth users but no tables (or a brand-new project)."
   echo "-- Idempotent — safe to re-run. Regenerate with: npm run build:apply-everything"
@@ -24,7 +24,8 @@ OUT=supabase/APPLY_EVERYTHING.sql
     supabase/migrations/0007_attendance_kiosk.sql \
     supabase/migrations/0008_kiosk_selfie_storage.sql \
     supabase/migrations/0009_kiosk_notices.sql \
-    supabase/migrations/0010_timesheets.sql ; do
+    supabase/migrations/0010_timesheets.sql \
+    supabase/migrations/0011_roster.sql ; do
     echo "-- ---------------------------------------------------------------------------"
     echo "-- $(basename "$f")"
     echo "-- ---------------------------------------------------------------------------"

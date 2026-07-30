@@ -38,7 +38,7 @@ options rejected, which is the part that saves the next argument.
 
 ## 2. Unit tests — automated (`npm run test:unit`)
 
-Vitest over the pure logic in `src/lib`. Currently 84 assertions covering the
+Vitest over the pure logic in `src/lib`. Currently 99 assertions covering the
 calculations nobody can eyeball:
 
 | File | What it protects |
@@ -49,6 +49,7 @@ calculations nobody can eyeball:
 | `tests/unit/integrations-catalogue.test.ts` | every secret field is classified as a secret (a misclassification stores an API key in plaintext), schema validation, masking |
 | `tests/unit/scope-data.test.ts` | the contract dataset still reconciles to 393.0 h/wk, 222+16 items, 60.0/46.5 h/day |
 | `tests/unit/timesheets.test.ts` | payable hours (override wins once approved, never negative, a stale override ignored), variance measured against what is PAID, and a payroll CSV that survives commas, quotes and Excel's formula prefix |
+| `tests/unit/roster.test.ts` | time-of-day parsing that refuses what it cannot read, seven-day weeks across month/year/DST boundaries, and the clash check — including a shift wholly INSIDE another, which a start-time comparison misses |
 | `tests/unit/kiosk-offline.test.ts` | the offline sync engine — outbox writes, clock-offset correction, a half-failed flush keeping what the server refused, a replayed batch pushing nothing twice, and PIN hashes that never contain the PIN |
 
 Add a test here whenever a calculation gets an argument, a rounding rule, or a
@@ -98,7 +99,7 @@ data.**
 
 It builds a throwaway database, applies `supabase/APPLY_EVERYTHING.sql`
 exactly as you'd paste it into the dashboard, applies it **again** (idempotency
-— you re-paste bundles routinely), then runs 119 assertions:
+— you re-paste bundles routinely), then runs 133 assertions:
 
 | Suite | Assertions | Proves |
 |---|---|---|
@@ -109,6 +110,7 @@ exactly as you'd paste it into the dashboard, applies it **again** (idempotency
 | `kiosk_isolation_check.sql` | 19 | PINs never leave the server, a device token grants no data access |
 | `timesheet_isolation_check.sql` | 20 | corrections never edit a punch, a reason is required, an approved week locks, another company cannot read the week |
 | `notices_isolation_check.sql` | 18 | personal notices never cached on a shared tablet, offline batches replay without double-punching, reworded notices must be re-acknowledged |
+| `roster_isolation_check.sql` | 14 | no inverted shift, no double-booking the same person, back-to-back allowed, a week-copy that reports what it skipped, the timesheet reading the same rostered hours |
 
 Three methodology rules learned the hard way:
 
@@ -170,6 +172,11 @@ dev server — dev-only behaviour has hidden real bugs here before.
   override the paid hours, reopen a locked week, and download the CSV. Proves
   the buttons call the right RPC with the right arguments — the mistake class
   that silently pays the wrong number.
+- `e2e/roster.live.spec.ts` — the roster board with a mocked signed-in session:
+  the cell you click becomes the person and the day that reach the server, an
+  edit keeps its shift id, a clash is named before the round trip and the
+  server's refusal is shown after it, and copying last week reports what it
+  skipped
 - `e2e/kiosk-offline.live.spec.ts` — the kiosk's LIVE path in a real browser
   with the Supabase RPCs intercepted: pair, cache, sign in with the network
   cut, and confirm the event syncs **exactly once** when it returns. Runs
@@ -345,8 +352,8 @@ are green or red in CI; the manual ones are a human saying yes.
 
 - [ ] Code reviewed by someone other than the author *(manual)*
 - [ ] `npm run verify` green — tokens, contrast, types, lint, unit, secrets, deps, build *(automated)*
-- [ ] `npm run test:db` green — 119 isolation assertions, bundle applies and re-applies *(automated)*
-- [ ] `npm run test:e2e` green — routes, kiosk, service desk *(automated)*
+- [ ] `npm run test:db` green — 133 isolation assertions, bundle applies and re-applies *(automated)*
+- [ ] `npm run test:e2e` green — routes, kiosk, service desk, timesheets, roster *(automated)*
 - [ ] `APPLY_EVERYTHING.sql` regenerated and committed *(automated check)*
 - [ ] New behaviour has tests; every fixed bug has a test *(manual)*
 - [ ] Migration reviewed for destructive changes; rollback plan written if any *(manual)*
@@ -362,11 +369,11 @@ are green or red in CI; the manual ones are a human saying yes.
 | Layer | State |
 |---|---|
 | Static checks, secrets, dependency triage | automated |
-| Unit tests | automated, 84 assertions on the maths that matters |
-| Database + RLS isolation | automated, 119 assertions incl. idempotency |
+| Unit tests | automated, 99 assertions on the maths that matters |
+| Database + RLS isolation | automated, 133 assertions incl. idempotency |
 | End-to-end journeys | automated, demo mode, production build |
 | Component tests | **not started** |
-| Live-mode e2e (mocked RPCs, real browser) | automated — kiosk offline journey |
+| Live-mode e2e (mocked RPCs, real browser) | automated — kiosk offline, timesheets, roster |
 | Live-mode e2e (real Supabase) | **manual on staging** |
 | Android device matrix | **manual, matrix defined above** |
 | Safari / WebKit | **manual — no WebKit in CI** |

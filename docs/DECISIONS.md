@@ -459,3 +459,45 @@ The design decisions worth keeping:
 - The demo store stays for a fresh clone: `/timesheets` renders the live component only when signed in with a site. The two never mix.
 
 Tested at three levels, because this decides what people are paid: 20 SQL assertions (including that another company cannot read the week), 18 unit tests on payable/variance/CSV arithmetic, and 7 browser tests that press the actual buttons and assert the RPC arguments.
+
+## 2026-07-30 — Roster live (0011): the board and the timesheet read the same rows
+
+Timesheets went live on 2026-07-29 comparing worked hours against **rostered**
+hours that only existed in a browser's localStorage, so a signed-in manager saw
+"Rostered 0h" and a meaningless variance. `roster_shifts` had existed since 0007
+with RLS but no rules and no read path.
+
+Decisions taken:
+
+1. **The overlap rule lives in the database, not the form.** A trigger refuses a
+   second shift for the same person over the same minutes on the same day, and
+   `end_min > start_min` is a check constraint. Two managers editing the same
+   week from two laptops cannot both win, and a form-only check would have let
+   the loser through. The screen still checks the shifts already on its board
+   before submitting — purely so the answer is instant — and it says so in a
+   comment: the server is the authority and its refusal is what gets shown.
+2. **Back-to-back is not a clash.** A 14:00 finish and a 14:00 start is a
+   handover, not a double-booking; the comparison is strict inequality on both
+   ends. Asserted in SQL *and* unit tests, because the naive fix (comparing
+   start times) also silently allows a shift wholly INSIDE another.
+3. **One write path that answers in sentences.** `roster_shift_set()` validates
+   and returns `{ok:false, error, overlap?}` rather than raising, so the screen
+   never has to translate a Postgres error string. Someone else's employee, a
+   deleted shift and an inverted time each get their own wording.
+4. **A week-copy must report what it skipped.** `roster_copy_week()` is additive
+   and skips anything that would clash, then returns `copied` and `skipped` —
+   the toast names both. A silent drop reads as a full copy, which is how a
+   cleaner arrives to find they were never rostered.
+5. **`roster_week()` is the single read.** The board and `timesheet_week()`'s
+   rostered figure come from the same rows, and a SQL assertion proves the two
+   screens cannot disagree (ok 10 in `roster_isolation_check.sql`).
+6. **The board is a grid, not a table.** People down the side, seven days
+   across, the current day tinted, and an explicit `Add a shift for <name> on
+   <day>` button in every empty cell — the accessible name is what the browser
+   test asserts, because "the cell you clicked becomes the person and day that
+   reach the server" is the mistake class that matters here.
+
+Verified: mirror applies + re-applies clean, `roster_isolation_check.sql` 14/14,
+15 unit, 7 browser tests against the placeholder-env build, full suite 52/52,
+`npm run verify` green. Paste bundle `supabase/APPLY_ROSTER.sql`;
+`APPLY_EVERYTHING.sql` regenerated through 0011.

@@ -145,21 +145,30 @@ The gap that mattered: the kiosk recorded punches into Postgres while Timesheets
 - Unclosed shifts (someone forgot to sign out) pay nothing and are **flagged everywhere** rather than silently dropped.
 - Tests: **20 SQL assertions** (incl. a cross-company isolation probe), **18 unit**, **7 browser** driving the real buttons. Totals now 84 unit / 119 database / 45 e2e.
 
+### Session 2026-07-30 — Roster live: the other half of "rostered hours"
+Timesheets compared worked hours against a roster that only existed in localStorage, so live "Rostered" read 0. Closed.
+
+- **0011**: `roster_shifts` gains an `end_min > start_min` constraint, a `note` column, and a **no-overlap trigger** — two managers editing the same week from two laptops cannot both win. RPCs: `roster_week()` (the board and the timesheet's rostered figure read the same rows), `roster_shift_set()` (one write path that returns a sentence rather than a Postgres error, and flags a clash with `overlap:true`), `roster_shift_delete()`, `roster_copy_week()` (additive, skips clashes and **reports how many** — a silent drop reads as a full copy).
+- **Screen** (`/roster`, live when signed in): a week board — people down the side, seven days across, the current day tinted. Click an empty cell to roster that person on that day; click a shift chip to move or remove it. Copy last week, metric cards (rostered hours / shifts / people rostered / nobody rostered), and a courtesy clash warning in the form before the round trip — the database stays the authority and its refusal is what the manager sees.
+- Tests: **14 SQL assertions** (incl. an overlap that must be refused mid-edit, back-to-back that must be allowed, and a rival org that cannot read the board), **15 unit** (time parsing, DST-crossing weeks, a shift wholly inside another), **7 browser** proving the cell you clicked becomes the person and day that reach the server. Totals now **99 unit / 133 database / 52 e2e**.
+- Paste bundle: `supabase/APPLY_ROSTER.sql` → then `tests/roster_isolation_check.sql` (14 ok).
+
 ## Migrations applied
 Authored + locally verified, pending owner's dashboard apply: `0000_platform_foundation.sql`, `0001_theme_engine.sql`, `seed.sql` (see supabase/README.md).
 
 ## Exact next steps
-0. **Owner: apply the kiosk backend** — `supabase/APPLY_STAGE2_PHASE2.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/kiosk_isolation_check.sql` (19 ok). Then `NEW_BUILDING.sql` for a real building, and follow `docs/KIOSK.md` to add cleaners and pair the tablet.
-1. **Owner applies `supabase/APPLY_STAGE4_INTEGRATIONS.sql`** in the SQL editor + runs `tests/integrations_isolation_check.sql` (expect 19 ok-notices) — supabase/README.md Stage 4. Then add real provider keys via `/settings/integrations` on a machine with `.env.local` set (SUPABASE_SECRET_KEY + NEXT_PUBLIC_INTEGRATIONS_LIVE=1) and prove a real send on the test page.
-2. Wire existing queued sends through `notify()`: calendar email reminders (currently a visible outbox), Service Desk follower emails + missed check-in alerts (Inngest stage).
-3. Ticketing import step 2 (per TICKETING_IMPORT_PLAN): 0006 offline-ref renumber trigger + billing fields, PDF+email report port (email goes via notify()), billing lock screen, insights charts.
-4. Kiosk PWA offline queue polish + minimal roster CRUD; then the owner's order: Tasks & incidents → Site audits → full Rosters → Contractors → Floor plans → Parcels → Automation.
+0. **Owner: apply the roster + timesheet backends** — `supabase/APPLY_TIMESHEETS.sql` then `supabase/APPLY_ROSTER.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/timesheet_isolation_check.sql` (20 ok) and `tests/roster_isolation_check.sql` (14 ok).
+1. **Owner: apply the kiosk backend** — `supabase/APPLY_STAGE2_PHASE2.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/kiosk_isolation_check.sql` (19 ok). Then `NEW_BUILDING.sql` for a real building, and follow `docs/KIOSK.md` to add cleaners and pair the tablet.
+2. **Owner applies `supabase/APPLY_STAGE4_INTEGRATIONS.sql`** in the SQL editor + runs `tests/integrations_isolation_check.sql` (expect 19 ok-notices) — supabase/README.md Stage 4. Then add real provider keys via `/settings/integrations` on a machine with `.env.local` set (SUPABASE_SECRET_KEY + NEXT_PUBLIC_INTEGRATIONS_LIVE=1) and prove a real send on the test page.
+3. Wire existing queued sends through `notify()`: calendar email reminders (currently a visible outbox), Service Desk follower emails + missed check-in alerts (Inngest stage).
+4. Ticketing import step 2 (per TICKETING_IMPORT_PLAN): 0006 offline-ref renumber trigger + billing fields, PDF+email report port (email goes via notify()), billing lock screen, insights charts.
+5. Then the owner's order: Tasks & incidents → Site audits → roster phase 2 (shift patterns / templates on the live board) → Contractors → Floor plans → Parcels → Automation.
 
 ## HANDOVER (half-finished / risky)
 - **Service Desk is the ONLY functional module** (client-side store, `foct-sd-demo-v1` in localStorage — clears with browser data; notifications/PDF simulated). All other screens remain static demos.
 - **All Stage 1.5 screens are static demos.** Buttons like "Approve", "Reassign zone", "Add shift" show toasts or nothing — no persistence. Kiosk PINs are a hardcoded demo map in `kiosk-screen.tsx`. Do not mistake these for working features.
 - **Sidebar is desktop-only** (`hidden lg:flex`); no mobile nav drawer yet.
-- **Roster week view fabricates non-today days** from today's data (visual demo of the board layout only).
+- **Roster week view fabricates non-today days** from today's data — DEMO MODE ONLY; signed in, `/roster` is the live board reading `roster_shifts`.
 - **Timesheets "Approve all ready" / per-row Approve don't change row state** — toast only.
 - **No ESLint config, no CI** — `check:tokens` + `check:contrast` + `tsc` are the gates; wire into CI in Stage 2.
 - **Drawer/Modal animations are minimal** (no enter/exit keyframes; Tailwind v4 has no stock animate utilities). Add `tw-animate-css` or keyframes if transitions feel abrupt.
