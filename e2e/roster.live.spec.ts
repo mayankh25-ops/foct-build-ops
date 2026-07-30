@@ -92,6 +92,24 @@ async function mockRpcs(page: Page, calls: Calls, state: State) {
           buildings: [{ id: SITE, name: "Aurora on Collins", slug: "aurora-on-collins" }],
         });
 
+      case "attendance_day":
+        // the board's sibling view (0013) — answered so the default Today view
+        // renders, then these specs switch to the week board
+        return json({
+          ok: true,
+          date: body.p_date,
+          timezone: "Australia/Melbourne",
+          server_time: new Date().toISOString(),
+          now_min: 600,
+          grace_min: 15,
+          detail: true,
+          summary: {
+            people: 1, rostered: 1, on_site: 1, finished: 0, upcoming: 0, missed: 0,
+            late: 0, overdue: 0, unrostered_here: 0, rostered_minutes: 480, worked_minutes: 0,
+          },
+          rows: [],
+        });
+
       case "roster_week": {
         state.week = String(body.p_week_start);
         return json({
@@ -141,9 +159,11 @@ async function openRoster(page: Page, calls: Calls, state: State) {
   await mockRpcs(page, calls, state);
   await page.goto("/roster");
   await expect(
-    page.getByRole("heading", { name: "Roster" }),
+    page.getByRole("heading", { name: "Roster", exact: true }),
     "the live roster did not render — is the session mock still matching?"
   ).toBeVisible();
+  // Today is the default view; every spec here is about the week board
+  await page.getByRole("button", { name: "Week board" }).click();
   await expect(page.getByText("Alice Ng").first()).toBeVisible({ timeout: 15_000 });
 }
 

@@ -11,8 +11,8 @@
     "check:tokens": "node scripts/check-tokens.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "export:themes": "node scripts/export-theme-tokens.mjs",
-    "build:apply-sql": "sh -c 'cat supabase/migrations/0000_platform_foundation.sql supabase/migrations/0001_theme_engine.sql supabase/seed.sql > supabase/APPLY_STAGE2.sql.tmp && (echo \"-- GENERATED one-paste apply — regenerate with npm run build:apply-sql\"; cat supabase/APPLY_STAGE2.sql.tmp) > supabase/APPLY_STAGE2.sql && rm supabase/APPLY_STAGE2.sql.tmp'",
-    "build:apply-stage4": "sh -c '(echo \"-- GENERATED one-paste apply for Stage 4 (integrations) — regenerate with npm run build:apply-stage4\"; echo \"-- Prereqs: APPLY_STAGE2 + APPLY_STAGE3 already applied. Idempotent — safe to re-run.\"; echo \"-- Afterwards run supabase/tests/integrations_isolation_check.sql (expect 19 ok-notices).\"; cat supabase/migrations/0005_integrations_framework.sql) > supabase/APPLY_STAGE4_INTEGRATIONS.sql'",
+    "build:apply-sql": "sh -c 'cat supabase/migrations/0000_platform_foundation.sql supabase/migrations/0001_theme_engine.sql supabase/seed.sql > supabase/APPLY_STAGE2.sql.tmp && (echo \"-- GENERATED one-paste apply \u2014 regenerate with npm run build:apply-sql\"; cat supabase/APPLY_STAGE2.sql.tmp) > supabase/APPLY_STAGE2.sql && rm supabase/APPLY_STAGE2.sql.tmp'",
+    "build:apply-stage4": "sh -c '(echo \"-- GENERATED one-paste apply for Stage 4 (integrations) \u2014 regenerate with npm run build:apply-stage4\"; echo \"-- Prereqs: APPLY_STAGE2 + APPLY_STAGE3 already applied. Idempotent \u2014 safe to re-run.\"; echo \"-- Afterwards run supabase/tests/integrations_isolation_check.sql (expect 19 ok-notices).\"; cat supabase/migrations/0005_integrations_framework.sql) > supabase/APPLY_STAGE4_INTEGRATIONS.sql'",
     "check:supabase": "node scripts/check-supabase.mjs",
     "build:apply-everything": "sh scripts/build-apply-everything.sh",
     "test": "vitest run",
@@ -22,7 +22,8 @@
     "test:e2e": "playwright test",
     "check:deps": "node scripts/check-deps.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",
-    "verify": "npm run check:tokens && npm run check:contrast && npm run typecheck && npm run lint && npm run test:unit && npm run check:secrets && npm run check:deps && npm run build"
+    "verify": "npm run check:tokens && npm run check:contrast && npm run typecheck && npm run lint && npm run test:unit && npm run check:secrets && npm run check:deps && npm run build",
+    "build:0012": "node scripts/build-0012-org-isolation.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.2.10",

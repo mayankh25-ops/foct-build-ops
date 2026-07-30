@@ -30,6 +30,19 @@ end $$;
 grant anon, authenticated, service_role to current_user;
 grant usage on schema public to anon, authenticated, service_role;
 
+-- IMPORTANT (second mirror-fidelity rule, same class as the pgcrypto one
+-- above): a Supabase project ships DEFAULT PRIVILEGES that grant every table
+-- created in `public` to anon, authenticated and service_role. So on the real
+-- project **RLS is the only thing standing between a signed-in user and a
+-- table** — while a plain Postgres grants nothing, and every RLS hole hides
+-- behind a "permission denied" that would never happen in production.
+-- The mirror therefore copies those defaults. 0003 takes them back off `anon`;
+-- `authenticated` keeps them, exactly as the live project does.
+alter default privileges in schema public grant all on tables    to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+grant all on all tables    in schema public to anon, authenticated, service_role;
+grant all on all sequences in schema public to anon, authenticated, service_role;
+
 -- GoTrue's account table, reduced to the columns the app reads.
 create schema if not exists auth;
 grant usage on schema auth to anon, authenticated, service_role;

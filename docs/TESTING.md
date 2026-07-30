@@ -38,7 +38,7 @@ options rejected, which is the part that saves the next argument.
 
 ## 2. Unit tests — automated (`npm run test:unit`)
 
-Vitest over the pure logic in `src/lib`. Currently 99 assertions covering the
+Vitest over the pure logic in `src/lib`. Currently 111 assertions covering the
 calculations nobody can eyeball:
 
 | File | What it protects |
@@ -50,6 +50,7 @@ calculations nobody can eyeball:
 | `tests/unit/scope-data.test.ts` | the contract dataset still reconciles to 393.0 h/wk, 222+16 items, 60.0/46.5 h/day |
 | `tests/unit/timesheets.test.ts` | payable hours (override wins once approved, never negative, a stale override ignored), variance measured against what is PAID, and a payroll CSV that survives commas, quotes and Excel's formula prefix |
 | `tests/unit/roster.test.ts` | time-of-day parsing that refuses what it cannot read, seven-day weeks across month/year/DST boundaries, and the clash check — including a shift wholly INSIDE another, which a start-time comparison misses |
+| `tests/unit/attendance-day.test.ts` | the sentence beside each person on Today — a no-show never reads as "arrived late", a forgotten sign-out outranks lateness — plus a day picker that keeps the LOCAL date at 23:30 and across DST |
 | `tests/unit/kiosk-offline.test.ts` | the offline sync engine — outbox writes, clock-offset correction, a half-failed flush keeping what the server refused, a replayed batch pushing nothing twice, and PIN hashes that never contain the PIN |
 
 Add a test here whenever a calculation gets an argument, a rounding rule, or a
@@ -99,7 +100,7 @@ data.**
 
 It builds a throwaway database, applies `supabase/APPLY_EVERYTHING.sql`
 exactly as you'd paste it into the dashboard, applies it **again** (idempotency
-— you re-paste bundles routinely), then runs 133 assertions:
+— you re-paste bundles routinely), then runs 171 assertions:
 
 | Suite | Assertions | Proves |
 |---|---|---|
@@ -110,6 +111,8 @@ exactly as you'd paste it into the dashboard, applies it **again** (idempotency
 | `kiosk_isolation_check.sql` | 19 | PINs never leave the server, a device token grants no data access |
 | `timesheet_isolation_check.sql` | 20 | corrections never edit a punch, a reason is required, an approved week locks, another company cannot read the week |
 | `notices_isolation_check.sql` | 18 | personal notices never cached on a shared tablet, offline batches replay without double-punching, reworded notices must be re-acknowledged |
+| `org_isolation_check.sql` | 22 | **the promise the product is sold on**: at ONE tower with two competing cleaning companies, a concierge firm, a strata manager and an electrician, nobody reads another company's staff, PINs, roster, punches, corrections or pay — and cannot roster, delete, correct or approve them either |
+| `attendance_day_isolation_check.sql` | 16 | today's states: nothing is "missed" before its start plus grace, late is here-and-late, a shift never signed out is not quietly closed, and the owner side gets counts without names |
 | `roster_isolation_check.sql` | 14 | no inverted shift, no double-booking the same person, back-to-back allowed, a week-copy that reports what it skipped, the timesheet reading the same rostered hours |
 
 Three methodology rules learned the hard way:
@@ -119,6 +122,20 @@ Three methodology rules learned the hard way:
 - **`create table if not exists` skips an existing older table** instead of
   upgrading it. That's why a half-built project needs
   `RESET_PUBLIC_SCHEMA.sql`, and why CI asserts the bundle is regenerated.
+- **The mirror must copy Supabase's GRANTS too — twice learned.** A Supabase
+  project ships default privileges granting every new `public` table to
+  `authenticated`, so **RLS is the only thing between a signed-in user and a
+  table**. A plain Postgres grants nothing, so every RLS hole hid behind a
+  "permission denied" that would never happen in production. That is exactly how
+  the 0012 hole survived: the concierge, the strata admin and an electrician
+  could all read cleaners' rows and their plaintext PINs on the real project,
+  while the local suite was green. The bootstrap now copies those grants, and
+  every probe runs `set local role authenticated`.
+- **A column revoke does nothing while the table grant stands.** `revoke select
+  (pin)` passed silently and the PIN stayed readable; the table grant covers
+  every column, present and future. The fix is to withdraw table SELECT and
+  re-grant column by column — which the suite proves by *reading* the column and
+  expecting a privilege error.
 - **The mirror must copy Supabase's schema LAYOUT, not just its API.** pgcrypto
   lives in an `extensions` schema on Supabase and in `public` on a plain
   Postgres, so a function with a pinned `search_path` can pass locally and fail
@@ -172,6 +189,10 @@ dev server — dev-only behaviour has hidden real bugs here before.
   override the paid hours, reopen a locked week, and download the CSV. Proves
   the buttons call the right RPC with the right arguments — the mistake class
   that silently pays the wrong number.
+- `e2e/today.live.spec.ts` — Today with a mocked signed-in session: a missing
+  cleaner reads as a problem rather than a grey row, late is here-and-late, a
+  forgotten sign-out is flagged, and `detail: false` (the owner side) renders
+  the explanation instead of an empty table
 - `e2e/roster.live.spec.ts` — the roster board with a mocked signed-in session:
   the cell you click becomes the person and the day that reach the server, an
   edit keeps its shift id, a clash is named before the round trip and the
@@ -352,7 +373,7 @@ are green or red in CI; the manual ones are a human saying yes.
 
 - [ ] Code reviewed by someone other than the author *(manual)*
 - [ ] `npm run verify` green — tokens, contrast, types, lint, unit, secrets, deps, build *(automated)*
-- [ ] `npm run test:db` green — 133 isolation assertions, bundle applies and re-applies *(automated)*
+- [ ] `npm run test:db` green — 171 isolation assertions, bundle applies and re-applies *(automated)*
 - [ ] `npm run test:e2e` green — routes, kiosk, service desk, timesheets, roster *(automated)*
 - [ ] `APPLY_EVERYTHING.sql` regenerated and committed *(automated check)*
 - [ ] New behaviour has tests; every fixed bug has a test *(manual)*
@@ -369,11 +390,11 @@ are green or red in CI; the manual ones are a human saying yes.
 | Layer | State |
 |---|---|
 | Static checks, secrets, dependency triage | automated |
-| Unit tests | automated, 99 assertions on the maths that matters |
-| Database + RLS isolation | automated, 133 assertions incl. idempotency |
+| Unit tests | automated, 111 assertions on the maths that matters |
+| Database + RLS isolation | automated, 171 assertions incl. idempotency |
 | End-to-end journeys | automated, demo mode, production build |
 | Component tests | **not started** |
-| Live-mode e2e (mocked RPCs, real browser) | automated — kiosk offline, timesheets, roster |
+| Live-mode e2e (mocked RPCs, real browser) | automated — kiosk offline, timesheets, roster, today |
 | Live-mode e2e (real Supabase) | **manual on staging** |
 | Android device matrix | **manual, matrix defined above** |
 | Safari / WebKit | **manual — no WebKit in CI** |
