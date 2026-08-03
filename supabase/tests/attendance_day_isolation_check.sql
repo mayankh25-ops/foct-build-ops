@@ -85,8 +85,20 @@ begin
     raise notice 'ok 5: a rostered no-show is MISSED';
   else raise exception 'FAIL 5: %', v_row; end if;
 
-  -- 6. the missing person is listed FIRST — a supervisor reads problems first
-  if (v_res -> 'rows' -> 0 ->> 'staff_id')::uuid = v_cara then
+  -- 6. missing people are listed FIRST — a supervisor reads problems first.
+  --    (Stated as an ordering rule, not "Cara is row 0": a real site has other
+  --     people, and an earlier suite in the same database may have left its own
+  --     no-show behind. Either way, no settled row may precede a missing one.)
+  if not exists (
+    select 1
+      from jsonb_array_elements(v_res -> 'rows') with ordinality as later(r, pos)
+     where later.r ->> 'state' = 'missed'
+       and exists (select 1 from jsonb_array_elements(v_res -> 'rows')
+                     with ordinality as earlier(r2, pos2)
+                    where earlier.pos2 < later.pos
+                      and earlier.r2 ->> 'state' <> 'missed')
+  ) and exists (select 1 from jsonb_array_elements(v_res -> 'rows') r
+                 where (r ->> 'staff_id')::uuid = v_cara and r ->> 'state' = 'missed') then
     raise notice 'ok 6: problems sort to the top of the day';
   else raise exception 'FAIL 6: first row %', v_res -> 'rows' -> 0 ->> 'staff_name'; end if;
 
