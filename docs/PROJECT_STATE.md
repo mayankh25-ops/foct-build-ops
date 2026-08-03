@@ -163,12 +163,13 @@ Found while building the "who is here now" read: the authority model behind ever
 - **Screen:** `/roster` now opens on **Today** (people, their rostered times, in/out, hours, state pill, problems sorted first, refreshes every minute) with the week board behind a Today | Week board toggle. The owner side sees the explanation, not an empty table.
 - Tests: **22 SQL assertions** for multi-org isolation at a shared site (two cleaning companies, concierge, strata, electrician), **16** for today's states, **12 unit**, **5 browser**. Totals now **111 unit / 171 database / 57 e2e**.
 - Paste bundle: `supabase/APPLY_ORG_ISOLATION.sql` (0012 + 0013) → `tests/org_isolation_check.sql` (22 ok) and `tests/attendance_day_isolation_check.sql` (16 ok).
+- **APPLIED AND VERIFIED on the owner's Supabase project (2026-08-03): 22/22 and 16/16.** Both suites first failed there and the failures were the TESTS, not the fix: they asserted "sees zero rows", which is only true on a freshly seeded database. A real project has history — a tablet left by an earlier kiosk-suite run belonged to the strata org, so the strata admin could rightly see it. Every probe now names the rows that must not be visible, and the ordering check states the rule (no settled row precedes a missing one) instead of naming a person. Lesson for future suites: **assert what must not be visible, never a row count.**
 
 ## Migrations applied
 Authored + locally verified, pending owner's dashboard apply: `0000_platform_foundation.sql`, `0001_theme_engine.sql`, `seed.sql` (see supabase/README.md).
 
 ## Exact next steps
-0. **Owner: apply `supabase/APPLY_ORG_ISOLATION.sql` — do this one first.** It closes the cross-org read hole (another company on the same building could read cleaners' rows, PINs, punches, roster and pay) and adds today's board. Then `tests/org_isolation_check.sql` (22 ok) + `tests/attendance_day_isolation_check.sql` (16 ok).
+0. ~~Apply `APPLY_ORG_ISOLATION.sql` + both checks~~ — **DONE 2026-08-03, 22/22 + 16/16 on the live project.**
 1. **Owner: apply the roster + timesheet backends** — `supabase/APPLY_TIMESHEETS.sql` then `supabase/APPLY_ROSTER.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/timesheet_isolation_check.sql` (20 ok) and `tests/roster_isolation_check.sql` (14 ok).
 2. **Owner: apply the kiosk backend** — `supabase/APPLY_STAGE2_PHASE2.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/kiosk_isolation_check.sql` (19 ok). Then `NEW_BUILDING.sql` for a real building, and follow `docs/KIOSK.md` to add cleaners and pair the tablet.
 3. **Owner applies `supabase/APPLY_STAGE4_INTEGRATIONS.sql`** in the SQL editor + runs `tests/integrations_isolation_check.sql` (expect 19 ok-notices) — supabase/README.md Stage 4. Then add real provider keys via `/settings/integrations` on a machine with `.env.local` set (SUPABASE_SECRET_KEY + NEXT_PUBLIC_INTEGRATIONS_LIVE=1) and prove a real send on the test page.
