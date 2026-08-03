@@ -11,6 +11,13 @@
 -- bypasses RLS, so a suite that forgets this passes no matter what the policies
 -- say. And these reads only mean anything because `_mirror_bootstrap.sql` grants
 -- tables to `authenticated` the way a Supabase project does.
+--
+-- Every assertion names the ROWS that must not be visible, rather than counting
+-- to zero. A real project has its own history — an owner-side org may have
+-- provisioned a tablet or a cleaner of its own, and seeing YOUR OWN row is the
+-- system working. (The zero-count version of this suite failed on the owner's
+-- project for exactly that reason: a tablet left behind by an earlier run
+-- belonged to the strata org, so the strata admin could rightly see it.)
 -- =============================================================================
 do $$
 declare
@@ -71,10 +78,10 @@ begin
     format('{"sub":"%s","role":"authenticated"}', c_amelia), true);
   execute 'set local role authenticated';
 
-  -- 1. no cleaning staff records at all
-  select count(*) into v_n from public.staff;
-  if v_n = 0 then raise notice 'ok 1: the concierge sees NO cleaning staff records';
-  else raise exception 'FAIL 1: concierge read % staff rows', v_n; end if;
+  -- 1. no cleaning staff records
+  if not exists (select 1 from public.staff where id in (v_foct_staff, v_rival_staff)) then
+    raise notice 'ok 1: the concierge sees NO cleaning staff records';
+  else raise exception 'FAIL 1: the concierge read a cleaner''s record'; end if;
 
   -- 2. the PIN column is not even addressable — a PIN is a credential
   begin
@@ -86,24 +93,26 @@ begin
   end;
 
   -- 3. not the roster either
-  select count(*) into v_n from public.roster_shifts;
-  if v_n = 0 then raise notice 'ok 3: the concierge sees no cleaning roster';
-  else raise exception 'FAIL 3: concierge read % shifts', v_n; end if;
+  if not exists (select 1 from public.roster_shifts
+                  where staff_id in (v_foct_staff, v_rival_staff)) then
+    raise notice 'ok 3: the concierge sees no cleaning roster';
+  else raise exception 'FAIL 3: the concierge read a cleaning shift'; end if;
 
   -- 4. nor when anybody came and went
-  select count(*) into v_n from public.attendance_events;
-  if v_n = 0 then raise notice 'ok 4: the concierge sees no check-in history';
-  else raise exception 'FAIL 4: concierge read % events', v_n; end if;
+  if not exists (select 1 from public.attendance_events where staff_id = v_foct_staff) then
+    raise notice 'ok 4: the concierge sees no check-in history';
+  else raise exception 'FAIL 4: the concierge read a cleaner''s check-in'; end if;
 
   -- 5. nor what anybody is paid
-  select count(*) into v_n from public.timesheet_weeks;
-  if v_n = 0 then raise notice 'ok 5: the concierge sees no timesheets';
-  else raise exception 'FAIL 5: concierge read % timesheet weeks', v_n; end if;
+  if not exists (select 1 from public.timesheet_weeks where staff_id = v_foct_staff) then
+    raise notice 'ok 5: the concierge sees no timesheets';
+  else raise exception 'FAIL 5: the concierge read a timesheet week'; end if;
 
   -- 6. nor the corrections behind them
-  select count(*) into v_n from public.attendance_adjustments;
-  if v_n = 0 then raise notice 'ok 6: the concierge sees no payroll corrections';
-  else raise exception 'FAIL 6: concierge read % adjustments', v_n; end if;
+  if not exists (select 1 from public.attendance_adjustments
+                  where session_event_id = v_foct_event) then
+    raise notice 'ok 6: the concierge sees no payroll corrections';
+  else raise exception 'FAIL 6: the concierge read a payroll correction'; end if;
 
   -- 7. BUT the day's PROGRESS is still available — counts, never names
   v_res := public.attendance_day(v_building, v_today);
@@ -120,14 +129,16 @@ begin
   execute 'set local role authenticated';
 
   -- 8. owning the building does not mean owning its contractors' records
-  select count(*) into v_n from public.staff;
-  if v_n = 0 then raise notice 'ok 8: the strata manager sees no cleaning staff records';
-  else raise exception 'FAIL 8: strata read % staff rows', v_n; end if;
+  if not exists (select 1 from public.staff where id in (v_foct_staff, v_rival_staff)) then
+    raise notice 'ok 8: the strata manager sees no cleaning staff records';
+  else raise exception 'FAIL 8: the strata manager read a cleaner''s record'; end if;
 
-  -- 9. nor the tablets' pair codes (a pair code provisions a kiosk)
-  select count(*) into v_n from public.kiosk_devices;
-  if v_n = 0 then raise notice 'ok 9: the strata manager sees no kiosk devices or pair codes';
-  else raise exception 'FAIL 9: strata read % devices', v_n; end if;
+  -- 9. nor a cleaning company's tablet, whose pair code provisions a kiosk.
+  --    (A tablet the OWNER org provisioned for itself stays visible to it —
+  --     that is ownership working, not a leak, so this names the rival's row.)
+  if not exists (select 1 from public.kiosk_devices where id = v_device) then
+    raise notice 'ok 9: the strata manager sees no cleaning company''s tablet';
+  else raise exception 'FAIL 9: the strata manager read another org''s kiosk'; end if;
 
   -- 10. and the device token is unreadable even where a row is visible
   begin
@@ -145,10 +156,10 @@ begin
   execute 'set local role authenticated';
 
   -- 11. a subcontractor on site sees nothing of the cleaners
-  select count(*) into v_n from public.staff;
-  select count(*) + v_n into v_n from public.attendance_events;
-  if v_n = 0 then raise notice 'ok 11: the electrical subcontractor sees nothing of the cleaners';
-  else raise exception 'FAIL 11: subcontractor read % rows', v_n; end if;
+  if not exists (select 1 from public.staff where id in (v_foct_staff, v_rival_staff))
+     and not exists (select 1 from public.attendance_events where staff_id = v_foct_staff) then
+    raise notice 'ok 11: the electrical subcontractor sees nothing of the cleaners';
+  else raise exception 'FAIL 11: the subcontractor read a cleaner''s record or check-in'; end if;
   execute 'reset role';
 
   -- ================== the OTHER cleaning company, same tower ===============
@@ -157,10 +168,11 @@ begin
   execute 'set local role authenticated';
 
   -- 12. its own crew, and only its own
-  select count(*) into v_n from public.staff;
-  if v_n >= 1 and not exists (select 1 from public.staff where id = v_foct_staff) then
+  if exists (select 1 from public.staff where id = v_rival_staff)
+     and not exists (select 1 from public.staff where id = v_foct_staff) then
     raise notice 'ok 12: a competing cleaning company sees only ITS OWN staff';
-  else raise exception 'FAIL 12: rival read % staff rows incl. FOCT: %', v_n,
+  else raise exception 'FAIL 12: rival saw own crew: %, saw FOCT: %',
+    exists (select 1 from public.staff where id = v_rival_staff),
     exists (select 1 from public.staff where id = v_foct_staff); end if;
 
   -- 13. not the other company's roster
