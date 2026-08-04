@@ -36,6 +36,9 @@ import {
   useAttendanceStore,
 } from "@/lib/attendance-store";
 import { calCategoryMeta, eventsForRange, useCalendarReady, useCalendarStore } from "@/lib/calendar-store";
+import { HandoverTimeline } from "@/components/handover/handover-timeline";
+import { HANDOVER_LIVE } from "@/lib/handover-live";
+import { useSessionStore } from "@/lib/session";
 import { useHandoverReady, useHandoverStore } from "@/lib/handover-store";
 import { useLiveWeather } from "@/lib/live-weather";
 import { useSdRehydrate, useSdStore } from "@/lib/service-desk-store";
@@ -81,6 +84,12 @@ export function DashboardClient() {
   useSdRehydrate();
   const manualEvents = useCalendarStore((s) => s.manualEvents);
   const calendarSeries = useCalendarStore((s) => s.series);
+  // live shift handover when there is a session; the demo list otherwise
+  const dashProfile = useSessionStore((st) => st.profile);
+  const site = dashProfile?.buildings[0];
+  const orgName = dashProfile?.memberships[0]?.org_name;
+  const handoverLive = HANDOVER_LIVE && Boolean(site);
+
   const notes = useHandoverStore((s) => s.notes);
   const addNote = useHandoverStore((s) => s.addNote);
   const tickets = useSdStore((s) => s.tickets);
@@ -404,9 +413,17 @@ export function DashboardClient() {
           </CardBody>
         </Card>
 
+        {/* SHIFT HANDOVER — one name for this everywhere (owner, 2026-08-04).
+            The cleaning company's log and the concierge company's log are
+            SEPARATE: same table, scoped by org, so neither sees the other. */}
+        {handoverLive && site ? (
+          <div className="min-w-0 self-start">
+            <HandoverTimeline buildingId={site.id} orgName={orgName} />
+          </div>
+        ) : (
         <Card className="min-w-0 self-start">
           <CardHeader>
-            <CardTitle>Team handover</CardTitle>
+            <CardTitle>Shift handover</CardTitle>
             <Badge tone="neutral">FOCT Cleaning only</Badge>
           </CardHeader>
           <CardBody className="flex flex-col gap-4">
@@ -439,6 +456,7 @@ export function DashboardClient() {
             ))}
           </CardBody>
         </Card>
+        )}
       </div>
 
       {/* hours + supplies */}
