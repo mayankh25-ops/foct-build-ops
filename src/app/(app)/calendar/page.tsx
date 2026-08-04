@@ -1,7 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { CalendarPlus, ChevronLeft, ChevronRight, Lock, Phone, Repeat } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight, Lock, Phone, Repeat,
+  Pencil,
+} from "lucide-react";
 import { Badge, StatusPill } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
@@ -73,6 +75,14 @@ const parseTime = (value: string): number | undefined => {
   return (h ?? 0) + (m ?? 0) / 60;
 };
 
+/** 9.5 → "09:30". parseTime's inverse — the edit form has to put back exactly
+ *  what was stored, or a saved event quietly moves by half an hour. */
+const toTimeInput = (hours: number): string => {
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+};
+
 function EventChip({ e, compact }: { e: CalEvent; compact?: boolean }) {
   const meta = calCategoryMeta[e.category];
   return (
@@ -104,19 +114,19 @@ function VisibilityBadge({ visibility }: { visibility?: CalVisibility }) {
 }
 
 function DayDrawer({
+  onEdit,
   date,
   events,
   viewRole,
   onClose,
 }: {
+  /** open the edit form on this event (the drawer closes behind it) */
+  onEdit: (e: CalEvent) => void;
   date: Date | null;
   events: CalEvent[];
   viewRole: CalRole;
   onClose: () => void;
 }) {
-  const removeJob = useCalendarStore((s) => s.removeJob);
-  const removeSeries = useCalendarStore((s) => s.removeSeries);
-  const { toast } = useToast();
   // the Root stays mounted and is driven by `open` — unmounting an open Radix
   // dialog mid-close leaks body pointer-events and strands the page
   return (
@@ -141,7 +151,21 @@ function DayDrawer({
               return (
                 <div key={e.id} className="rounded-card border border-edge bg-canvas p-4">
                   <div className="flex items-start justify-between gap-3">
-                    <p className="text-body-sm font-medium text-fg">{e.title}</p>
+                    <p
+                      className={cn(
+                        "text-body-sm font-medium",
+                        e.status === "cancelled" ? "text-fg-muted line-through" : "text-fg"
+                      )}
+                    >
+                      {e.title}
+                    </p>
+                    {e.status === "cancelled" && (
+                      // the reason matters more than the strike-through: a
+                      // contractor turning up to a locked door needs to know why
+                      <p className="mt-0.5 text-body-sm text-critical-text">
+                        Cancelled{e.cancelReason ? ` — ${e.cancelReason}` : ""}
+                      </p>
+                    )}
                     <StatusPill tone={meta.tone}>{meta.label}</StatusPill>
                   </div>
                   <p className="mt-1.5 font-mono text-caption text-fg-muted">{fmtRange(e)}</p>
@@ -182,23 +206,16 @@ function DayDrawer({
                     )}
                     {e.billable && <Badge tone="warning">Billable extra — quote first</Badge>}
                     {e.source === "scope" && <Badge tone="neutral">From the agreement</Badge>}
+                    {e.status === "cancelled" && <Badge tone="critical">Cancelled</Badge>}
                     {e.source === "manual" &&
                       (canModify(e, viewRole) ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (e.seriesId) {
-                              removeSeries(e.seriesId);
-                              toast({ tone: "neutral", title: "Recurring event removed", description: `${e.title} — the whole series` });
-                            } else {
-                              removeJob(e.spanId ?? e.id);
-                              toast({ tone: "neutral", title: e.spanId ? "Multi-day event removed" : "Event removed", description: e.title });
-                            }
+                        <EventActions
+                          event={e}
+                          onEdit={() => {
+                            onClose();
+                            onEdit(e);
                           }}
-                        >
-                          {e.seriesId ? "Remove series" : "Remove"}
-                        </Button>
+                        />
                       ) : (
                         <span className="text-caption text-fg-muted">Only the building admin can change this</span>
                       ))}
@@ -213,14 +230,156 @@ function DayDrawer({
 }
 
 /* ---------------------------------------------------------------- */
+/* What you can do to an event you are allowed to change             */
+/* ---------------------------------------------------------------- */
+
+function EventActions({
+  event,
+  onEdit,
+}: {
+  event: CalEvent;
+  /** the caller already asked canModify(); this renders what you may DO */
+  onEdit: () => void;
+}) {
+  const cancelJob = useCalendarStore((s) => s.cancelJob);
+  const cancelSeries = useCalendarStore((s) => s.cancelSeries);
+  const restoreJob = useCalendarStore((s) => s.restoreJob);
+  const restoreSeries = useCalendarStore((s) => s.restoreSeries);
+  const endSeriesOn = useCalendarStore((s) => s.endSeriesOn);
+  const removeJob = useCalendarStore((s) => s.removeJob);
+  const removeSeries = useCalendarStore((s) => s.removeSeries);
+  const { toast } = useToast();
+  const [asking, setAsking] = React.useState(false);
+  const [reason, setReason] = React.useState("");
+
+  const isSeries = Boolean(event.seriesId);
+  const targetId = event.seriesId ?? event.spanId ?? event.id;
+
+  if (event.status === "cancelled") {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => {
+          if (isSeries) restoreSeries(targetId);
+          else restoreJob(targetId);
+          toast({ tone: "success", title: "Back on", description: event.title });
+        }}
+      >
+        Reinstate
+      </Button>
+    );
+  }
+
+  if (asking) {
+    return (
+      <div className="flex w-full flex-wrap items-end gap-2">
+        <Input
+          className="min-w-48 flex-1"
+          label="Why is it off?"
+          placeholder="e.g. contractor rescheduled to next week"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+        />
+        <Button
+          size="sm"
+          disabled={!reason.trim()}
+          onClick={() => {
+            if (isSeries) cancelSeries(targetId, reason.trim());
+            else cancelJob(targetId, reason.trim());
+            setAsking(false);
+            setReason("");
+            toast({
+              tone: "neutral",
+              title: isSeries ? "Series cancelled" : "Event cancelled",
+              description: `${event.title} — everyone sees the reason`,
+            });
+          }}
+        >
+          Cancel it
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => setAsking(false)}>
+          Keep it
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Button variant="ghost" size="sm" onClick={onEdit}>
+        <Pencil aria-hidden className="mr-1 size-3.5" />
+        Edit
+      </Button>
+      {/* cancelling is the everyday case; a reason is required, and the event
+          stays on the calendar so nobody turns up to a locked door */}
+      <Button variant="ghost" size="sm" onClick={() => setAsking(true)}>
+        Cancel
+      </Button>
+      {isSeries && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            endSeriesOn(targetId, event.date);
+            toast({
+              tone: "neutral",
+              title: "Series ended",
+              description: `${event.title} — nothing after ${event.date}; earlier dates stay`,
+            });
+          }}
+        >
+          End after this date
+        </Button>
+      )}
+      {/* deleting is for a mistake, not for "it did not happen" — which is why
+          it is last and says so */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => {
+          if (isSeries) removeSeries(targetId);
+          else removeJob(targetId);
+          toast({
+            tone: "neutral",
+            title: "Deleted",
+            description: `${event.title} — gone from the calendar entirely`,
+          });
+        }}
+      >
+        Delete
+      </Button>
+    </>
+  );
+}
+
+/* ---------------------------------------------------------------- */
 /* Add event — BIG centred modal, task-reminder-app style            */
 /* ---------------------------------------------------------------- */
 
-function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRole: CalRole }) {
+/**
+ * Add — and EDIT. The same form both ways: an edit that used a different,
+ * smaller form would quietly lose whichever fields it forgot.
+ */
+function AddEventModal({
+  defaultDate,
+  viewRole,
+  editing,
+  onDone,
+}: {
+  defaultDate: string;
+  viewRole: CalRole;
+  /** set = editing that event instead of creating one */
+  editing?: CalEvent | null;
+  onDone?: () => void;
+}) {
   const addJob = useCalendarStore((s) => s.addJob);
   const addSeries = useCalendarStore((s) => s.addSeries);
+  const updateJob = useCalendarStore((s) => s.updateJob);
+  const updateSeries = useCalendarStore((s) => s.updateSeries);
   const { toast } = useToast();
   const [open, setOpen] = React.useState(false);
+  const isEdit = Boolean(editing);
 
   const [title, setTitle] = React.useState("");
   const [date, setDate] = React.useState(defaultDate);
@@ -238,6 +397,33 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
   const [contactPhone, setContactPhone] = React.useState("");
   const [remindEmail, setRemindEmail] = React.useState("");
   const [remindDays, setRemindDays] = React.useState("1");
+
+  // opening on an event fills the form with what is already there, so an edit
+  // starts from the truth rather than from blanks
+  React.useEffect(() => {
+    if (!editing) return;
+    setOpen(true);
+    setTitle(editing.title);
+    setDate(editing.date);
+    setAllDay(editing.time === undefined);
+    setStart(editing.time === undefined ? "09:00" : toTimeInput(editing.time));
+    setFinish(editing.endTime === undefined ? "" : toTimeInput(editing.endTime));
+    setCategory(editing.category);
+    setDetail(editing.detail ?? "");
+    setRepeat(editing.repeat ?? "none");
+    setEndDate(editing.endDate ?? "");
+    setVisibility(editing.visibility ?? "everyone");
+    setLocked(Boolean(editing.locked));
+    setContactName(editing.contactName ?? "");
+    setContactPhone(editing.contactPhone ?? "");
+    setRemindEmail(editing.reminder?.email ?? "");
+    setRemindDays(String(editing.reminder?.daysBefore ?? 1));
+  }, [editing]);
+
+  const close = (o: boolean) => {
+    setOpen(o);
+    if (!o) onDone?.();
+  };
 
   const reset = () => {
     setTitle("");
@@ -277,6 +463,25 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
       contactName: contactName.trim() || undefined,
       contactPhone: contactPhone.trim() || undefined,
     };
+    if (isEdit && editing) {
+      const target = editing.seriesId ?? editing.spanId ?? editing.id;
+      if (editing.seriesId) {
+        updateSeries(target, { ...shared, startDate: date, until: endDate || undefined });
+      } else {
+        updateJob(target, {
+          ...shared,
+          date,
+          endDate: endDate && endDate > date ? endDate : undefined,
+        });
+      }
+      close(false);
+      toast({
+        tone: "success",
+        title: editing.seriesId ? "Recurring event updated" : "Event updated",
+        description: title.trim(),
+      });
+      return;
+    }
     if (repeat === "none") {
       addJob({ ...shared, date, endDate: endDate && endDate > date ? endDate : undefined });
     } else {
@@ -302,18 +507,29 @@ function AddEventModal({ defaultDate, viewRole }: { defaultDate: string; viewRol
   const label = "flex flex-col gap-1.5 text-body-sm font-medium text-fg";
 
   return (
-    <Modal open={open} onOpenChange={setOpen}>
-      <ModalTrigger asChild>
-        <Button>
-          <CalendarPlus aria-hidden /> Add event
-        </Button>
-      </ModalTrigger>
+    <Modal open={open} onOpenChange={close}>
+      {!isEdit && (
+        <ModalTrigger asChild>
+          <Button>
+            <CalendarPlus aria-hidden /> Add event
+          </Button>
+        </ModalTrigger>
+      )}
       <ModalContent size="lg">
         <ModalHeader>
-          <ModalTitle>Add a calendar event</ModalTitle>
+          <ModalTitle>{isEdit ? "Edit this event" : "Add a calendar event"}</ModalTitle>
           <ModalDescription>
-            One-off or recurring. Creating as <strong>{calRoleLabel(viewRole)}</strong> — choose who
-            can see it below.
+            {isEdit ? (
+              <>
+                Everyone who can see this event sees the change. As{" "}
+                <strong>{calRoleLabel(viewRole)}</strong>.
+              </>
+            ) : (
+              <>
+                One-off or recurring. Creating as <strong>{calRoleLabel(viewRole)}</strong> — choose
+                who can see it below.
+              </>
+            )}
           </ModalDescription>
         </ModalHeader>
         <ModalBody className="flex flex-col gap-5">
@@ -535,6 +751,7 @@ export default function CalendarPage() {
   const [filter, setFilter] = React.useState<CalCategory | "all">("all");
   const [view, setView] = React.useState<"month" | "list">("month");
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
+  const [editing, setEditing] = React.useState<CalEvent | null>(null);
 
   React.useEffect(() => {
     setCursor((c) => c ?? new Date());
@@ -746,7 +963,18 @@ export default function CalendarPage() {
         events={selectedKey ? (byDate.get(selectedKey) ?? []) : []}
         viewRole={viewRole}
         onClose={() => setSelectedKey(null)}
+        onEdit={setEditing}
       />
+
+      {/* the edit form is the SAME form as Add, opened on an existing event */}
+      {editing && (
+        <AddEventModal
+          defaultDate={editing.date}
+          viewRole={viewRole}
+          editing={editing}
+          onDone={() => setEditing(null)}
+        />
+      )}
 
       {queuedReminders.length > 0 && (
         <Card className="mt-6">

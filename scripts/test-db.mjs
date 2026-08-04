@@ -37,6 +37,7 @@ const SUITES = [
   { file: "supabase/tests/attendance_day_isolation_check.sql", expect: 16, name: "today's attendance" },
   { file: "supabase/tests/alerts_isolation_check.sql", expect: 18, name: "missed check-in alerts" },
   { file: "supabase/tests/auth_onboarding_check.sql", expect: 15, name: "getting in (invites + bootstrap)" },
+  { file: "supabase/tests/handover_check.sql", expect: 14, name: "shift handover" },
 ];
 
 const BOOTSTRAP = "supabase/tests/_mirror_bootstrap.sql";
