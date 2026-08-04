@@ -15,6 +15,9 @@ import { useToast } from "@/components/ui/toast";
 import { sdCategories, sdPriorityMeta, sdStatusMeta, type SdPriority } from "@/lib/service-desk-data";
 import { useSdRehydrate, useSdStore } from "@/lib/service-desk-store";
 import { useConciergeReady, useConciergeStore } from "@/lib/concierge-store";
+import { HandoverTimeline } from "@/components/handover/handover-timeline";
+import { HANDOVER_LIVE } from "@/lib/handover-live";
+import { useSessionStore } from "@/lib/session";
 import { cn } from "@/lib/cn";
 
 /**
@@ -122,6 +125,12 @@ export default function ConciergePage() {
   const markCollected = useConciergeStore((s) => s.markCollected);
   const addNote = useConciergeStore((s) => s.addNote);
   const { toast } = useToast();
+
+  // live handover when there is a session; the demo list otherwise
+  const profile = useSessionStore((st) => st.profile);
+  const site = profile?.buildings[0];
+  const orgName = profile?.memberships[0]?.org_name;
+  const live = HANDOVER_LIVE && Boolean(site);
 
   const [resident, setResident] = React.useState("");
   const [apartment, setApartment] = React.useState("");
@@ -266,7 +275,11 @@ export default function ConciergePage() {
             </CardBody>
           </Card>
 
-          {/* handover notes */}
+          {/* handover notes — live timeline when signed in (0016), the demo
+              list otherwise so a fresh clone still shows the shape */}
+          {live && site ? (
+            <HandoverTimeline buildingId={site.id} orgName={orgName} />
+          ) : (
           <Card>
             <CardHeader>
               <div>
@@ -313,6 +326,7 @@ export default function ConciergePage() {
               ))}
             </CardBody>
           </Card>
+          )}
         </div>
       </div>
     </>

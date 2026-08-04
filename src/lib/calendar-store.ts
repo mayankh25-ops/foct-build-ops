@@ -80,6 +80,15 @@ export interface CalEvent {
   visibility?: CalVisibility;
   /** admin-locked: nobody but the building admin can change or remove it */
   locked?: boolean;
+  /**
+   * A cancelled event STAYS on the calendar, struck through, with its reason.
+   * Deleting it would leave the contractor turning up to a locked door and
+   * nobody able to say why it was called off.
+   */
+  status?: "scheduled" | "cancelled";
+  cancelReason?: string;
+  cancelledAt?: string;
+  updatedAt?: string;
   createdBy?: CalRole;
   contactName?: string;
   contactPhone?: string;
@@ -111,6 +120,10 @@ export interface CalSeries {
   contactName?: string;
   contactPhone?: string;
   reminder?: { email: string; daysBefore: number };
+  status?: "scheduled" | "cancelled";
+  cancelReason?: string;
+  cancelledAt?: string;
+  updatedAt?: string;
 }
 
 export const calCategoryMeta: Record<
@@ -242,6 +255,11 @@ function occurrence(s: CalSeries, key: string): CalEvent {
     contactPhone: s.contactPhone,
     seriesId: s.id,
     repeat: s.repeat,
+    // a cancelled series shows every occurrence struck through, with the reason
+    status: s.status,
+    cancelReason: s.cancelReason,
+    cancelledAt: s.cancelledAt,
+    updatedAt: s.updatedAt,
   };
 }
 
@@ -335,6 +353,18 @@ interface CalendarState {
   setViewRole: (r: CalRole) => void;
   addJob: (input: AddEventInput) => void;
   addSeries: (input: AddSeriesInput) => void;
+  /** change what an event says or when it happens — history is not rewritten
+   *  silently: `updatedAt` is stamped so a screen can show it was changed */
+  updateJob: (id: string, patch: Partial<AddEventInput>) => void;
+  updateSeries: (id: string, patch: Partial<AddSeriesInput>) => void;
+  /** called off, but still visible with the reason */
+  cancelJob: (id: string, reason: string) => void;
+  cancelSeries: (id: string, reason: string) => void;
+  /** un-cancel: the job is back on */
+  restoreJob: (id: string) => void;
+  restoreSeries: (id: string) => void;
+  /** stop a recurring event from a date, keeping everything before it */
+  endSeriesOn: (id: string, lastDate: string) => void;
   removeJob: (id: string) => void;
   removeSeries: (id: string) => void;
   resetDemo: () => void;
@@ -383,6 +413,59 @@ export const useCalendarStore = create<CalendarState>()(
       addSeries: (input) =>
         set((s) => ({
           series: [...s.series, { id: `sr-${Date.now()}-${seq++}`, ...input }],
+        })),
+      updateJob: (id, patch) =>
+        set((s) => ({
+          manualEvents: s.manualEvents.map((e) =>
+            e.id === id ? { ...e, ...patch, updatedAt: new Date().toISOString() } : e
+          ),
+        })),
+      updateSeries: (id, patch) =>
+        set((s) => ({
+          series: s.series.map((x) =>
+            x.id === id ? { ...x, ...patch, updatedAt: new Date().toISOString() } : x
+          ),
+        })),
+      cancelJob: (id, reason) =>
+        set((s) => ({
+          manualEvents: s.manualEvents.map((e) =>
+            e.id === id
+              ? { ...e, status: "cancelled" as const, cancelReason: reason,
+                  cancelledAt: new Date().toISOString() }
+              : e
+          ),
+        })),
+      cancelSeries: (id, reason) =>
+        set((s) => ({
+          series: s.series.map((x) =>
+            x.id === id
+              ? { ...x, status: "cancelled" as const, cancelReason: reason,
+                  cancelledAt: new Date().toISOString() }
+              : x
+          ),
+        })),
+      restoreJob: (id) =>
+        set((s) => ({
+          manualEvents: s.manualEvents.map((e) =>
+            e.id === id
+              ? { ...e, status: "scheduled" as const, cancelReason: undefined, cancelledAt: undefined }
+              : e
+          ),
+        })),
+      restoreSeries: (id) =>
+        set((s) => ({
+          series: s.series.map((x) =>
+            x.id === id
+              ? { ...x, status: "scheduled" as const, cancelReason: undefined, cancelledAt: undefined }
+              : x
+          ),
+        })),
+      // "stop it from next month" keeps every occurrence that already happened
+      endSeriesOn: (id, lastDate) =>
+        set((s) => ({
+          series: s.series.map((x) =>
+            x.id === id ? { ...x, until: lastDate, updatedAt: new Date().toISOString() } : x
+          ),
         })),
       removeJob: (id) =>
         set((s) => ({ manualEvents: s.manualEvents.filter((e) => e.id !== id) })),
