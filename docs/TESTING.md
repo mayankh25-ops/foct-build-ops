@@ -38,7 +38,7 @@ options rejected, which is the part that saves the next argument.
 
 ## 2. Unit tests — automated (`npm run test:unit`)
 
-Vitest over the pure logic in `src/lib`. Currently 111 assertions covering the
+Vitest over the pure logic in `src/lib`. Currently 121 assertions covering the
 calculations nobody can eyeball:
 
 | File | What it protects |
@@ -51,6 +51,7 @@ calculations nobody can eyeball:
 | `tests/unit/timesheets.test.ts` | payable hours (override wins once approved, never negative, a stale override ignored), variance measured against what is PAID, and a payroll CSV that survives commas, quotes and Excel's formula prefix |
 | `tests/unit/roster.test.ts` | time-of-day parsing that refuses what it cannot read, seven-day weeks across month/year/DST boundaries, and the clash check — including a shift wholly INSIDE another, which a start-time comparison misses |
 | `tests/unit/attendance-day.test.ts` | the sentence beside each person on Today — a no-show never reads as "arrived late", a forgotten sign-out outranks lateness — plus a day picker that keeps the LOCAL date at 23:30 and across DST |
+| `tests/unit/alerts.test.ts` | the sentence an alert uses on screen AND in the email (one wording, one fact), and the delivery note that must never claim a send that did not happen |
 | `tests/unit/kiosk-offline.test.ts` | the offline sync engine — outbox writes, clock-offset correction, a half-failed flush keeping what the server refused, a replayed batch pushing nothing twice, and PIN hashes that never contain the PIN |
 
 Add a test here whenever a calculation gets an argument, a rounding rule, or a
@@ -100,7 +101,7 @@ data.**
 
 It builds a throwaway database, applies `supabase/APPLY_EVERYTHING.sql`
 exactly as you'd paste it into the dashboard, applies it **again** (idempotency
-— you re-paste bundles routinely), then runs 171 assertions:
+— you re-paste bundles routinely), then runs 189 assertions:
 
 | Suite | Assertions | Proves |
 |---|---|---|
@@ -113,6 +114,7 @@ exactly as you'd paste it into the dashboard, applies it **again** (idempotency
 | `notices_isolation_check.sql` | 18 | personal notices never cached on a shared tablet, offline batches replay without double-punching, reworded notices must be re-acknowledged |
 | `org_isolation_check.sql` | 22 | **the promise the product is sold on**: at ONE tower with two competing cleaning companies, a concierge firm, a strata manager and an electrician, nobody reads another company's staff, PINs, roster, punches, corrections or pay — and cannot roster, delete, correct or approve them either |
 | `attendance_day_isolation_check.sql` | 16 | today's states: nothing is "missed" before its start plus grace, late is here-and-late, a shift never signed out is not quietly closed, and the owner side gets counts without names |
+| `alerts_isolation_check.sql` | 18 | nothing is raised before a shift could have started, a scan run repeatedly never raises the same alert twice, arriving late or signing out resolves an alert by itself, acknowledging records who and why, and only the sending job can stamp an alert as emailed |
 | `roster_isolation_check.sql` | 14 | no inverted shift, no double-booking the same person, back-to-back allowed, a week-copy that reports what it skipped, the timesheet reading the same rostered hours |
 
 Three methodology rules learned the hard way:
@@ -191,8 +193,10 @@ dev server — dev-only behaviour has hidden real bugs here before.
   that silently pays the wrong number.
 - `e2e/today.live.spec.ts` — Today with a mocked signed-in session: a missing
   cleaner reads as a problem rather than a grey row, late is here-and-late, a
-  forgotten sign-out is flagged, and `detail: false` (the owner side) renders
-  the explanation instead of an empty table
+  forgotten sign-out is flagged, `detail: false` (the owner side) renders the
+  explanation instead of an empty table, an open alert carries its note through
+  to the acknowledgement RPC, and a failed alert email is stated rather than
+  swallowed
 - `e2e/roster.live.spec.ts` — the roster board with a mocked signed-in session:
   the cell you click becomes the person and the day that reach the server, an
   edit keeps its shift id, a clash is named before the round trip and the
@@ -373,7 +377,7 @@ are green or red in CI; the manual ones are a human saying yes.
 
 - [ ] Code reviewed by someone other than the author *(manual)*
 - [ ] `npm run verify` green — tokens, contrast, types, lint, unit, secrets, deps, build *(automated)*
-- [ ] `npm run test:db` green — 171 isolation assertions, bundle applies and re-applies *(automated)*
+- [ ] `npm run test:db` green — 189 isolation assertions, bundle applies and re-applies *(automated)*
 - [ ] `npm run test:e2e` green — routes, kiosk, service desk, timesheets, roster *(automated)*
 - [ ] `APPLY_EVERYTHING.sql` regenerated and committed *(automated check)*
 - [ ] New behaviour has tests; every fixed bug has a test *(manual)*
@@ -390,8 +394,8 @@ are green or red in CI; the manual ones are a human saying yes.
 | Layer | State |
 |---|---|
 | Static checks, secrets, dependency triage | automated |
-| Unit tests | automated, 111 assertions on the maths that matters |
-| Database + RLS isolation | automated, 171 assertions incl. idempotency |
+| Unit tests | automated, 121 assertions on the maths that matters |
+| Database + RLS isolation | automated, 189 assertions incl. idempotency |
 | End-to-end journeys | automated, demo mode, production build |
 | Component tests | **not started** |
 | Live-mode e2e (mocked RPCs, real browser) | automated — kiosk offline, timesheets, roster, today |

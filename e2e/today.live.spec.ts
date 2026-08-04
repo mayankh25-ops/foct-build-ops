@@ -67,7 +67,12 @@ async function signIn(page: Page) {
   });
 }
 
-async function openToday(page: Page, day: Record<string, unknown>) {
+async function openToday(
+  page: Page,
+  day: Record<string, unknown>,
+  alerts: Record<string, unknown>[] = [],
+  acked: { p_alert: string; p_note: string }[] = []
+) {
   await signIn(page);
   await page.route("**/auth/v1/**", (route: Route) =>
     route.fulfill({
@@ -110,6 +115,12 @@ async function openToday(page: Page, day: Record<string, unknown>) {
         grace_min: 15,
         ...day,
       });
+    if (name === "attendance_alerts_open")
+      return json({ ok: true, date: body.p_date, alerts: alerts });
+    if (name === "attendance_alert_ack") {
+      acked.push(body as { p_alert: string; p_note: string });
+      return json({ ok: true });
+    }
     if (name === "roster_week")
       return json({
         ok: true,
@@ -190,5 +201,80 @@ test.describe("today", () => {
 
     await expect(page.getByText(/Individual staff records belong to the company/)).toBeVisible();
     await expect(page.getByText(/1 on site, 1 finished of 3 rostered/)).toBeVisible();
+  });
+
+  test("an open alert is shown above the day, and acknowledging sends the note", async ({
+    page,
+  }) => {
+    const acked: { p_alert: string; p_note: string }[] = [];
+    await openToday(
+      page,
+      { detail: true, summary: summary(), rows: [row()] },
+      [
+        {
+          id: "al-1",
+          kind: "missed",
+          staff_id: "c1",
+          staff_name: "Cara Diaz",
+          work_date: "2026-07-30",
+          due_min: 360,
+          raised_at: "2026-07-30T06:15:00+10:00",
+          notified_at: null,
+          notify_error: null,
+        },
+      ],
+      acked
+    );
+
+    await expect(page.getByText("Cara Diaz has not checked in for a 06:00 start")).toBeVisible();
+    await expect(page.getByText("1 open alert")).toBeVisible();
+
+    await page.getByLabel("What happened?").fill("called her, 20 minutes away");
+    await page.getByRole("button", { name: /Acknowledge/ }).click();
+
+    await expect.poll(() => acked.length).toBe(1);
+    expect(acked[0]).toMatchObject({ p_alert: "al-1", p_note: "called her, 20 minutes away" });
+  });
+
+  test("a failed alert email is stated, not swallowed", async ({ page }) => {
+    await openToday(
+      page,
+      { detail: true, summary: summary(), rows: [row()] },
+      [
+        {
+          id: "al-2",
+          kind: "overdue",
+          staff_id: "s9",
+          staff_name: "Sam Lee",
+          work_date: "2026-07-30",
+          due_min: 840,
+          raised_at: "2026-07-30T15:10:00+10:00",
+          notified_at: null,
+          notify_error: "provider rejected",
+        },
+      ]
+    );
+
+    await expect(page.getByText(/Email failed: provider rejected/)).toBeVisible();
+    await expect(page.getByText(/Sam Lee is still signed in/)).toBeVisible();
+  });
+
+  test("the owner side sees no alerts at all — they name people", async ({ page }) => {
+    await openToday(page, { detail: false, summary: summary(), rows: [] }, [
+      {
+        id: "al-3",
+        kind: "missed",
+        staff_id: "c1",
+        staff_name: "Cara Diaz",
+        work_date: "2026-07-30",
+        due_min: 360,
+        raised_at: "2026-07-30T06:15:00+10:00",
+        notified_at: null,
+        notify_error: null,
+      },
+    ]);
+
+    await expect(page.getByText(/Individual staff records belong to the company/)).toBeVisible();
+    await expect(page.getByText("Cara Diaz")).toBeHidden();
   });
 });

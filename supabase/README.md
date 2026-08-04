@@ -110,6 +110,18 @@ finished. The building owner and the concierge see the counts, never the names.
 Both test files leave a few test cleaners on the demo building — delete them
 from Settings → Cleaners & kiosks if you don't want them.
 
+## Missed check-in alerts
+1. SQL Editor → paste **`supabase/APPLY_ALERTS.sql`** → Run (idempotent).
+2. New query → **`supabase/tests/alerts_isolation_check.sql`** → expect **18 ok**.
+3. For the emails: set `CRON_SECRET` (any long random string) and
+   `SUPABASE_SECRET_KEY` in Vercel → Settings → Environment Variables, add
+   recipients per site under **Settings → Sites**, and make sure an email
+   provider is active under **Settings → Integrations**. Without those, alerts
+   appear on **Roster → Today** and nothing is sent.
+
+The job runs on a schedule (`vercel.json`, every 10 minutes) and can also be
+triggered by hand from Today with **Check now**.
+
 ## Timesheets + roster apply (payable hours, and who is meant to be here)
 Both are already inside a fresh `APPLY_EVERYTHING.sql`; these two files are for
 projects set up before they existed. Apply in this order:
