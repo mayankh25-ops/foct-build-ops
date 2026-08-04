@@ -11,6 +11,7 @@
 import * as React from "react";
 import { AlertTriangle, ChevronLeft, ChevronRight, CloudOff, Clock, RotateCcw, UserCheck, Users } from "lucide-react";
 
+import { AlertStrip } from "@/components/roster/alert-strip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
@@ -148,6 +149,10 @@ export function LiveToday({ buildingId, siteName }: { buildingId: string; siteNa
           </Button>
         )}
       </div>
+
+      {/* Open alerts sit ABOVE the counts: a person nobody can find outranks
+          any number on this page. Only the employer sees them. */}
+      {data?.detail && <AlertStrip buildingId={buildingId} date={date} onChanged={load} />}
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="On site now" value={s?.on_site ?? 0} icon={UserCheck} />

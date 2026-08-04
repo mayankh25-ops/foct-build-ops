@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
+import { AlertSettingsCard } from "@/components/roster/alert-settings-card";
 import { useSessionStore } from "@/lib/session";
 import {
   LANGUAGES,
@@ -208,7 +209,12 @@ export default function SitesPage() {
       ) : (
         <div className="grid gap-5">
           {sites.map((s) => (
-            <SiteCard key={s.id} site={s} live={live} onSaved={refresh} />
+            <React.Fragment key={s.id}>
+              <SiteCard site={s} live={live} onSaved={refresh} />
+              {/* alerting is a per-site decision, so it lives beside the site
+                  it belongs to rather than in a settings page of its own */}
+              {live && <AlertSettingsCard buildingId={s.id} siteName={s.name} />}
+            </React.Fragment>
           ))}
         </div>
       )}

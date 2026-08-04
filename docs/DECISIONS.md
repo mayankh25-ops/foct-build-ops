@@ -560,3 +560,44 @@ Verified: mirror applies and re-applies clean, `org_isolation_check.sql` 22/22
 electrician), `attendance_day_isolation_check.sql` 16/16, every earlier suite
 still green (171 assertions), 111 unit, 57 browser, `npm run verify` green.
 Paste bundle `supabase/APPLY_ORG_ISOLATION.sql`.
+
+## 2026-08-03 — Missed check-in alerts (0014): raised by the database, sent by a job
+
+Today's board knew who had not turned up. Nobody was necessarily looking at it,
+which is not an alerting system. Decisions taken:
+
+1. **The alert is a ROW, not an email.** It is raised in the database, resolved
+   in the database, and read back by both the screen and the mailer — so the
+   inbox and Roster → Today can never describe the same morning differently.
+2. **Idempotence is the index's job, not the caller's.** A unique index on
+   (staff, date, kind, coalesce(shift)) means the scan can run every five
+   minutes, or a hundred times an hour, and nobody is emailed twice. `shift_id`
+   is coalesced because a nullable column in a unique constraint lets every null
+   through as distinct — the exact bug that would spam a site.
+3. **Alerts close themselves.** Arriving late resolves the missed alert
+   (`arrived`); signing out resolves the overdue one (`signed_out`). A list that
+   only grows stops being read, and a supervisor should not have to tidy up
+   after somebody who simply turned up late.
+4. **Acknowledging is a resolution with a name on it**, never a delete: who,
+   when, and a free-text reason ("called her, 20 minutes away"). That is the
+   record worth having when the question comes back a week later.
+5. **A send is stamped only on acceptance.** `notified_at` is set only when a
+   provider accepted the message, and `notify_error` is shown on screen.
+   Silence about a failed alert is the worst possible outcome for this feature,
+   so the UI states it.
+6. **One email per organisation per scan**, not one per person: five missing
+   cleaners is one problem to look at, not five interruptions.
+7. **The job authenticates with a shared secret and refuses to run without
+   one.** `CRON_SECRET` unset → 501, not an open endpoint. The service role can
+   only scan and stamp; `app.is_service_role()` gates those two functions and
+   nothing else, and a user calling them gets "not permitted" (asserted).
+8. **Scheduling is not tied to Vercel.** `vercel.json` runs it every 10 minutes
+   because that is where this deploys today, but the route is a plain URL — any
+   scheduler, or Supabase pg_cron, drives it equally well. (Note for the owner:
+   Vercel's Hobby plan limits cron frequency; Pro or an external scheduler is
+   needed for minute-level checking.)
+
+Verified: `alerts_isolation_check.sql` 18/18 on the mirror including the
+"scan three times, still one alert" case, every earlier suite still green (189
+assertions), 121 unit, 60 browser, `npm run verify` green. Paste bundle
+`supabase/APPLY_ALERTS.sql`.

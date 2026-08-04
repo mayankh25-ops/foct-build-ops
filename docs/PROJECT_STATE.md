@@ -165,17 +165,29 @@ Found while building the "who is here now" read: the authority model behind ever
 - Paste bundle: `supabase/APPLY_ORG_ISOLATION.sql` (0012 + 0013) → `tests/org_isolation_check.sql` (22 ok) and `tests/attendance_day_isolation_check.sql` (16 ok).
 - **APPLIED AND VERIFIED on the owner's Supabase project (2026-08-03): 22/22 and 16/16.** Both suites first failed there and the failures were the TESTS, not the fix: they asserted "sees zero rows", which is only true on a freshly seeded database. A real project has history — a tablet left by an earlier kiosk-suite run belonged to the strata org, so the strata admin could rightly see it. Every probe now names the rows that must not be visible, and the ordering check states the rule (no settled row precedes a missing one) instead of naming a person. Lesson for future suites: **assert what must not be visible, never a row count.**
 
+### Session 2026-08-03 — Missed check-in alerts (0014): the system tells somebody
+Today knew who never turned up; nothing acted on it. Closed — the last item on the original CleaningOps list.
+
+- **0014**: `attendance_alerts` + `attendance_alert_settings`. Two kinds — **missed** (rostered, start + grace passed, no check-in) and **overdue** (still signed in long after the shift ended). Rules that keep an alert system worth reading: a unique index on (staff, date, kind, shift) means a scan every few minutes **cannot raise or email the same thing twice**; alerts **close themselves** when the person arrives (`arrived`) or finally signs out (`signed_out`); nothing is raised before its start plus grace, in the building's own timezone — the same rule 0013 shows on screen; and `notified_at` is stamped **only when a provider accepted the message**, so a mail outage leaves a visibly unsent alert, not a silent one.
+- **Delivery**: `/api/alerts/scan` (shared-secret auth via `CRON_SECRET`, service-role DB access) scans every building, groups by organisation — one email per org per scan, not one per person — and sends through the org's own active provider via `notify()`. `vercel.json` runs it every 10 minutes. Any scheduler that can call a URL works equally well.
+- **Screens**: open alerts sit ABOVE the counts on Roster → Today with a **Check now** button and per-alert Acknowledge (which records who, when and a free-text reason). Alert settings — on/off, grace, chase-a-forgotten-sign-out, recipients — live beside each site in Settings → Sites. Recipients are validated when typed, not at send time.
+- Isolation: alerts follow 0012 — only the employing org sees them, and the owner side (`detail:false`) sees no alert strip at all, because alerts name people.
+- Tests: **18 SQL assertions**, **10 unit**, **3 browser**. Totals now **121 unit / 189 database / 60 e2e**.
+- Paste bundle: `supabase/APPLY_ALERTS.sql` → `tests/alerts_isolation_check.sql` (18 ok).
+- Also: `brace-expansion` advisory (GHSA-rgw5-rvv9-x895) surfaced by the dependency gate and fixed by a lockfile bump (5.0.8 → 5.0.9).
+
 ## Migrations applied
 Authored + locally verified, pending owner's dashboard apply: `0000_platform_foundation.sql`, `0001_theme_engine.sql`, `seed.sql` (see supabase/README.md).
 
 ## Exact next steps
 0. ~~Apply `APPLY_ORG_ISOLATION.sql` + both checks~~ — **DONE 2026-08-03, 22/22 + 16/16 on the live project.**
-1. **Owner: apply the roster + timesheet backends** — `supabase/APPLY_TIMESHEETS.sql` then `supabase/APPLY_ROSTER.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/timesheet_isolation_check.sql` (20 ok) and `tests/roster_isolation_check.sql` (14 ok).
-2. **Owner: apply the kiosk backend** — `supabase/APPLY_STAGE2_PHASE2.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/kiosk_isolation_check.sql` (19 ok). Then `NEW_BUILDING.sql` for a real building, and follow `docs/KIOSK.md` to add cleaners and pair the tablet.
-3. **Owner applies `supabase/APPLY_STAGE4_INTEGRATIONS.sql`** in the SQL editor + runs `tests/integrations_isolation_check.sql` (expect 19 ok-notices) — supabase/README.md Stage 4. Then add real provider keys via `/settings/integrations` on a machine with `.env.local` set (SUPABASE_SECRET_KEY + NEXT_PUBLIC_INTEGRATIONS_LIVE=1) and prove a real send on the test page.
-4. Wire existing queued sends through `notify()`: calendar email reminders (currently a visible outbox), Service Desk follower emails + missed check-in alerts (Inngest stage).
-5. Ticketing import step 2 (per TICKETING_IMPORT_PLAN): 0006 offline-ref renumber trigger + billing fields, PDF+email report port (email goes via notify()), billing lock screen, insights charts.
-6. Then the owner's order: Tasks & incidents → Site audits → roster phase 2 (shift patterns / templates on the live board) → Contractors → Floor plans → Parcels → Automation.
+1. **Owner: apply `supabase/APPLY_ALERTS.sql`**, then `tests/alerts_isolation_check.sql` (18 ok). For the EMAILS: set `CRON_SECRET` (any long random string) and `SUPABASE_SECRET_KEY` in Vercel, add recipients under Settings → Sites, and have an active email provider under Settings → Integrations. Without those the alerts still appear on Today; nothing is sent.
+2. **Owner: apply the roster + timesheet backends** — `supabase/APPLY_TIMESHEETS.sql` then `supabase/APPLY_ROSTER.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/timesheet_isolation_check.sql` (20 ok) and `tests/roster_isolation_check.sql` (14 ok).
+3. **Owner: apply the kiosk backend** — `supabase/APPLY_STAGE2_PHASE2.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/kiosk_isolation_check.sql` (19 ok). Then `NEW_BUILDING.sql` for a real building, and follow `docs/KIOSK.md` to add cleaners and pair the tablet.
+4. **Owner applies `supabase/APPLY_STAGE4_INTEGRATIONS.sql`** in the SQL editor + runs `tests/integrations_isolation_check.sql` (expect 19 ok-notices) — supabase/README.md Stage 4. Then add real provider keys via `/settings/integrations` on a machine with `.env.local` set (SUPABASE_SECRET_KEY + NEXT_PUBLIC_INTEGRATIONS_LIVE=1) and prove a real send on the test page.
+5. Wire the REMAINING queued sends through `notify()`: calendar email reminders (currently a visible outbox) and Service Desk follower emails. (Missed check-in alerts now go through it — 0014.)
+6. Ticketing import step 2 (per TICKETING_IMPORT_PLAN): 0006 offline-ref renumber trigger + billing fields, PDF+email report port (email goes via notify()), billing lock screen, insights charts.
+7. Then the owner's order: Tasks & incidents → Site audits → roster phase 2 (shift patterns / templates on the live board) → Contractors → Floor plans → Parcels → Automation.
 
 ## HANDOVER (half-finished / risky)
 - **Service Desk is the ONLY functional module** (client-side store, `foct-sd-demo-v1` in localStorage — clears with browser data; notifications/PDF simulated). All other screens remain static demos.
