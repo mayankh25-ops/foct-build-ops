@@ -38,7 +38,7 @@ options rejected, which is the part that saves the next argument.
 
 ## 2. Unit tests — automated (`npm run test:unit`)
 
-Vitest over the pure logic in `src/lib`. Currently 121 assertions covering the
+Vitest over the pure logic in `src/lib`. Currently 133 assertions covering the
 calculations nobody can eyeball:
 
 | File | What it protects |
@@ -51,6 +51,7 @@ calculations nobody can eyeball:
 | `tests/unit/timesheets.test.ts` | payable hours (override wins once approved, never negative, a stale override ignored), variance measured against what is PAID, and a payroll CSV that survives commas, quotes and Excel's formula prefix |
 | `tests/unit/roster.test.ts` | time-of-day parsing that refuses what it cannot read, seven-day weeks across month/year/DST boundaries, and the clash check — including a shift wholly INSIDE another, which a start-time comparison misses |
 | `tests/unit/attendance-day.test.ts` | the sentence beside each person on Today — a no-show never reads as "arrived late", a forgotten sign-out outranks lateness — plus a day picker that keeps the LOCAL date at 23:30 and across DST |
+| `tests/unit/auth.test.ts` | what sign-in SAYS when it fails — a configuration fault and a wrong password look alike and are opposites — and the "signed in, no site yet" message that used to be a silently empty product |
 | `tests/unit/alerts.test.ts` | the sentence an alert uses on screen AND in the email (one wording, one fact), and the delivery note that must never claim a send that did not happen |
 | `tests/unit/kiosk-offline.test.ts` | the offline sync engine — outbox writes, clock-offset correction, a half-failed flush keeping what the server refused, a replayed batch pushing nothing twice, and PIN hashes that never contain the PIN |
 
@@ -101,7 +102,7 @@ data.**
 
 It builds a throwaway database, applies `supabase/APPLY_EVERYTHING.sql`
 exactly as you'd paste it into the dashboard, applies it **again** (idempotency
-— you re-paste bundles routinely), then runs 189 assertions:
+— you re-paste bundles routinely), then runs 204 assertions:
 
 | Suite | Assertions | Proves |
 |---|---|---|
@@ -114,6 +115,7 @@ exactly as you'd paste it into the dashboard, applies it **again** (idempotency
 | `notices_isolation_check.sql` | 18 | personal notices never cached on a shared tablet, offline batches replay without double-punching, reworded notices must be re-acknowledged |
 | `org_isolation_check.sql` | 22 | **the promise the product is sold on**: at ONE tower with two competing cleaning companies, a concierge firm, a strata manager and an electrician, nobody reads another company's staff, PINs, roster, punches, corrections or pay — and cannot roster, delete, correct or approve them either |
 | `attendance_day_isolation_check.sql` | 16 | today's states: nothing is "missed" before its start plus grace, late is here-and-late, a shift never signed out is not quietly closed, and the owner side gets counts without names |
+| `auth_onboarding_check.sql` | 15 | the front door: a new account gets a profile row, the FIRST sign-in claims the project and every later uninvited arrival gets nothing, an invitation is single-use / expiring / revocable, and nobody can invite somebody to a role above their own |
 | `alerts_isolation_check.sql` | 18 | nothing is raised before a shift could have started, a scan run repeatedly never raises the same alert twice, arriving late or signing out resolves an alert by itself, acknowledging records who and why, and only the sending job can stamp an alert as emailed |
 | `roster_isolation_check.sql` | 14 | no inverted shift, no double-booking the same person, back-to-back allowed, a week-copy that reports what it skipped, the timesheet reading the same rostered hours |
 
@@ -191,6 +193,11 @@ dev server — dev-only behaviour has hidden real bugs here before.
   override the paid hours, reopen a locked week, and download the CSV. Proves
   the buttons call the right RPC with the right arguments — the mistake class
   that silently pays the wrong number.
+- `e2e/sign-in.live.spec.ts` — the front door: a link can be requested with no
+  password at all, it points back at THIS deployment's callback (asserted from
+  `?redirect_to=`, where supabase-js actually puts it), a throttled project
+  explains the limit, and the callback claims access — including the
+  "signed in, no site yet" state that used to look like a broken deployment
 - `e2e/today.live.spec.ts` — Today with a mocked signed-in session: a missing
   cleaner reads as a problem rather than a grey row, late is here-and-late, a
   forgotten sign-out is flagged, `detail: false` (the owner side) renders the
@@ -377,7 +384,7 @@ are green or red in CI; the manual ones are a human saying yes.
 
 - [ ] Code reviewed by someone other than the author *(manual)*
 - [ ] `npm run verify` green — tokens, contrast, types, lint, unit, secrets, deps, build *(automated)*
-- [ ] `npm run test:db` green — 189 isolation assertions, bundle applies and re-applies *(automated)*
+- [ ] `npm run test:db` green — 204 isolation assertions, bundle applies and re-applies *(automated)*
 - [ ] `npm run test:e2e` green — routes, kiosk, service desk, timesheets, roster *(automated)*
 - [ ] `APPLY_EVERYTHING.sql` regenerated and committed *(automated check)*
 - [ ] New behaviour has tests; every fixed bug has a test *(manual)*
@@ -394,8 +401,8 @@ are green or red in CI; the manual ones are a human saying yes.
 | Layer | State |
 |---|---|
 | Static checks, secrets, dependency triage | automated |
-| Unit tests | automated, 121 assertions on the maths that matters |
-| Database + RLS isolation | automated, 189 assertions incl. idempotency |
+| Unit tests | automated, 133 assertions on the maths that matters |
+| Database + RLS isolation | automated, 204 assertions incl. idempotency |
 | End-to-end journeys | automated, demo mode, production build |
 | Component tests | **not started** |
 | Live-mode e2e (mocked RPCs, real browser) | automated — kiosk offline, timesheets, roster, today |

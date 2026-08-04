@@ -601,3 +601,54 @@ Verified: `alerts_isolation_check.sql` 18/18 on the mirror including the
 "scan three times, still one alert" case, every earlier suite still green (189
 assertions), 121 unit, 60 browser, `npm run verify` green. Paste bundle
 `supabase/APPLY_ALERTS.sql`.
+
+## 2026-08-04 — Getting in (0015): invitations, magic links, and a first-arrival bootstrap
+
+Owner: "Why do we have to do so much manually… I created a new user, it still
+doesn't work." Two separate faults, both real.
+
+**Fault one: an account is not access.** Creating a login meant four steps —
+dashboard user, password, then hand-written INSERTs for the profile row, the
+organisation membership and the building membership. Miss one and sign-in
+succeeded into a product showing demo data, with nothing on screen explaining
+why. **Fault two: the password itself.** On a fresh project the seeded people
+have no password, so the only honest error was "that account has no password" —
+which is not what Supabase says.
+
+Decisions taken:
+
+1. **Access is granted by INVITING AN EMAIL ADDRESS**, and claimed by signing
+   in. `claim_access()` runs after every sign-in and converts anything waiting
+   for that address. Nobody edits the database to add a colleague.
+2. **The first sign-in claims the project.** On a project nobody has signed in
+   to, the first arrival becomes admin of the organisation that actually employs
+   the staff (oldest org if none). This is the step that cannot be an
+   invitation — somebody has to be first. It is bounded by history: the moment
+   any user has a `last_seen_at`, the branch is dead, and an uninvited arrival
+   gets nothing. `last_seen_at` is stamped LAST inside the function, because
+   stamping it first would lock the very first person out of their own project.
+3. **Invitations are single-use, expiring (14 days) and revocable**, scoped to
+   an organisation you belong to, and **rank-limited**: `app.role_rank` stops a
+   manager minting a super admin. All four are asserted.
+4. **Magic link is the default.** No password to set, forget, or hand out, and
+   for people who sign in from a phone once a fortnight that is the right
+   trade. A password stays available behind a toggle, because links depend on
+   email delivery and a supervisor locked out at 5am needs a way in that does
+   not involve an inbox.
+5. **The implicit flow, not PKCE.** PKCE stores its verifier on the device that
+   REQUESTED the link, so requesting on a laptop and opening on a phone fails —
+   which is exactly how site supervisors read email. The callback handles a
+   `?code=` anyway, so a project configured for PKCE still works.
+6. **"Signed in, no site yet" is a screen, not a silence.** The callback says
+   it and names the fix (ask an admin to invite you). The old behaviour — a
+   dashboard full of demo data — is what made a working sign-in look broken.
+
+One thing still lives in the Supabase dashboard and cannot be moved:
+Authentication → URL Configuration → Site URL and the `/auth/callback` redirect.
+Supabase will not accept a redirect it has not been told about, and there is no
+API for it on a project's own key. It is documented in `APPLY_LOGIN.sql` where
+somebody will actually read it.
+
+Verified: `auth_onboarding_check.sql` 15/15, every earlier suite green (204
+assertions), 133 unit, 67 browser, `npm run verify` green. Paste bundle
+`supabase/APPLY_LOGIN.sql`.

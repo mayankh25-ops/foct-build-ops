@@ -110,6 +110,16 @@ finished. The building owner and the concierge see the counts, never the names.
 Both test files leave a few test cleaners on the demo building — delete them
 from Settings → Cleaners & kiosks if you don't want them.
 
+## Getting in (logins) — do this before handing the app to anybody
+1. SQL Editor → paste **`supabase/APPLY_LOGIN.sql`** → Run (idempotent).
+2. New query → **`supabase/tests/auth_onboarding_check.sql`** → expect **15 ok**.
+3. Dashboard → **Authentication → URL Configuration**: set **Site URL** to your
+   app's URL and add `https://<your-app>/auth/callback` under Redirect URLs.
+   Without this the emailed sign-in link points at localhost.
+4. Open `/sign-in`, type your email, click the link. On a project nobody has
+   signed in to yet, that first sign-in makes you an admin automatically.
+   Everybody after you gets in by being invited from **Settings → People**.
+
 ## Missed check-in alerts
 1. SQL Editor → paste **`supabase/APPLY_ALERTS.sql`** → Run (idempotent).
 2. New query → **`supabase/tests/alerts_isolation_check.sql`** → expect **18 ok**.
