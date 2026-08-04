@@ -176,18 +176,30 @@ Today knew who never turned up; nothing acted on it. Closed — the last item on
 - Paste bundle: `supabase/APPLY_ALERTS.sql` → `tests/alerts_isolation_check.sql` (18 ok).
 - Also: `brace-expansion` advisory (GHSA-rgw5-rvv9-x895) surfaced by the dependency gate and fixed by a lockfile bump (5.0.8 → 5.0.9).
 
+### Session 2026-08-04 — Getting IN (0015): sign-in stops being a manual job
+Owner report: "why do we have to do so much manually… I created a new user, it still doesn't work." Both halves were real.
+
+- **What was broken.** Creating a login meant: add the user in the Supabase dashboard, set a password, then hand-write INSERTs for `public.users`, `organisation_memberships` and `building_memberships`. Miss any one and the app signs you in **to nothing** — a correct password landing on a dashboard full of demo data, with no message explaining why.
+- **0015**: `handle_new_auth_user` trigger (a new account gets its profile row by itself — a user row grants NOTHING, it is identity, not access); **`org_invites`** with `invite_create` / `invite_revoke` / `org_people`; and **`claim_access()`**, called after every sign-in, which creates the profile row, accepts any invitation waiting for that address, and stamps `last_seen_at`. **The first sign-in claims the project**: on a project nobody has ever signed in to, the first arrival becomes admin of the organisation that actually employs the staff (falling back to the oldest org). After that the door is shut — an uninvited arrival gets nothing at all. Guards: invitations are single-use, expire in 14 days, are revocable, are scoped to an org you belong to, and **nobody can invite somebody to a role above their own** (`app.role_rank`).
+- **Magic link is now the default sign-in.** No password to set, forget or hand out; a password remains behind "Use a password instead" because links depend on email delivery. `/auth/callback` finishes the session (PKCE `?code=` or an implicit hash), calls `claim_access()`, and — when the answer is "you have no site yet" — SAYS SO rather than dropping you into demo data. Expired links, throttled projects and configuration faults each get their own sentence.
+- **Settings → People**: invite by email, choose the role, see who is waiting and who has never signed in, revoke. No dashboard, no SQL.
+- **Owner action beyond the SQL**: Supabase → Authentication → URL Configuration → **Site URL** = your app's URL, and add `https://<your-app>/auth/callback` to Redirect URLs. Without it the emailed link points at localhost.
+- Tests: **15 SQL assertions**, **12 unit**, **7 browser**. Totals now **133 unit / 204 database / 67 e2e**.
+- Paste bundle: `supabase/APPLY_LOGIN.sql` → `tests/auth_onboarding_check.sql` (15 ok).
+
 ## Migrations applied
 Authored + locally verified, pending owner's dashboard apply: `0000_platform_foundation.sql`, `0001_theme_engine.sql`, `seed.sql` (see supabase/README.md).
 
 ## Exact next steps
 0. ~~Apply `APPLY_ORG_ISOLATION.sql` + both checks~~ — **DONE 2026-08-03, 22/22 + 16/16 on the live project.**
-1. **Owner: apply `supabase/APPLY_ALERTS.sql`**, then `tests/alerts_isolation_check.sql` (18 ok). For the EMAILS: set `CRON_SECRET` (any long random string) and `SUPABASE_SECRET_KEY` in Vercel, add recipients under Settings → Sites, and have an active email provider under Settings → Integrations. Without those the alerts still appear on Today; nothing is sent.
-2. **Owner: apply the roster + timesheet backends** — `supabase/APPLY_TIMESHEETS.sql` then `supabase/APPLY_ROSTER.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/timesheet_isolation_check.sql` (20 ok) and `tests/roster_isolation_check.sql` (14 ok).
-3. **Owner: apply the kiosk backend** — `supabase/APPLY_STAGE2_PHASE2.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/kiosk_isolation_check.sql` (19 ok). Then `NEW_BUILDING.sql` for a real building, and follow `docs/KIOSK.md` to add cleaners and pair the tablet.
-4. **Owner applies `supabase/APPLY_STAGE4_INTEGRATIONS.sql`** in the SQL editor + runs `tests/integrations_isolation_check.sql` (expect 19 ok-notices) — supabase/README.md Stage 4. Then add real provider keys via `/settings/integrations` on a machine with `.env.local` set (SUPABASE_SECRET_KEY + NEXT_PUBLIC_INTEGRATIONS_LIVE=1) and prove a real send on the test page.
-5. Wire the REMAINING queued sends through `notify()`: calendar email reminders (currently a visible outbox) and Service Desk follower emails. (Missed check-in alerts now go through it — 0014.)
-6. Ticketing import step 2 (per TICKETING_IMPORT_PLAN): 0006 offline-ref renumber trigger + billing fields, PDF+email report port (email goes via notify()), billing lock screen, insights charts.
-7. Then the owner's order: Tasks & incidents → Site audits → roster phase 2 (shift patterns / templates on the live board) → Contractors → Floor plans → Parcels → Automation.
+1. **Owner: apply `supabase/APPLY_LOGIN.sql`** (then `tests/auth_onboarding_check.sql`, 15 ok) and set Authentication → URL Configuration → Site URL + `/auth/callback` redirect. Then sign in with a link — no password needed.
+2. **Owner: apply `supabase/APPLY_ALERTS.sql`**, then `tests/alerts_isolation_check.sql` (18 ok). For the EMAILS: set `CRON_SECRET` (any long random string) and `SUPABASE_SECRET_KEY` in Vercel, add recipients under Settings → Sites, and have an active email provider under Settings → Integrations. Without those the alerts still appear on Today; nothing is sent.
+3. **Owner: apply the roster + timesheet backends** — `supabase/APPLY_TIMESHEETS.sql` then `supabase/APPLY_ROSTER.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/timesheet_isolation_check.sql` (20 ok) and `tests/roster_isolation_check.sql` (14 ok).
+4. **Owner: apply the kiosk backend** — `supabase/APPLY_STAGE2_PHASE2.sql` (or a fresh `APPLY_EVERYTHING.sql`), then `tests/kiosk_isolation_check.sql` (19 ok). Then `NEW_BUILDING.sql` for a real building, and follow `docs/KIOSK.md` to add cleaners and pair the tablet.
+5. **Owner applies `supabase/APPLY_STAGE4_INTEGRATIONS.sql`** in the SQL editor + runs `tests/integrations_isolation_check.sql` (expect 19 ok-notices) — supabase/README.md Stage 4. Then add real provider keys via `/settings/integrations` on a machine with `.env.local` set (SUPABASE_SECRET_KEY + NEXT_PUBLIC_INTEGRATIONS_LIVE=1) and prove a real send on the test page.
+6. Wire the REMAINING queued sends through `notify()`: calendar email reminders (currently a visible outbox) and Service Desk follower emails. (Missed check-in alerts now go through it — 0014.)
+7. Ticketing import step 2 (per TICKETING_IMPORT_PLAN): 0006 offline-ref renumber trigger + billing fields, PDF+email report port (email goes via notify()), billing lock screen, insights charts.
+8. Then the owner's order: Tasks & incidents → Site audits → roster phase 2 (shift patterns / templates on the live board) → Contractors → Floor plans → Parcels → Automation.
 
 ## HANDOVER (half-finished / risky)
 - **Service Desk is the ONLY functional module** (client-side store, `foct-sd-demo-v1` in localStorage — clears with browser data; notifications/PDF simulated). All other screens remain static demos.

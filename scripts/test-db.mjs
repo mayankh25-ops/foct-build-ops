@@ -36,6 +36,7 @@ const SUITES = [
   { file: "supabase/tests/org_isolation_check.sql", expect: 22, name: "multi-org at a shared site" },
   { file: "supabase/tests/attendance_day_isolation_check.sql", expect: 16, name: "today's attendance" },
   { file: "supabase/tests/alerts_isolation_check.sql", expect: 18, name: "missed check-in alerts" },
+  { file: "supabase/tests/auth_onboarding_check.sql", expect: 15, name: "getting in (invites + bootstrap)" },
 ];
 
 const BOOTSTRAP = "supabase/tests/_mirror_bootstrap.sql";

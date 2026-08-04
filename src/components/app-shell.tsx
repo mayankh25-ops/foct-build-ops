@@ -24,6 +24,7 @@ import {
   Timer,
   UsersRound,
   Waves,
+  UserCog,
 } from "lucide-react";
 import { Building2 as SiteIcon, IdCard, Palette, Plug } from "lucide-react";
 import { Sidebar } from "@/components/ui/sidebar";
@@ -142,6 +143,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             title: "Settings",
             items: [
               { label: "Sites", icon: SiteIcon, href: "/settings/sites" },
+              // portal logins (invitations) — distinct from the cleaners below,
+              // who sign in on a tablet with a PIN and never see this app
+              { label: "People", icon: UserCog, href: "/settings/people" },
               { label: "Cleaners & kiosks", icon: IdCard, href: "/settings/staff" },
               { label: "Appearance", icon: Palette, href: "/settings/appearance" },
               { label: "Integrations", icon: Plug, href: "/settings/integrations" },

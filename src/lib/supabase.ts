@@ -22,7 +22,13 @@ export function getSupabase(): SupabaseClient {
     );
   }
   client ??= createClient(url!, anonKey!, {
-    auth: { persistSession: true, autoRefreshToken: true },
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      // a magic link lands with its session in the URL; consuming it here is
+      // what makes /auth/callback work when the email is opened on a phone
+      detectSessionInUrl: true,
+    },
   });
   return client;
 }
