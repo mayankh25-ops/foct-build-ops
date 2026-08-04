@@ -88,7 +88,7 @@ All consume semantic tokens only (`npm run check:tokens` enforces).
 `check:tokens` ✓, `check:contrast` ✓ (37 pairs × 15 themes — 5 permanent + 10 review variants; checker now merges `:root` structural-hook defaults), `tsc` ✓, `next build` ✓, Nature + Glass finalist rebuilds screenshotted and visually verified (borderless sage tiles / frosted mesh glass, true ring donut). New structural hooks: `--card-border` (+ `border-cardline` on Card), `--sidebar-active-bg/fg` (active-nav pill) — defaults keep every other theme pixel-identical.
 
 ### Session 2026-07-10 (latest) — dashboard fully live + calendar reminders
-- Dashboard: live Open-Meteo weather, due-today/this-week card from the calendar, Team handover notes (persisted, org-private), SD open-by-status chart. Calendar Add-job now takes an email reminder (queued visibly; sends via email adapter at backend stage).
+- Dashboard: live Open-Meteo weather, due-today/this-week card from the calendar, Shift handover notes (persisted, org-private), SD open-by-status chart. Calendar Add-job now takes an email reminder (queued visibly; sends via email adapter at backend stage).
 
 ### Session 2026-07-10 (later) — roadmap wave 1: five functional modules
 - **Attendance flow LIVE end-to-end**: kiosk PIN check-in/out (demo PINs 1234/2345/3456/4567/5678/6789) → `attendance-store` events → roster statuses/timesheets/missed alerts/dashboard all derive. Approve week persists; CSV export real.
@@ -186,6 +186,9 @@ Owner report: "why do we have to do so much manually… I created a new user, it
 - **Owner action beyond the SQL**: Supabase → Authentication → URL Configuration → **Site URL** = your app's URL, and add `https://<your-app>/auth/callback` to Redirect URLs. Without it the emailed link points at localhost.
 - Tests: **15 SQL assertions**, **12 unit**, **7 browser**. Totals now **133 unit / 204 database / 67 e2e**.
 - Paste bundle: `supabase/APPLY_LOGIN.sql` → `tests/auth_onboarding_check.sql` (15 ok).
+
+### 2026-08-04 — one name: SHIFT HANDOVER
+Owner decision: the dashboard's "Team handover" and the concierge desk's "Shift handover" were the same feature under two names. Both are now **Shift handover**, and both read the live 0016 log when signed in. They remain **separate logs**: `handover_notes.org_id` scopes them, so the cleaning company and the concierge company share a table at the same building and neither sees the other's notes (asserted — `handover_check.sql` ok 14).
 
 ## Migrations applied
 Authored + locally verified, pending owner's dashboard apply: `0000_platform_foundation.sql`, `0001_theme_engine.sql`, `seed.sql` (see supabase/README.md).

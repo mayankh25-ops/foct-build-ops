@@ -1,9 +1,13 @@
 "use client";
 
 /**
- * Team handover notes — the cleaning org's shift-to-shift log, shown on the
- * dashboard. Org-private (same isolation posture as the concierge desk's
- * handover; enforced by RLS at the backend stage).
+ * Shift handover notes (DEMO fallback) — the cleaning org's shift-to-shift log
+ * on the dashboard. Called "Shift handover" everywhere now (owner, 2026-08-04);
+ * "team handover" was the same thing under a second name.
+ *
+ * Signed in, the dashboard uses the LIVE timeline instead (0016), where the
+ * cleaning company's log and the concierge company's log are separate by
+ * org_id — same table, same building, neither sees the other.
  */
 import * as React from "react";
 import { create } from "zustand";
