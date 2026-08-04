@@ -165,6 +165,7 @@ Two files cover every setup situation:
 |---|---|
 | Brand-new / empty project | Paste **`APPLY_EVERYTHING.sql`** → Run |
 | Not sure what a project contains | Paste **`tests/project_inventory.sql`** → one row tells you the accounts that can sign in there and which subsystems exist |
+| The app says **`column buildings.slug does not exist`** (or any other missing column) | Your project was created by an OLDER version of these migrations, and `create table if not exists` will not upgrade a table that already exists. Paste **`REPAIR_SCHEMA.sql`** → Run → then **`APPLY_EVERYTHING.sql`** → Run. It only ADDS missing columns — nothing is dropped, no data is touched, and it is a no-op on an up-to-date project. |
 | APPLY fails with e.g. `column b.owner_org_id does not exist` | The project is stuck at an older half-built shape (`create table if not exists` skips an existing old table instead of upgrading it). Paste **`RESET_PUBLIC_SCHEMA.sql`** → Run → then `APPLY_EVERYTHING.sql`. **Your logins survive** — Supabase keeps accounts in the separate `auth` schema. |
 
 Verified on PG16: `APPLY_EVERYTHING` applies cleanly to an empty database and
