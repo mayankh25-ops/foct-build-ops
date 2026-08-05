@@ -2,6 +2,26 @@
 
 > Any deviation from CLAUDE.md, and any significant technical choice, goes here with date and reason.
 
+## 2026-08-05 — Sites are created in the app; reference data is a migration, not a seed
+
+**Context.** The owner reported "add new sites and 4 modules are still not working". Both halves turned out to be the same defect, plus a third one underneath.
+
+**Decisions.**
+
+1. **`site_create()` is a SECURITY DEFINER RPC, not a client-side sequence of inserts.** Creating a site touches `buildings`, `organisations`, `building_organisations`, `building_modules` and `building_memberships`. Doing that from the client means five round trips any one of which can fail, leaving a building that exists and is serviced by nobody — which looks fine on the Sites screen and breaks at the kiosk. One transaction, one rollback.
+
+2. **Adding a site is `manager`+; removing one is `org_admin`+.** These are different decisions. A cleaning company's operations manager onboards a building the afternoon the contract is signed; putting that behind org_admin sends them back to the SQL editor, which is the friction being removed. Deleting is rare and destructive, so it needs whoever is accountable for the account. A site with any attendance against it cannot be deleted at all — those rows are payroll evidence.
+
+3. **`roles`, `organisation_types` and `modules` move from `seed.sql` into migration 0017.** They were never demo data: `claim_access()` looks up `'org_admin'`, `site_create()` looks up `'cleaning'`, every permission check joins `roles`. Living in the demo seed meant a project set up without Aurora on Collins had an empty `roles` table, and the first sign-in failed on a not-null constraint nobody would connect to "the modules don't load". seed.sql still inserts the same rows; the on-conflict clauses make that a no-op.
+
+4. **The first person into a project with NO organisations gets one created for them**, named from their email domain. The old bootstrap searched for an organisation and, finding none, returned `ok: true` having granted nothing — success that behaves like a locked door.
+
+5. **`app_health()` is readable by any signed-in user, and by `anon`.** It exposes only the names of tables and functions this repository already publishes, and the counts of rows — no data. The alternative (admin-only) means the person who cannot get in also cannot find out why, which is precisely when it is needed.
+
+6. **The database suite gained a second, unseeded pass (`BARE_SUITES`).** Every one of the thirteen existing suites starts from a database containing Meridian Strata and FOCT Cleaning, so all of them silently assumed an organisation exists. The empty-project walk — sign in, get an org, create a site, add a cleaner, provision a kiosk — cannot be expressed in any of them, and that walk was broken.
+
+**Rejected.** Fixing the four spinners alone. The stuck loading flag was real and is fixed, but the reason `buildings` was empty is that there was no way to fill it; shipping only the spinner fix would have replaced "loading forever" with "no cleaners yet" and left the owner just as stuck.
+
 ## 2026-07-02 — CLAUDE.md filename
 Uploaded file was `claude.md.txt` wrapped in a markdown code fence with CRLF endings. Renamed to `CLAUDE.md`, stripped fence, normalised to LF. Content unchanged.
 

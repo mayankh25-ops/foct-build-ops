@@ -26,7 +26,7 @@ import {
   Waves,
   UserCog,
 } from "lucide-react";
-import { Building2 as SiteIcon, IdCard, Palette, Plug } from "lucide-react";
+import { Building2 as SiteIcon, HeartPulse, IdCard, Palette, Plug } from "lucide-react";
 import { Sidebar } from "@/components/ui/sidebar";
 import { ToastProvider } from "@/components/ui/toast";
 import { TopBar } from "@/components/ui/top-bar";
@@ -149,6 +149,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               { label: "Cleaners & kiosks", icon: IdCard, href: "/settings/staff" },
               { label: "Appearance", icon: Palette, href: "/settings/appearance" },
               { label: "Integrations", icon: Plug, href: "/settings/integrations" },
+              // last, because you only look for it when something is wrong —
+              // and when something IS wrong it must be findable without help
+              { label: "System health", icon: HeartPulse, href: "/settings/health" },
             ],
           },
         ]}

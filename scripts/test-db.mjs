@@ -18,10 +18,11 @@
  * Nothing here ever touches a real Supabase project.
  */
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import process from "node:process";
 
 const DB = `foct_test_${Date.now().toString(36)}`;
+const BARE_DB = `${DB}_bare`;
 
 /** file → how many `ok` notices a healthy run prints */
 const SUITES = [
@@ -38,10 +39,28 @@ const SUITES = [
   { file: "supabase/tests/alerts_isolation_check.sql", expect: 18, name: "missed check-in alerts" },
   { file: "supabase/tests/auth_onboarding_check.sql", expect: 15, name: "getting in (invites + bootstrap)" },
   { file: "supabase/tests/handover_check.sql", expect: 14, name: "shift handover" },
+  { file: "supabase/tests/site_create_check.sql", expect: 17, name: "adding a site in the app" },
+  // LAST, always: this one deliberately drops a table and a function to prove
+  // the health check notices. Nothing after it would find a whole database.
+  { file: "supabase/tests/health_check.sql", expect: 9, name: "system health (destructive — runs last)" },
+];
+
+/**
+ * Suites that must run WITHOUT the demo seed.
+ *
+ * Every suite above starts from a database that already contains Meridian
+ * Strata, FOCT Cleaning and Aurora on Collins — so all of them silently assume
+ * an organisation exists. A real new project has none, and that is precisely
+ * the arrangement in which the first sign-in used to succeed while granting
+ * nothing. These run against migrations only, on a database of their own.
+ */
+const BARE_SUITES = [
+  { file: "supabase/tests/bare_project_check.sql", expect: 12, name: "a brand-new empty project" },
 ];
 
 const BOOTSTRAP = "supabase/tests/_mirror_bootstrap.sql";
 const BUNDLE = "supabase/APPLY_EVERYTHING.sql";
+const MIGRATIONS_DIR = "supabase/migrations";
 
 function psqlArgs(db) {
   if (process.env.PGTEST_URL) {
@@ -94,7 +113,7 @@ async function main() {
     return;
   }
 
-  for (const f of [BOOTSTRAP, BUNDLE, ...SUITES.map((s) => s.file)]) {
+  for (const f of [BOOTSTRAP, BUNDLE, ...SUITES.map((s) => s.file), ...BARE_SUITES.map((s) => s.file)]) {
     if (!existsSync(f)) {
       console.error(`MISSING ${f} — run \`npm run build:apply-everything\` first.`);
       process.exitCode = 1;
@@ -150,6 +169,62 @@ async function main() {
         psql(null, ["-c", `drop database if exists ${DB}`]);
       } catch {
         console.error(`(left ${DB} behind — drop it manually)`);
+      }
+    }
+  }
+
+  // ---------------------------------------------- the unseeded project ------
+  // Migrations only, no seed: the state a real new Supabase project is in.
+  // `.head.sql` files are generator INPUTS, not migrations — applying one would
+  // re-run an older definition over the top of the built version.
+  const migrations = readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.endsWith(".sql") && !f.endsWith(".head.sql"))
+    .sort()
+    .map((f) => `${MIGRATIONS_DIR}/${f}`);
+
+  let bareCreated = false;
+  try {
+    psql(null, ["-c", `create database ${BARE_DB}`]);
+    bareCreated = true;
+
+    process.stdout.write("applying migrations with NO seed … ");
+    psql(BARE_DB, [
+      "-v",
+      "ON_ERROR_STOP=1",
+      "-f",
+      BOOTSTRAP,
+      ...migrations.flatMap((f) => ["-f", f]),
+    ]);
+    console.log("ok");
+
+    for (const suite of BARE_SUITES) {
+      process.stdout.write(`${suite.name} … `);
+      let out;
+      try {
+        out = psql(BARE_DB, ["-v", "ON_ERROR_STOP=1", "-f", suite.file]);
+      } catch (e) {
+        const fail =
+          (e.output ?? "").split("\n").find((l) => /FAIL|ERROR/.test(l)) ?? "unknown error";
+        console.log(`FAILED\n    ${fail.trim()}`);
+        failures++;
+        continue;
+      }
+      const oks = (out.match(/NOTICE:\s+ok\b/gi) ?? []).length;
+      if (oks === suite.expect) console.log(`${oks}/${suite.expect} ok`);
+      else {
+        console.log(`FAILED — ${oks} ok notices, expected ${suite.expect}`);
+        failures++;
+      }
+    }
+  } catch (e) {
+    console.log(`FAILED\n    ${String(e.output ?? e.message).trim().split("\n").slice(-3).join("\n")}`);
+    failures++;
+  } finally {
+    if (bareCreated) {
+      try {
+        psql(null, ["-c", `drop database if exists ${BARE_DB}`]);
+      } catch {
+        console.error(`(left ${BARE_DB} behind — drop it manually)`);
       }
     }
   }

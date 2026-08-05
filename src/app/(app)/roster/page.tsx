@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/modal";
 import { LiveRoster } from "@/components/roster/live-roster";
 import { useSessionStore } from "@/lib/session";
+import { NoSiteState } from "@/components/settings/no-site-state";
 import { ROSTER_LIVE } from "@/lib/roster-live";
 import {
   dateKey,
@@ -356,6 +357,21 @@ export default function RosterPage() {
   const site = profile?.buildings[0];
   if (ROSTER_LIVE && site) {
     return <LiveRoster buildingId={site.id} siteName={site.name} />;
+  }
+  // Signed in against a real database but with no site yet: show that, rather
+  // than quietly falling through to the demo store. Seeing somebody else's
+  // roster and mistaking it for your own is worse than seeing nothing.
+  if (ROSTER_LIVE && profile) {
+    return (
+      <>
+        <PageHeader
+          eyebrow="CleaningOps"
+          title="Roster"
+          description="Who is on, when, and at which site."
+        />
+        <NoSiteState what="Rosters" />
+      </>
+    );
   }
   return <DemoRosterPage />;
 }

@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { NoSiteState } from "@/components/settings/no-site-state";
 import { Input } from "@/components/ui/input";
 import {
   Modal,
@@ -354,7 +355,12 @@ export function NoticesTab({
   const [editing, setEditing] = React.useState<NoticeRow | null>(null);
 
   const refresh = React.useCallback(() => {
-    if (!live || !buildingId) return;
+    if (!live || !buildingId) {
+      // same fix as the three tabs beside this one: an early return that
+      // leaves `loading` true is a spinner with no way out
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     listNotices(buildingId)
       .then((r) => {
@@ -403,7 +409,9 @@ export function NoticesTab({
         </Card>
       )}
 
-      {loading ? (
+      {live && !buildingId ? (
+        <NoSiteState what="Notices" />
+      ) : loading ? (
         <Card>
           <CardBody className="flex items-center gap-2 text-body-sm text-fg-muted">
             <Loader2 aria-hidden className="size-4 animate-spin" />
