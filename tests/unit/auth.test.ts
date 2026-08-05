@@ -7,7 +7,7 @@
  * dashboard full of demo data for an account with no organisation behind it.
  */
 import { describe, expect, it } from "vitest";
-import { accessMessage, explainAuthError } from "@/lib/auth-live";
+import { accessMessage, claimFailureMessage, explainAuthError } from "@/lib/auth-live";
 import { inviteAge, type OrgInvite } from "@/lib/people-live";
 
 describe("explainAuthError", () => {
@@ -50,6 +50,40 @@ describe("accessMessage", () => {
 
   it("stays quiet when the claim itself failed — the caller reports that", () => {
     expect(accessMessage({ ok: false, error: "boom" })).toBeNull();
+  });
+});
+
+describe("claimFailureMessage", () => {
+  it("says nothing when the claim worked, whatever the answer was", () => {
+    expect(claimFailureMessage({ ok: true, has_access: true })).toBeNull();
+    expect(claimFailureMessage({ ok: true, has_access: false })).toBeNull();
+  });
+
+  it("names the FILE when the RPC is missing from the database", () => {
+    // this is the case that reads as "login is broken": the link works, the
+    // session is real, and claim_access 404s because the bundle was never
+    // pasted. Blaming the email or the password sends somebody the wrong way.
+    for (const raw of [
+      "Could not find the function public.claim_access without parameters",
+      'function public.claim_access() does not exist',
+      "PGRST202",
+    ]) {
+      const msg = claimFailureMessage({ ok: false, error: raw })!;
+      expect(msg).toContain("APPLY_EVERYTHING.sql");
+      expect(msg).toMatch(/System health/);
+      // and it explicitly clears the user of doing anything wrong
+      expect(msg).toMatch(/email and link are fine/);
+    }
+  });
+
+  it("does not blame the database for a session problem", () => {
+    expect(claimFailureMessage({ ok: false, error: "JWT expired" })).toMatch(/fresh link/);
+  });
+
+  it("passes anything else through rather than swallowing it", () => {
+    expect(claimFailureMessage({ ok: false, error: "connection reset" })).toContain(
+      "connection reset"
+    );
   });
 });
 

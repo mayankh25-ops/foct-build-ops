@@ -19,7 +19,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { Card, CardBody } from "@/components/ui/card";
-import { accessMessage, claimAccess, explainAuthError } from "@/lib/auth-live";
+import {
+  accessMessage,
+  claimAccess,
+  claimFailureMessage,
+  explainAuthError,
+} from "@/lib/auth-live";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 
 type Phase = "working" | "no-access" | "error";
@@ -75,6 +80,18 @@ function Callback() {
 
       const outcome = await claimAccess();
       if (cancelled) return;
+
+      // claim_access() FAILING is not the same as it reporting no access, and
+      // conflating the two is what made this look like a login bug: the old
+      // code asked accessMessage() (which answers null unless the call
+      // succeeded), got nothing, and redirected to an empty dashboard with the
+      // real cause — usually an RPC missing from the database — unread.
+      const failed = claimFailureMessage(outcome);
+      if (failed) {
+        setPhase("error");
+        setMessage(failed);
+        return;
+      }
 
       const note = accessMessage(outcome);
       if (note) {

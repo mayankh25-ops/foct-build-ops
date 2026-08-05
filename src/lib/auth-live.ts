@@ -38,8 +38,12 @@ export async function sendMagicLink(email: string): Promise<{ ok: boolean; error
     email: email.trim(),
     options: {
       emailRedirectTo: callbackUrl(),
-      // Anyone signing in must already have an account or an invitation
-      // waiting: a link that silently creates accounts is a way in.
+      // An account is created if there isn't one, because on a brand-new
+      // project the FIRST person has no account yet and requiring one would
+      // send them back to the dashboard to hand-make it — the manual step this
+      // whole flow exists to remove. Creating an account grants nothing on its
+      // own: `claim_access()` gives the first arrival the project and every
+      // later uninvited one an explicit "ask an admin".
       shouldCreateUser: true,
     },
   });
@@ -111,4 +115,29 @@ export function accessMessage(outcome: ClaimOutcome): string | null {
   if (!outcome.ok) return null;
   if (outcome.has_access) return null;
   return "You're signed in, but nobody has given this address access to a site yet. Ask an admin to invite you from Settings → People — you'll get in the moment they do.";
+}
+
+/**
+ * When `claim_access()` itself FAILED, rather than reporting no access.
+ *
+ * This is the gap that made "login is still broken" so hard to pin down: the
+ * callback asked `accessMessage()` for something to say, got null (because the
+ * outcome was not ok at all), and redirected to the dashboard anyway. The
+ * person landed on an empty app having been told nothing — and the actual
+ * cause, an RPC that is not in their database, was sitting in a rejected
+ * promise nobody read.
+ *
+ * The missing-function case is the one that matters and it has a named fix, so
+ * it gets its own sentence.
+ */
+export function claimFailureMessage(outcome: ClaimOutcome): string | null {
+  if (outcome.ok) return null;
+  const raw = outcome.error ?? "";
+  if (/could not find the function|does not exist|42883|PGRST202/i.test(raw)) {
+    return "Your email and link are fine — this project's database is missing the sign-in setup. Open Supabase → SQL Editor and run supabase/APPLY_EVERYTHING.sql, then open the link again. (Settings → System health lists exactly what's missing.)";
+  }
+  if (/jwt|token/i.test(raw)) {
+    return "The link signed you in but the session was rejected. Ask for a fresh link and open it in this browser.";
+  }
+  return `You're signed in, but setting up your access failed: ${raw}`;
 }
