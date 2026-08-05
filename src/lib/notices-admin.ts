@@ -224,6 +224,73 @@ export async function updateSite(
   if (error) throw new Error(error.message);
 }
 
+export interface NewSiteInput {
+  name: string;
+  address: string;
+  timezone: string;
+  language: string;
+  /** blank = "my own organisation", which is the ordinary case */
+  ownerOrg?: string;
+  cleaningOrg?: string;
+}
+
+export type SiteResult =
+  | { ok: true; buildingId: string; slug: string }
+  | { ok: false; error: string };
+
+/**
+ * Create a site — building, organisations, cross-org grants, module switches
+ * and the caller's own membership, in one transaction (0017).
+ *
+ * Returns a result rather than throwing: every failure here is something the
+ * person at the keyboard can act on ("that isn't a timezone", "ask your
+ * admin"), so it belongs in the form, not in a console.
+ */
+export async function createSite(input: NewSiteInput): Promise<SiteResult> {
+  const { data, error } = await getSupabase().rpc("site_create", {
+    p_name: input.name,
+    p_address: input.address,
+    p_timezone: input.timezone,
+    p_language: input.language,
+    p_owner_org: input.ownerOrg?.trim() || null,
+    p_cleaning_org: input.cleaningOrg?.trim() || null,
+  });
+  if (error) return { ok: false, error: friendlyDbError(error.message) };
+  const res = data as { ok: boolean; building_id?: string; slug?: string; error?: string };
+  if (!res?.ok) return { ok: false, error: res?.error ?? "The site could not be created." };
+  return { ok: true, buildingId: res.building_id!, slug: res.slug! };
+}
+
+export async function deleteSite(id: string): Promise<SiteResult | { ok: true; slug: string; buildingId: string }> {
+  const { data, error } = await getSupabase().rpc("site_delete", { p_building: id });
+  if (error) return { ok: false, error: friendlyDbError(error.message) };
+  const res = data as { ok: boolean; error?: string };
+  if (!res?.ok) return { ok: false, error: res?.error ?? "The site could not be removed." };
+  return { ok: true, buildingId: id, slug: "" };
+}
+
+/**
+ * Turn a Postgres/PostgREST error into something a supervisor can act on.
+ *
+ * The two that matter are the ones that mean "the database is behind the app":
+ * a missing function or column reads as gibberish, but it always has the same
+ * fix — paste the SQL bundle. Saying so here is the difference between a
+ * five-minute fix and an afternoon.
+ */
+export function friendlyDbError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("could not find the function") || m.includes("does not exist") || m.includes("42883")) {
+    return `${message} — your database is missing part of this release. Open Settings → System health for what to do.`;
+  }
+  if (m.includes("column") && m.includes("does not exist")) {
+    return `${message} — your database is behind the app. Open Settings → System health for what to do.`;
+  }
+  if (m.includes("jwt") || m.includes("not signed in")) {
+    return "Your session has expired. Sign in again.";
+  }
+  return message;
+}
+
 /** Australian zones first — every site is here today. */
 export const TIMEZONES = [
   "Australia/Melbourne",

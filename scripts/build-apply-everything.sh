@@ -30,7 +30,9 @@ OUT=supabase/APPLY_EVERYTHING.sql
     supabase/migrations/0013_attendance_day.sql \
     supabase/migrations/0014_attendance_alerts.sql \
     supabase/migrations/0015_auth_onboarding.sql \
-    supabase/migrations/0016_handover.sql ; do
+    supabase/migrations/0016_handover.sql \
+    supabase/migrations/0017_site_create.sql \
+    supabase/migrations/0018_health.sql ; do
     echo "-- ---------------------------------------------------------------------------"
     echo "-- $(basename "$f")"
     echo "-- ---------------------------------------------------------------------------"

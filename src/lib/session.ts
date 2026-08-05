@@ -106,6 +106,20 @@ export function useSessionInit(): void {
   }, []);
 }
 
+/**
+ * Re-read the profile after something changes what the signed-in person can
+ * reach — creating a site, accepting an invitation, being added to a building.
+ *
+ * Without this, `site_create()` succeeds, the row exists, and every screen that
+ * reads `profile.buildings` still believes there are none until the next full
+ * reload. That gap is indistinguishable from the create having failed.
+ */
+export async function refreshProfile(): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  const p = await loadProfile();
+  useSessionStore.getState().setFromProfile(p);
+}
+
 export async function signOut(): Promise<void> {
   if (!isSupabaseConfigured) return;
   await getSupabase().auth.signOut();

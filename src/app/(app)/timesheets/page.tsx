@@ -25,6 +25,7 @@ import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { LiveTimesheets } from "@/components/timesheets/live-timesheets";
 import { useSessionStore } from "@/lib/session";
+import { NoSiteState } from "@/components/settings/no-site-state";
 import { TIMESHEETS_LIVE } from "@/lib/timesheets-live";
 import {
   dateKey,
@@ -351,6 +352,21 @@ export default function TimesheetsPage() {
   const site = profile?.buildings[0];
   if (TIMESHEETS_LIVE && site) {
     return <LiveTimesheets buildingId={site.id} siteName={site.name} />;
+  }
+  // Signed in against a real database but with no site yet: show that, rather
+  // than quietly falling through to the demo store. Seeing somebody else's
+  // roster and mistaking it for your own is worse than seeing nothing.
+  if (TIMESHEETS_LIVE && profile) {
+    return (
+      <>
+        <PageHeader
+          eyebrow="CleaningOps"
+          title="Timesheets"
+          description="Who is on, when, and at which site."
+        />
+        <NoSiteState what="Timesheets" />
+      </>
+    );
   }
   return <DemoTimesheetsPage />;
 }

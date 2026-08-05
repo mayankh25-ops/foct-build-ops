@@ -38,7 +38,7 @@ options rejected, which is the part that saves the next argument.
 
 ## 2. Unit tests — automated (`npm run test:unit`)
 
-Vitest over the pure logic in `src/lib`. Currently 133 assertions covering the
+Vitest over the pure logic in `src/lib`. Currently 161 assertions covering the
 calculations nobody can eyeball:
 
 | File | What it protects |
@@ -102,7 +102,7 @@ data.**
 
 It builds a throwaway database, applies `supabase/APPLY_EVERYTHING.sql`
 exactly as you'd paste it into the dashboard, applies it **again** (idempotency
-— you re-paste bundles routinely), then runs 204 assertions:
+— you re-paste bundles routinely), then runs 235 assertions:
 
 | Suite | Assertions | Proves |
 |---|---|---|
@@ -118,6 +118,22 @@ exactly as you'd paste it into the dashboard, applies it **again** (idempotency
 | `auth_onboarding_check.sql` | 15 | the front door: a new account gets a profile row, the FIRST sign-in claims the project and every later uninvited arrival gets nothing, an invitation is single-use / expiring / revocable, and nobody can invite somebody to a role above their own |
 | `alerts_isolation_check.sql` | 18 | nothing is raised before a shift could have started, a scan run repeatedly never raises the same alert twice, arriving late or signing out resolves an alert by itself, acknowledging records who and why, and only the sending job can stamp an alert as emailed |
 | `roster_isolation_check.sql` | 14 | no inverted shift, no double-booking the same person, back-to-back allowed, a week-copy that reports what it skipped, the timesheet reading the same rostered hours |
+| `handover_check.sql` | 14 | the log is append-only, a note is attributed to whoever wrote it, filed under the BUILDING's day, and each company sees only its own |
+| `site_create_check.sql` | 17 | a manager can add a site and immediately SEE it, a cleaner cannot invent buildings, another company's admin cannot delete yours, and a site holding attendance cannot be deleted at all |
+| `health_check.sql` | 9 | **destructive, runs last** — it drops a column, a function and a table in turn and asserts the health check names each one and still answers |
+
+### The unseeded pass
+
+Every suite above starts from a database that already contains Meridian Strata,
+FOCT Cleaning and Aurora on Collins — so all of them silently assume an
+organisation exists. A real new Supabase project has none, and that is exactly
+the arrangement in which the first sign-in used to succeed while granting
+nothing. So `test-db.mjs` builds a SECOND database from the migrations with **no
+seed at all** and runs:
+
+| Suite | Assertions | Proves |
+|---|---|---|
+| `bare_project_check.sql` | 12 | the whole walk on an empty project: first sign-in creates an organisation and grants access, the second arrival gets nothing, a site is created from the app and is visible immediately, then a cleaner with a PIN and a paired kiosk |
 
 Three methodology rules learned the hard way:
 

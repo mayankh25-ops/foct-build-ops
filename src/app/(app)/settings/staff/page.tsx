@@ -32,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { NoSiteState } from "@/components/settings/no-site-state";
 import { Input } from "@/components/ui/input";
 import {
   Modal,
@@ -147,7 +148,12 @@ function CleanersTab({
   const [reveal, setReveal] = React.useState<{ pin: string; who: string } | null>(null);
 
   const refresh = React.useCallback(() => {
-    if (!live || !buildingId) return;
+    if (!live || !buildingId) {
+      // clearing the flag here is the whole fix: returning early with
+      // `loading` still true is a spinner that never stops
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     listStaff(buildingId)
       .then((r) => {
@@ -214,7 +220,9 @@ function CleanersTab({
         </Card>
       )}
 
-      {loading ? (
+      {live && !buildingId ? (
+        <NoSiteState what="Cleaners" />
+      ) : loading ? (
         <Card>
           <CardBody className="flex items-center gap-2 text-body-sm text-fg-muted">
             <Loader2 aria-hidden className="size-4 animate-spin" />
@@ -364,7 +372,12 @@ function KiosksTab({ buildingId, live }: { buildingId: string | null; live: bool
   const kioskUrl = typeof window === "undefined" ? "/kiosk" : `${window.location.origin}/kiosk`;
 
   const refresh = React.useCallback(() => {
-    if (!live || !buildingId) return;
+    if (!live || !buildingId) {
+      // clearing the flag here is the whole fix: returning early with
+      // `loading` still true is a spinner that never stops
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     listDevices(buildingId)
       .then((r) => {
@@ -411,7 +424,9 @@ function KiosksTab({ buildingId, live }: { buildingId: string | null; live: bool
         </Card>
       )}
 
-      {loading ? (
+      {live && !buildingId ? (
+        <NoSiteState what="Kiosk tablets" />
+      ) : loading ? (
         <Card>
           <CardBody className="flex items-center gap-2 text-body-sm text-fg-muted">
             <Loader2 aria-hidden className="size-4 animate-spin" />
@@ -572,7 +587,12 @@ function AttendanceTab({ buildingId, live }: { buildingId: string | null; live: 
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!live || !buildingId) return;
+    if (!live || !buildingId) {
+      // clearing the flag here is the whole fix: returning early with
+      // `loading` still true is a spinner that never stops
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     listSessions(buildingId, isoDate(-6), isoDate(1))
       .then((r) => {
@@ -615,7 +635,9 @@ function AttendanceTab({ buildingId, live }: { buildingId: string | null; live: 
         </Card>
       )}
 
-      {loading ? (
+      {live && !buildingId ? (
+        <NoSiteState what="Attendance records" />
+      ) : loading ? (
         <Card>
           <CardBody className="flex items-center gap-2 text-body-sm text-fg-muted">
             <Loader2 aria-hidden className="size-4 animate-spin" />
