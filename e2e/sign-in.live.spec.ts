@@ -20,7 +20,7 @@ interface Calls {
 async function mockAuth(
   page: Page,
   calls: Calls,
-  opts: { hasAccess?: boolean; otpError?: string } = {}
+  opts: { hasAccess?: boolean; otpError?: string; claimMissing?: boolean } = {}
 ) {
   // ONE handler for the whole auth surface, branching inside: Playwright gives
   // precedence to the LAST matching route, so a general pattern registered
@@ -57,6 +57,18 @@ async function mockAuth(
       route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(data) });
     if (name === "claim_access") {
       calls.claims++;
+      if (opts.claimMissing) {
+        // exactly what PostgREST answers when the bundle was never pasted
+        return route.fulfill({
+          status: 404,
+          contentType: "application/json",
+          body: JSON.stringify({
+            code: "PGRST202",
+            message:
+              "Could not find the function public.claim_access without parameters in the schema cache",
+          }),
+        });
+      }
       return json({ ok: true, claimed: 0, bootstrapped: false, has_access: opts.hasAccess ?? true });
     }
     return json({ ok: true });
@@ -160,5 +172,36 @@ test.describe("sign in", () => {
     await page.goto("/auth/callback?error=access_denied&error_description=Email+link+is+invalid+or+has+expired");
 
     await expect(page.getByText(/expired or was already used/)).toBeVisible();
+  });
+});
+
+test.describe("when the database is behind the app", () => {
+  test("a missing claim_access is NAMED, not a silent trip to an empty dashboard", async ({
+    page,
+  }) => {
+    // THE BUG: the callback asked accessMessage() for something to say, got
+    // null because the call had FAILED rather than reported no access, and
+    // redirected anyway. The person landed on an empty product having been
+    // told nothing, and read it as "login is broken".
+    const calls: Calls = { otp: [], claims: 0 };
+    await withSession(page);
+    await mockAuth(page, calls, { claimMissing: true });
+    await page.goto("/auth/callback?next=/dashboard");
+
+    await expect(page.getByText(/APPLY_EVERYTHING\.sql/)).toBeVisible();
+    await expect(page.getByText(/System health/)).toBeVisible();
+    // and it must NOT have carried on into the app
+    await expect(page).toHaveURL(/\/auth\/callback/);
+  });
+
+  test("and it says the sign-in itself was fine, so nobody re-checks their email", async ({
+    page,
+  }) => {
+    const calls: Calls = { otp: [], claims: 0 };
+    await withSession(page);
+    await mockAuth(page, calls, { claimMissing: true });
+    await page.goto("/auth/callback");
+
+    await expect(page.getByText(/email and link are fine/)).toBeVisible();
   });
 });
