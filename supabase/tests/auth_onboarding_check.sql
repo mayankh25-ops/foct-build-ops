@@ -13,6 +13,18 @@ declare
   v_rando uuid := '44444444-0000-0000-0000-000000000003';   -- nobody invited them
   v_invite uuid; v_n int;
   c_priya constant uuid := '22222222-0000-0000-0000-000000000003'; -- manager, FOCT Cleaning
+  -- everyone this suite invents, so it can put them back afterwards
+  c_cast constant uuid[] := array[
+    '44444444-0000-0000-0000-000000000001',   -- owner@example.com
+    '44444444-0000-0000-0000-000000000002',   -- mate@example.com
+    '44444444-0000-0000-0000-000000000003',   -- stranger@example.com
+    '44444444-0000-0000-0000-000000000004',   -- late@example.com
+    '44444444-0000-0000-0000-000000000005'    -- gone@example.com
+  ]::uuid[];
+  c_addresses constant text[] := array[
+    'mate@example.com', 'sneaky@example.com', 'mole@example.com',
+    'late@example.com', 'gone@example.com', 'not-an-address'
+  ];
 begin
   select id into v_building from public.buildings where slug = 'aurora-on-collins';
   select id into v_foct  from public.organisations where slug = 'foct-cleaning';
@@ -29,11 +41,21 @@ begin
     perform public.staff_create(v_building, 'Onboarding Cleaner');
   end if;
 
-  -- a clean front door: nobody in this project has ever signed in
+  -- A clean front door: nobody in this project has ever signed in.
+  --
+  -- The invitations go first. org_invites.invited_by and .accepted_by
+  -- reference public.users with no ON DELETE action, so an accepted invitation
+  -- left by an earlier run makes the delete below fail with
+  -- org_invites_accepted_by_fkey -- which made this suite single-use.
   update public.users set last_seen_at = null;
-  delete from public.organisation_memberships
-   where user_id in (v_owner, v_mate, v_rando);
-  delete from public.users where id in (v_owner, v_mate, v_rando);
+  delete from public.org_invites
+   where invited_by = any(c_cast)
+      or accepted_by = any(c_cast)
+      or lower(email) = any(c_addresses);
+  delete from public.building_memberships     where user_id = any(c_cast);
+  delete from public.organisation_memberships where user_id = any(c_cast);
+  delete from public.users                    where id      = any(c_cast);
+  delete from auth.users                      where id      = any(c_cast);
 
   insert into auth.users (id, email) values
     (v_owner, 'owner@example.com'),
@@ -174,4 +196,20 @@ begin
       raise notice 'ok 15: a revoked invitation grants nothing';
     else raise exception 'FAIL 15: %', v_res; end if;
   end;
+  -- ---------------------------------------------------------------- tidy ----
+  -- Put the front door back. Without this the suite leaves five accounts on
+  -- the project, one of them an ADMIN of the organisation that runs the site,
+  -- and -- because claim_access() reads last_seen_at to decide whether anybody
+  -- has ever signed in -- a SPENT BOOTSTRAP: the real first user would then
+  -- sign in to nothing, the exact failure 0015 was written to prevent.
+  delete from public.org_invites
+   where invited_by = any(c_cast)
+      or accepted_by = any(c_cast)
+      or lower(email) = any(c_addresses);
+  delete from public.building_memberships     where user_id = any(c_cast);
+  delete from public.organisation_memberships where user_id = any(c_cast);
+  delete from public.users                    where id      = any(c_cast);
+  delete from auth.users                      where id      = any(c_cast);
+  update public.users set last_seen_at = null;
+  raise notice 'ok: cleaned up -- the project is as it was before this suite ran';
 end $$;

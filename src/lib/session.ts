@@ -90,11 +90,62 @@ async function loadProfile(): Promise<SessionProfile | null> {
 
 let initialised = false;
 
+/**
+ * "Continue to the demo without signing in".
+ *
+ * On a deployment with no Supabase env the status is already "demo" and
+ * nothing redirects. On a CONFIGURED one it is "signed-out", and AppShell
+ * sends every signed-out visitor to /sign-in -- so that link bounced straight
+ * back to the page it was clicked on, which read as the button doing nothing.
+ * This flag is the visitor saying "I know, show me the demo anyway".
+ *
+ * sessionStorage, so it is scoped to the tab and cannot outlive the browsing
+ * session and quietly put a real signed-in user back on demo data. Reads and
+ * writes are guarded: a private window can throw on access.
+ */
+const DEMO_OPT_IN = "foct-demo-opt-in";
+
+export function isDemoOptIn(): boolean {
+  try {
+    return sessionStorage.getItem(DEMO_OPT_IN) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function enterDemoMode(): void {
+  try {
+    sessionStorage.setItem(DEMO_OPT_IN, "1");
+  } catch {
+    // storage blocked: the status below still carries this tab
+  }
+  useSessionStore.getState().setStatus("demo");
+}
+
+/** Leaving the demo: /sign-in calls this, so signing in for real always wins. */
+export function exitDemoMode(): void {
+  if (!isDemoOptIn()) return;
+  try {
+    sessionStorage.removeItem(DEMO_OPT_IN);
+  } catch {
+    // nothing to undo
+  }
+  // the demo path returns before wiring the auth listener, so let the next
+  // AppShell mount resolve the session properly
+  initialised = false;
+  useSessionStore.getState().setStatus(isSupabaseConfigured ? "loading" : "demo");
+}
+
 /** Mount once (AppShell). Resolves the session and follows auth changes. */
 export function useSessionInit(): void {
   React.useEffect(() => {
     if (!isSupabaseConfigured || initialised) return;
     initialised = true;
+    // the visitor chose the demo over signing in -- honour it for this tab
+    if (isDemoOptIn()) {
+      useSessionStore.getState().setStatus("demo");
+      return;
+    }
     const { setFromProfile } = useSessionStore.getState();
     void loadProfile().then(setFromProfile);
     const { data: sub } = getSupabase().auth.onAuthStateChange((event) => {

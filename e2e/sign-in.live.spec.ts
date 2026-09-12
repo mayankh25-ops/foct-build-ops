@@ -145,6 +145,53 @@ test.describe("sign in", () => {
     await expect(page.getByRole("button", { name: /^Sign in$/ })).toBeVisible();
   });
 
+  test("and the way BACK to the link is findable", async ({ page }) => {
+    // the toggle was caption-sized muted text: people who landed on the
+    // password form could not see how to get back, and there is no password
+    // to type on a project where nobody has ever set one
+    const calls: Calls = { otp: [], claims: 0 };
+    await mockAuth(page, calls);
+    await page.goto("/sign-in");
+
+    await page.getByRole("button", { name: "Use a password instead" }).click();
+    await expect(page.getByLabel("Password")).toBeVisible();
+
+    await page.getByRole("button", { name: "Email me a link instead" }).click();
+    await expect(page.getByLabel("Password")).toBeHidden();
+    await expect(page.getByRole("button", { name: /Email me a sign-in link/ })).toBeVisible();
+  });
+
+  test("the demo link reaches the demo, on a project that HAS a database", async ({ page }) => {
+    // AppShell sends every signed-out visitor to /sign-in, so this link used
+    // to bounce straight back to the page it was clicked on -- indistinguishable
+    // from a dead button. Demo mode is an explicit choice now.
+    const calls: Calls = { otp: [], claims: 0 };
+    await mockAuth(page, calls);
+    await page.goto("/sign-in");
+
+    await page.getByRole("button", { name: /Continue to the demo/ }).click();
+
+    await page.waitForURL(/\/dashboard/);
+    await expect(page.getByText(/Demo data/)).toBeVisible();
+  });
+
+  test("and choosing the demo never strands you: sign in is one click, and it sticks", async ({
+    page,
+  }) => {
+    const calls: Calls = { otp: [], claims: 0 };
+    await mockAuth(page, calls);
+    await page.goto("/sign-in");
+    await page.getByRole("button", { name: /Continue to the demo/ }).click();
+    await page.waitForURL(/\/dashboard/);
+
+    await page.getByRole("link", { name: "Sign in" }).click();
+    await page.waitForURL(/\/sign-in/);
+
+    // the opt-in is dropped, so the product is properly gated again
+    await page.goto("/dashboard");
+    await page.waitForURL(/\/sign-in/);
+  });
+
   test("the callback claims access and moves you into the product", async ({ page }) => {
     const calls: Calls = { otp: [], claims: 0 };
     await withSession(page);
