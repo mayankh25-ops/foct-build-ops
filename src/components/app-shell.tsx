@@ -36,6 +36,8 @@ import { BUILTIN_THEMES } from "@/lib/theme-registry";
 import { DEFAULT_THEME, useThemeRehydrate, useThemeStore } from "@/lib/theme-store";
 import { useRouter } from "next/navigation";
 import { signOut, useSessionInit, useSessionStore } from "@/lib/session";
+import { isSupabaseConfigured } from "@/lib/supabase";
+import Link from "next/link";
 
 /**
  * AppShell. The rendered theme comes from the building's assignment in the
@@ -54,7 +56,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const profile = useSessionStore((s) => s.profile);
   const activeOrgId = useSessionStore((s) => s.activeOrgId);
 
-  // live mode: unauthenticated users go to sign-in; demo mode never redirects
+  // Live mode: an unauthenticated visitor goes to sign-in. "demo" deliberately
+  // does NOT land here -- it is also what "continue to the demo without signing
+  // in" sets, and bouncing that back to /sign-in is what made the link look
+  // dead on any deployment with Supabase configured.
   React.useEffect(() => {
     if (sessionStatus === "signed-out") router.replace("/sign-in");
   }, [sessionStatus, router]);
@@ -175,6 +180,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               : undefined
           }
         />
+        {/* Browsing the demo on a project that HAS a database looks exactly
+            like being signed in. Say which one this is, and keep a way out --
+            TopBar shows no sign-out unless the session is "ready". */}
+        {isSupabaseConfigured && sessionStatus === "demo" && (
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-warning-subtle px-6 py-2 text-caption text-warning-text">
+            <span>Demo data — nothing on this screen belongs to your building.</span>
+            <Link href="/sign-in" className="font-medium underline underline-offset-2">
+              Sign in
+            </Link>
+          </div>
+        )}
         <ToastProvider>
           <main className="min-w-0 flex-1 overflow-y-auto">
             <div className="mx-auto max-w-[1440px] px-6 py-10 lg:px-12">{children}</div>

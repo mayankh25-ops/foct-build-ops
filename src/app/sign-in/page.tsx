@@ -10,7 +10,6 @@
  * account into access.
  */
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { KeyRound, Mail } from "lucide-react";
 
@@ -18,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { sendMagicLink, signInWithPassword } from "@/lib/auth-live";
+import { enterDemoMode, exitDemoMode } from "@/lib/session";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { building } from "@/lib/demo-data";
 
@@ -30,6 +30,12 @@ export default function SignInPage() {
   const [message, setMessage] = React.useState("");
 
   const emailLooksReal = /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email.trim());
+
+  // being on this page means signing in for real: drop any demo opt-in the
+  // tab is carrying, so the session resolves properly after the link lands
+  React.useEffect(() => {
+    exitDemoMode();
+  }, []);
 
   const send = async () => {
     setState("busy");
@@ -133,24 +139,40 @@ export default function SignInPage() {
             </Button>
           )}
 
-          <button
-            type="button"
-            className="text-center text-caption text-fg-muted hover:underline"
+          {/* The switch between the only two ways in. It was caption-sized
+              muted text, which read as a footnote -- somebody who ended up on
+              the password form could not find the way back to the link. */}
+          <Button
+            variant="secondary"
             onClick={() => {
               setMode((m) => (m === "link" ? "password" : "link"));
               setState("idle");
               setMessage("");
             }}
           >
-            {mode === "link" ? "Use a password instead" : "Email me a link instead"}
-          </button>
+            {mode === "link" ? (
+              <>
+                <KeyRound aria-hidden className="size-4" />
+                Use a password instead
+              </>
+            ) : (
+              <>
+                <Mail aria-hidden className="size-4" />
+                Email me a link instead
+              </>
+            )}
+          </Button>
 
-          <Link
-            href="/dashboard"
-            className="text-center text-caption text-fg-muted hover:underline"
+          <button
+            type="button"
+            onClick={() => {
+              enterDemoMode();
+              router.push("/dashboard");
+            }}
+            className="text-center text-body-sm text-fg-secondary underline underline-offset-2 hover:text-fg"
           >
             Continue to the demo without signing in
-          </Link>
+          </button>
         </CardBody>
       </Card>
     </div>
