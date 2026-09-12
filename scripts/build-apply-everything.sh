@@ -4,7 +4,12 @@ OUT=supabase/APPLY_EVERYTHING.sql
   echo "-- ============================================================================="
   echo "-- APPLY_EVERYTHING.sql — GENERATED. Sets up a COMPLETE, EMPTY Supabase project"
   echo "-- in one paste: platform foundation, theme engine, demo seed, Service Desk,"
-  echo "-- anon hardening, authz, integrations framework, session profile, attendance +\n-- kiosk devices, notices, timesheets, roster, per-org isolation, today's attendance, missed check-in alerts, invitations + first-sign-in bootstrap, shift handover."
+  # One echo per LINE. A "\n" inside an echo string is expanded by some
+  # shells and printed literally by others, so a bundle generated on one
+  # machine never matches one regenerated on another -- and the "is the
+  # bundle stale?" gate below is then red forever, which is what it was.
+  echo "-- anon hardening, authz, integrations framework, session profile, attendance +"
+  echo "-- kiosk devices, notices, timesheets, roster, per-org isolation, today's attendance, missed check-in alerts, invitations + first-sign-in bootstrap, shift handover."
   echo "--"
   echo "-- Use when a project has auth users but no tables (or a brand-new project)."
   echo "-- Idempotent — safe to re-run. Regenerate with: npm run build:apply-everything"

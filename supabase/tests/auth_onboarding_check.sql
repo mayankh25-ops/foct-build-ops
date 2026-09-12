@@ -211,5 +211,8 @@ begin
   delete from public.users                    where id      = any(c_cast);
   delete from auth.users                      where id      = any(c_cast);
   update public.users set last_seen_at = null;
-  raise notice 'ok: cleaned up -- the project is as it was before this suite ran';
+  -- NOT an 'ok' notice: scripts/test-db.mjs counts /NOTICE:\s+ok\b/ and
+  -- expects exactly 15 of them from this suite. Housekeeping is not an
+  -- assertion, so it must not look like one.
+  raise notice 'tidied up -- the project is as it was before this suite ran';
 end $$;

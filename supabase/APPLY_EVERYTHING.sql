@@ -1,7 +1,8 @@
 -- =============================================================================
 -- APPLY_EVERYTHING.sql — GENERATED. Sets up a COMPLETE, EMPTY Supabase project
 -- in one paste: platform foundation, theme engine, demo seed, Service Desk,
--- anon hardening, authz, integrations framework, session profile, attendance +\n-- kiosk devices, notices, timesheets, roster, per-org isolation, today's attendance, missed check-in alerts, invitations + first-sign-in bootstrap, shift handover.
+-- anon hardening, authz, integrations framework, session profile, attendance +
+-- kiosk devices, notices, timesheets, roster, per-org isolation, today's attendance, missed check-in alerts, invitations + first-sign-in bootstrap, shift handover.
 --
 -- Use when a project has auth users but no tables (or a brand-new project).
 -- Idempotent — safe to re-run. Regenerate with: npm run build:apply-everything
