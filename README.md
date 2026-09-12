@@ -42,6 +42,7 @@ The full layered strategy, the release gate, and an honest list of what is
 | Not sure what a project contains | paste `supabase/tests/project_inventory.sql` |
 | A half-built project that errors on apply | `supabase/RESET_PUBLIC_SCHEMA.sql`, then the bundle (logins survive) |
 | A real building to test with | edit and paste `supabase/NEW_BUILDING.sql` |
+| Somebody needs a login | edit and paste `supabase/INVITE_USER.sql` |
 
 ## Docs
 
